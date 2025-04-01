@@ -476,43 +476,70 @@ function init_dofmap_from_pattern!(FES::FESpace{Tv, Ti, FEType, APT}, DM::Type{<
     colstarts[end] = dofmap_totallength + 1
 
     if FES.broken
-        FES[DM] = SerialVariableTargetAdjacency(colstarts)
-        return FES[DM]
-    end
+        xItemDofs = SerialVariableTargetAdjacency(colstarts)
+    else
 
-    colentries = zeros(Ti, dofmap_totallength)
-    xItemDofs = VariableTargetAdjacency{Ti}(colentries, colstarts)
+        colentries = zeros(Ti, dofmap_totallength)
+        xItemDofs = VariableTargetAdjacency{Ti}(colentries, colstarts)
 
-    cpattern::Array{DofMapPatternSegment, 1} = dofmap4EG[1].segments
-    l::Int = 0
-    offset::Int = 0
-    pos::Int = 0
-    q::Int = 0
-    item_with_interiordofs::Int = 0
-    for subitem in 1:nsubitems
-        itemEG = xItemGeometries[subitem]
-        item = sub2sup(subitem)
-        if length(EG) > 1
-            iEG = findfirst(isequal(itemEG), EG)
-        end
-        cpattern = dofmap4EG[iEG].segments
-        l = length(cpattern)
-        if has_interiordofs[iEG]
-            item_with_interiordofs += 1
-        end
-        for c in 1:ncomponents
-            offset = (c - 1) * offset4component
-            for k in 1:l
-                q = cpattern[k].ndofs
-                if cpattern[k].type <: DofTypeNode && cpattern[k].each_component
-                    for n in 1:nnodes4EG[iEG]
+        cpattern::Array{DofMapPatternSegment, 1} = dofmap4EG[1].segments
+        l::Int = 0
+        offset::Int = 0
+        pos::Int = 0
+        q::Int = 0
+        item_with_interiordofs::Int = 0
+        for subitem in 1:nsubitems
+            itemEG = xItemGeometries[subitem]
+            item = sub2sup(subitem)
+            if length(EG) > 1
+                iEG = findfirst(isequal(itemEG), EG)
+            end
+            cpattern = dofmap4EG[iEG].segments
+            l = length(cpattern)
+            if has_interiordofs[iEG]
+                item_with_interiordofs += 1
+            end
+            for c in 1:ncomponents
+                offset = (c - 1) * offset4component
+                for k in 1:l
+                    q = cpattern[k].ndofs
+                    if cpattern[k].type <: DofTypeNode && cpattern[k].each_component
+                        for n in 1:nnodes4EG[iEG]
+                            for m in 1:q
+                                pos += 1
+                                xItemDofs.colentries[pos] = xItemNodes[n, item] + offset + (m - 1) * nnodes
+                            end
+                        end
+                        offset += nnodes * q
+                    elseif cpattern[k].type <: DofTypeFace && cpattern[k].each_component
+                        for n in 1:nfaces4EG[iEG]
+                            for m in 1:q
+                                pos += 1
+                                xItemDofs.colentries[pos] = xItemFaces[n, item] + offset + (m - 1) * nfaces
+                            end
+                        end
+                        offset += nfaces * q
+                    elseif cpattern[k].type <: DofTypeEdge && cpattern[k].each_component
+                        for n in 1:nedges4EG[iEG]
+                            for m in 1:q
+                                pos += 1
+                                xItemDofs.colentries[pos] = xItemEdges[n, item] + offset + (m - 1) * nedges
+                            end
+                        end
+                        offset += nedges * q
+                    elseif cpattern[k].type <: DofTypeInterior && cpattern[k].each_component
                         for m in 1:q
                             pos += 1
-                            xItemDofs.colentries[pos] = xItemNodes[n, item] + offset + (m - 1) * nnodes
+                            xItemDofs.colentries[pos] = sub2sup(item_with_interiordofs) + offset
+                            offset += nitems
                         end
                     end
-                    offset += nnodes * q
-                elseif cpattern[k].type <: DofTypeFace && cpattern[k].each_component
+                end
+            end
+            offset = ncomponents * offset4component
+            for k in 1:l
+                q = cpattern[k].ndofs
+                if cpattern[k].type <: DofTypeFace && !cpattern[k].each_component
                     for n in 1:nfaces4EG[iEG]
                         for m in 1:q
                             pos += 1
@@ -520,7 +547,7 @@ function init_dofmap_from_pattern!(FES::FESpace{Tv, Ti, FEType, APT}, DM::Type{<
                         end
                     end
                     offset += nfaces * q
-                elseif cpattern[k].type <: DofTypeEdge && cpattern[k].each_component
+                elseif cpattern[k].type <: DofTypeEdge && !cpattern[k].each_component
                     for n in 1:nedges4EG[iEG]
                         for m in 1:q
                             pos += 1
@@ -528,7 +555,7 @@ function init_dofmap_from_pattern!(FES::FESpace{Tv, Ti, FEType, APT}, DM::Type{<
                         end
                     end
                     offset += nedges * q
-                elseif cpattern[k].type <: DofTypeInterior && cpattern[k].each_component
+                elseif cpattern[k].type <: DofTypeInterior && !cpattern[k].each_component
                     for m in 1:q
                         pos += 1
                         xItemDofs.colentries[pos] = sub2sup(item_with_interiordofs) + offset
@@ -537,36 +564,9 @@ function init_dofmap_from_pattern!(FES::FESpace{Tv, Ti, FEType, APT}, DM::Type{<
                 end
             end
         end
-        offset = ncomponents * offset4component
-        for k in 1:l
-            q = cpattern[k].ndofs
-            if cpattern[k].type <: DofTypeFace && !cpattern[k].each_component
-                for n in 1:nfaces4EG[iEG]
-                    for m in 1:q
-                        pos += 1
-                        xItemDofs.colentries[pos] = xItemFaces[n, item] + offset + (m - 1) * nfaces
-                    end
-                end
-                offset += nfaces * q
-            elseif cpattern[k].type <: DofTypeEdge && !cpattern[k].each_component
-                for n in 1:nedges4EG[iEG]
-                    for m in 1:q
-                        pos += 1
-                        xItemDofs.colentries[pos] = xItemEdges[n, item] + offset + (m - 1) * nedges
-                    end
-                end
-                offset += nedges * q
-            elseif cpattern[k].type <: DofTypeInterior && !cpattern[k].each_component
-                for m in 1:q
-                    pos += 1
-                    xItemDofs.colentries[pos] = sub2sup(item_with_interiordofs) + offset
-                    offset += nitems
-                end
-            end
-        end
     end
-
     FES[DM] = xItemDofs
+
 
     if FES.dofgrid !== FES.xgrid
         ## assume parent relation between xgrid and dofgrid

@@ -66,7 +66,7 @@ function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{T
     xCellDofs::DofMapTypes{Ti} = FE[CellDofs]
     qf = QuadratureRule{T, EG}(max(4, 2 + bonus_quadorder))
     FEB = FEEvaluator(FE, Identity, qf; T = T)
-    QP = QPInfos(FE.dofgrid)
+    QP = QPInfos(FE.dofgrid; kwargs...)
 
     # evaluation of gradient of P1 functions
     FE3 = H1P1{1}
