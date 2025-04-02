@@ -198,8 +198,8 @@ function get_basis(::Type{ON_CELLS}, ::Type{HDIVRT1{3}}, ::Type{<:Tetrahedron3D}
     end
 end
 
-function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, <:HDIVRT1{2}, APT}, EG::Type{<:Triangle2D}) where {Tv, Ti, APT}
-    xCellFaceSigns = FE.dofgrid[CellFaceSigns]
+function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, <:HDIVRT1{2}, APT}, EG::Type{<:Triangle2D}, xgrid) where {Tv, Ti, APT}
+    xCellFaceSigns = xgrid[CellFaceSigns]
     nfaces = num_faces(EG)
     return function closure(coefficients, cell)
         fill!(coefficients, 1.0)
@@ -211,8 +211,8 @@ function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, <:HDIVRT1{2}, AP
     end
 end
 
-function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, <:HDIVRT1{3}, APT}, EG::Type{<:Tetrahedron3D}) where {Tv, Ti, APT}
-    xCellFaceSigns = FE.dofgrid[CellFaceSigns]
+function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, <:HDIVRT1{3}, APT}, EG::Type{<:Tetrahedron3D}, xgrid) where {Tv, Ti, APT}
+    xCellFaceSigns = xgrid[CellFaceSigns]
     nfaces = num_faces(EG)
     return function closure(coefficients, cell)
         fill!(coefficients, 1.0)
@@ -232,8 +232,8 @@ end
 # the RT0 and those two BDM1 face functions are chosen
 # such that they reflect the two moments with respect to the second and third node
 # of the global face enumeration
-function get_basissubset(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, <:HDIVRT1{3}, APT}, EG::Type{<:Tetrahedron3D}) where {Tv, Ti, APT}
-    xCellFaceOrientations = FE.dofgrid[CellFaceOrientations]
+function get_basissubset(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, <:HDIVRT1{3}, APT}, EG::Type{<:Tetrahedron3D}, xgrid) where {Tv, Ti, APT}
+    xCellFaceOrientations = xgrid[CellFaceOrientations]
     nfaces::Int = num_faces(EG)
     orientation = xCellFaceOrientations[1, 1]
     shift4orientation1::Array{Int, 1} = [1, 0, 1, 2]

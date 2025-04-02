@@ -208,8 +208,8 @@ function get_basis(::Type{ON_CELLS}, ::Type{HDIVRTk{2, order}}, ::Type{<:Triangl
 end
 
 
-function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, <:HDIVRTk{2, order}, APT}, EG::Type{<:Triangle2D}) where {Tv, Ti, APT, order}
-    xCellFaceSigns::Union{VariableTargetAdjacency{Int32}, Array{Int32, 2}} = FE.dofgrid[CellFaceSigns]
+function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, <:HDIVRTk{2, order}, APT}, EG::Type{<:Triangle2D}, xgrid) where {Tv, Ti, APT, order}
+    xCellFaceSigns::Union{VariableTargetAdjacency{Int32}, Array{Int32, 2}} = xgrid[CellFaceSigns]
     nfaces::Int = num_faces(EG)
     dim::Int = dim_element(EG)
     return function closure(coefficients::Array{<:Real, 2}, cell::Int)

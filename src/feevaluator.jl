@@ -90,11 +90,11 @@ function FEEvaluator(
     coeff_handler = NothingFunction
     if FEType <: Union{AbstractH1FiniteElementWithCoefficients, AbstractHdivFiniteElement, AbstractHcurlFiniteElement}
         coefficients = ones(T, ncomponents, ndofs4item)
-        coeff_handler = get_coefficients(FEAT, FE, EG)
+        coeff_handler = get_coefficients(FEAT, FE, EG, xgrid)
     end
 
     # set subset handler (only relevant if ndofs4item_all > ndofs4item)
-    subset_handler = get_basissubset(FEAT, FE, EG)
+    subset_handler = get_basissubset(FEAT, FE, EG, xgrid)
 
     # prepare offsets and additional coefficients
     offsets = 0:edim:((ncomponents - 1) * edim) # edim steps
