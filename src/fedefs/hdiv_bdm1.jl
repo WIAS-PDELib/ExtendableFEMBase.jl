@@ -203,8 +203,8 @@ function get_basis(::Type{ON_CELLS}, ::Type{HDIVBDM1{3}}, ::Type{<:Tetrahedron3D
 end
 
 
-function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, <:HDIVBDM1, APT}, EG::Type{<:AbstractElementGeometry2D}) where {Tv, Ti, APT}
-    xCellFaceSigns::Union{VariableTargetAdjacency{Int32}, Array{Int32, 2}} = FE.dofgrid[CellFaceSigns]
+function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, <:HDIVBDM1, APT}, EG::Type{<:AbstractElementGeometry2D}, xgrid) where {Tv, Ti, APT}
+    xCellFaceSigns::Union{VariableTargetAdjacency{Int32}, Array{Int32, 2}} = xgrid[CellFaceSigns]
     nfaces::Int = num_faces(EG)
     dim::Int = dim_element(EG)
     return function closure(coefficients::Array{<:Real, 2}, cell::Int)
