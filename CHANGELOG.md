@@ -1,7 +1,9 @@
 # CHANGES
 
-## next version
+## v1.0.0
   - doc improvements
+  - several bugfixes regarding finite elements defined on subgrids
+  - integrate now reacts on regions parameter and has proper docstrings
 
 ## v0.8.1 November 5, 2024
   - fixed dimension in nodevals output (xdim was determined wrongly and caused huge arrays)
