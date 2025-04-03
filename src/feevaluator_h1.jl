@@ -158,6 +158,21 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Norm
     return nothing
 end
 
+
+# TANGENTFLUX H1 (ON_FACES, ON_BFACES)
+function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:TangentFlux, <:AbstractH1FiniteElement})
+    # fetch normal of item
+    normal = view(FEBE.coefficients_op, :, FEBE.citem[])
+    subset = _update_subset!(FEBE)
+    cvals = FEBE.cvals
+    refbasisvals = FEBE.refbasisvals
+    fill!(cvals, 0)
+    for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2), k in 1:length(normal)
+        cvals[1, dof_i, i] = refbasisvals[i][subset[dof_i], 1] * normal[2] - refbasisvals[i][subset[dof_i], 2] * normal[1]
+    end
+    return nothing
+end
+
 # NORMALFLUX H1+COEFFICIENTS (ON_FACES, ON_BFACES)
 function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:NormalFlux, <:AbstractH1FiniteElementWithCoefficients})
     # fetch normal of item

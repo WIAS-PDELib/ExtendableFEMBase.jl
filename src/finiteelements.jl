@@ -243,7 +243,7 @@ $(TYPEDSIGNATURES)
 returns the coefficients for local evaluations of finite element functions
 ( see e.g. h1v_br.jl for a use-case)
 """
-function get_coefficients(::Type{<:AssemblyType}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{<:AbstractElementGeometry}) where {Tv, Ti, FEType <: AbstractFiniteElement, APT}
+function get_coefficients(::Type{<:AssemblyType}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{<:AbstractElementGeometry}, xgrid = FE.dofgrid) where {Tv, Ti, FEType <: AbstractFiniteElement, APT}
     return NothingFunction
 end
 
@@ -262,7 +262,7 @@ where different basis functions are chosen
 depending on the face orientations (which in 3D is not just a sign)
 
 """
-function get_basissubset(::Type{<:AssemblyType}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{<:AbstractElementGeometry}) where {Tv, Ti, FEType <: AbstractFiniteElement, APT}
+function get_basissubset(::Type{<:AssemblyType}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{<:AbstractElementGeometry}, xgrid = FE.dofgrid) where {Tv, Ti, FEType <: AbstractFiniteElement, APT}
     return NothingFunction
 end
 
@@ -451,8 +451,8 @@ include("fedefs/hcurl_n0.jl");
 include("fedefs/hcurl_n1.jl");
 
 
-function get_coefficients(::Type{ON_BFACES}, FE::FESpace{Tv, Ti, FEType, APT}, EG::Type{<:AbstractElementGeometry}) where {Tv, Ti, FEType <: AbstractFiniteElement, APT}
-    get_coeffs_on_face = get_coefficients(ON_FACES, FE, EG)
+function get_coefficients(::Type{ON_BFACES}, FE::FESpace{Tv, Ti, FEType, APT}, EG::Type{<:AbstractElementGeometry}, xgrid) where {Tv, Ti, FEType <: AbstractFiniteElement, APT}
+    get_coeffs_on_face = get_coefficients(ON_FACES, FE, EG, xgrid)
     xBFaceFaces = FE.xgrid[BFaceFaces]
     return function closure(coefficients, bface)
         get_coeffs_on_face(coefficients, xBFaceFaces[bface])
@@ -471,12 +471,12 @@ function get_reconstruction_matrix(T::Type{<:Real}, FE::FESpace, FER::FESpace)
 
     ncells = num_sources(xgrid[CellNodes])
     rhandlers = [get_reconstruction_coefficient(ON_CELLS, FE, FER, EG[1])]
-    chandlers = [get_coefficients(ON_CELLS, FER, EG[1])]
+    chandlers = [get_coefficients(ON_CELLS, FER, EG[1], xgrid)]
     shandlers = [get_basissubset(ON_CELLS, FER, EG[1])]
     for j in 2:length(EG)
         append!(rhandlers, [get_reconstruction_coefficients(ON_CELLS, FE, FER, EG[j])])
-        append!(chandlers, [get_coefficients(ON_CELLS, FER, EG[j])])
-        append!(shandlers, [get_basissubset(ON_CELLS, FER, EG[j])])
+        append!(chandlers, [get_coefficients(ON_CELLS, FER, EG[j], xgrid)])
+        append!(shandlers, [get_basissubset(ON_CELLS, FER, EG[j],)])
     end
 
     ndofs_FE = zeros(Int, length(EG))

@@ -290,11 +290,11 @@ end
 
 
 ## if order > 2 on Triangl2D we need to change the ordering of the face dofs on faces that have a negative orientation sign
-function get_basissubset(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, H1Pk{ncomponents, edim, order}, APT}, EG::Type{<:Triangle2D}) where {ncomponents, edim, order, Tv, Ti, APT}
+function get_basissubset(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, H1Pk{ncomponents, edim, order}, APT}, EG::Type{<:Triangle2D}, xgrid) where {ncomponents, edim, order, Tv, Ti, APT}
     if order < 3
         return NothingFunction # no reordering needed
     end
-    xCellFaceSigns = FE.dofgrid[CellFaceSigns]
+    xCellFaceSigns = xgrid[CellFaceSigns]
     nfaces::Int = num_faces(EG)
     ndofs_for_f::Int = order - 1
     ndofs_for_c = get_ndofs(ON_CELLS, H1Pk{1, edim, order}, EG)

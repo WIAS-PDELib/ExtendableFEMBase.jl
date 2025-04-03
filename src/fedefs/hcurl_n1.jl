@@ -104,8 +104,8 @@ function get_basis(::Type{ON_CELLS}, ::Type{HCURLN1{2}}, ::Type{<:Triangle2D})
     end
 end
 
-function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, <:HCURLN1, APT}, EG::Type{<:AbstractElementGeometry2D}) where {Tv, Ti, APT}
-    xCellFaceSigns = FE.dofgrid[CellFaceSigns]
+function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, <:HCURLN1, APT}, EG::Type{<:AbstractElementGeometry2D}, xgrid) where {Tv, Ti, APT}
+    xCellFaceSigns = xgrid[CellFaceSigns]
     nfaces = num_faces(EG)
     return function closure(coefficients, cell)
         # multiplication with normal vector signs (only RT0)

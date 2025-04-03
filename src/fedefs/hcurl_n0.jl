@@ -144,8 +144,8 @@ function get_basis(::Type{ON_CELLS}, ::Type{HCURLN0{3}}, ::Type{<:Tetrahedron3D}
     end
 end
 
-function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, <:HCURLN0, APT}, EG::Type{<:AbstractElementGeometry2D}) where {Tv, Ti, APT}
-    xCellFaceSigns = FE.dofgrid[CellFaceSigns]
+function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, <:HCURLN0, APT}, EG::Type{<:AbstractElementGeometry2D}, xgrid) where {Tv, Ti, APT}
+    xCellFaceSigns = xgrid[CellFaceSigns]
     nfaces = num_faces(EG)
     return function closure(coefficients, cell)
         # multiplication with normal vector signs
@@ -156,8 +156,8 @@ function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, <:HCURLN0, APT},
     end
 end
 
-function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, <:HCURLN0, APT}, EG::Type{<:AbstractElementGeometry3D}) where {Tv, Ti, APT}
-    xCellEdgeSigns = FE.dofgrid[CellEdgeSigns]
+function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, <:HCURLN0, APT}, EG::Type{<:AbstractElementGeometry3D}, xgrid) where {Tv, Ti, APT}
+    xCellEdgeSigns = xgrid[CellEdgeSigns]
     nedges = num_edges(EG)
     return function closure(coefficients, cell)
         # multiplication with normal vector signs

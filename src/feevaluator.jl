@@ -43,14 +43,14 @@ Note that matrix-valued operators evaluations, e.g. for Gradient, are given as a
 function FEEvaluator(
         FE::FESpace{TvG, TiG, FEType, FEAPT},
         operator::Type{<:StandardFunctionOperator},
-        qrule::QuadratureRule{TvR, EG};
+        qrule::QuadratureRule{TvR, EG},
+        xgrid = FE.dofgrid;     # FE.xgrid also reasonable in certain situations
         L2G = nothing,
         T = Float64,
         AT = ON_CELLS
     ) where {TvG, TiG, TvR, FEType <: AbstractFiniteElement, EG <: AbstractElementGeometry, FEAPT <: AssemblyType}
 
     xref = qrule.xref
-    xgrid = FE.xgrid
     if L2G === nothing
         L2G = L2GTransformer(EG, xgrid, AT)
     end
@@ -76,7 +76,7 @@ function FEEvaluator(
         end
     end
     edim = max(1, dim_element(EG))
-    xdim = size(FE.xgrid[Coordinates], 1)
+    xdim = size(xgrid[Coordinates], 1)
     resultdim = Int(Length4Operator(operator, edim, ncomponents))
 
     # evaluate basis on reference domain
@@ -90,11 +90,11 @@ function FEEvaluator(
     coeff_handler = NothingFunction
     if FEType <: Union{AbstractH1FiniteElementWithCoefficients, AbstractHdivFiniteElement, AbstractHcurlFiniteElement}
         coefficients = ones(T, ncomponents, ndofs4item)
-        coeff_handler = get_coefficients(FEAT, FE, EG)
+        coeff_handler = get_coefficients(FEAT, FE, EG, xgrid)
     end
 
     # set subset handler (only relevant if ndofs4item_all > ndofs4item)
-    subset_handler = get_basissubset(FEAT, FE, EG)
+    subset_handler = get_basissubset(FEAT, FE, EG, xgrid)
 
     # prepare offsets and additional coefficients
     offsets = 0:edim:((ncomponents - 1) * edim) # edim steps
@@ -104,8 +104,8 @@ function FEEvaluator(
         @warn "ndofs = 0 for FEType = $FEType on EG = $EG"
         offsets2 = []
     end
-    compressiontargets = _prepare_compressiontargets(operator, FE.xgrid, AT, edim)
-    coefficients_op = _prepare_additional_coefficients(operator, FE.xgrid, AT, edim)
+    compressiontargets = _prepare_compressiontargets(operator, xgrid, AT, edim)
+    coefficients_op = _prepare_additional_coefficients(operator, xgrid, AT, edim)
     current_eval = zeros(T, resultdim, ndofs4item, length(xref))
 
     derivorder = NeededDerivative4Operator(operator)
@@ -178,7 +178,7 @@ _prepare_additional_coefficients(::Type{<:AbstractFunctionOperator}, xgrid, AT, 
 _prepare_additional_coefficients(::Type{<:NormalFlux}, xgrid, AT, edim) = AT == ON_BFACES ? view(xgrid[FaceNormals], :, xgrid[BFaceFaces]) : xgrid[FaceNormals]
 _prepare_additional_coefficients(::Type{<:TangentialGradient}, xgrid, AT, edim) = xgrid[FaceNormals]
 function _prepare_additional_coefficients(::Type{<:TangentFlux}, xgrid, AT, edim)
-    if edim == 2
+    if edim == 1
         return _prepare_additional_coefficients(NormalFlux, xgrid, AT, edim)
     else
         return AT == ON_BEDGES ? view(xgrid[EdgeTangents], :, xgrid[BEdgeEdges]) : xgrid[EdgeTangents]

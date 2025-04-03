@@ -253,9 +253,9 @@ function get_basis(AT::Type{ON_CELLS}, ::Type{H1P1TEB{3}}, EG::Type{<:Tetrahedro
     end
 end
 
-function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, H1P1TEB{3}, APT}, ::Type{<:Tetrahedron3D}) where {Tv, Ti, APT}
-    xEdgeTangents::Array{Tv, 2} = FE.dofgrid[EdgeTangents]
-    xCellEdges = FE.dofgrid[CellEdges]
+function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, H1P1TEB{3}, APT}, ::Type{<:Tetrahedron3D}, xgrid) where {Tv, Ti, APT}
+    xEdgeTangents::Array{Tv, 2} = xgrid[EdgeTangents]
+    xCellEdges = xgrid[CellEdges]
     return function closure(coefficients::Array{<:Real, 2}, cell)
         fill!(coefficients, 1.0)
         for e in 1:6, k in 1:2
@@ -265,9 +265,9 @@ function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, H1P1TEB{3}, APT}
     end
 end
 
-function get_coefficients(::Type{<:ON_FACES}, FE::FESpace{Tv, Ti, H1P1TEB{3}, APT}, ::Type{<:Triangle2D}) where {Tv, Ti, APT}
-    xEdgeTangents::Array{Tv, 2} = FE.dofgrid[EdgeTangents]
-    xFaceEdges = FE.dofgrid[FaceEdges]
+function get_coefficients(::Type{<:ON_FACES}, FE::FESpace{Tv, Ti, H1P1TEB{3}, APT}, ::Type{<:Triangle2D}, xgrid) where {Tv, Ti, APT}
+    xEdgeTangents::Array{Tv, 2} = xgrid[EdgeTangents]
+    xFaceEdges = xgrid[FaceEdges]
     return function closure(coefficients::Array{<:Real, 2}, face)
         fill!(coefficients, 1.0)
         for e in 1:3, k in 1:2
