@@ -178,7 +178,7 @@ _prepare_additional_coefficients(::Type{<:AbstractFunctionOperator}, xgrid, AT, 
 _prepare_additional_coefficients(::Type{<:NormalFlux}, xgrid, AT, edim) = AT == ON_BFACES ? view(xgrid[FaceNormals], :, xgrid[BFaceFaces]) : xgrid[FaceNormals]
 _prepare_additional_coefficients(::Type{<:TangentialGradient}, xgrid, AT, edim) = xgrid[FaceNormals]
 function _prepare_additional_coefficients(::Type{<:TangentFlux}, xgrid, AT, edim)
-    if edim == 2
+    if edim == 1
         return _prepare_additional_coefficients(NormalFlux, xgrid, AT, edim)
     else
         return AT == ON_BEDGES ? view(xgrid[EdgeTangents], :, xgrid[BEdgeEdges]) : xgrid[EdgeTangents]
