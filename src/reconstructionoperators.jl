@@ -31,7 +31,8 @@ end
 function FEEvaluator(
         FE::FESpace{TvG, TiG, FEType, FEAPT},
         operator::Type{<:Reconstruct{FETypeReconst, stdop}},
-        qrule::QuadratureRule{TvR, EG};
+        qrule::QuadratureRule{TvR, EG},
+        xgrid = FE.xgrid;
         L2G = nothing,
         T = Float64,
         AT = ON_CELLS
@@ -40,7 +41,6 @@ function FEEvaluator(
     @debug "Creating FEBasisEvaluator for reconstruction of $stdop operator of $FEType into $FETypeReconst on $EG"
 
     ## generate FESpace for reconstruction
-    xgrid = FE.xgrid
     FE2 = FESpace{FETypeReconst}(xgrid)
 
     ## collect dimension information
@@ -62,7 +62,7 @@ function FEEvaluator(
     if L2G === nothing
         L2G = L2GTransformer(EG, xgrid, AT)
     end
-    FEB = FEEvaluator(FE2, stdop, qrule; L2G = L2G, T = T, AT = AT)
+    FEB = FEEvaluator(FE2, stdop, qrule, xgrid; L2G = L2G, T = T, AT = AT)
 
     ## reconstruction coefficient handler
     reconst_handler = ReconstructionHandler(FE, FE2, AT, EG)

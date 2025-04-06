@@ -148,9 +148,9 @@ function get_basis(AT::Type{ON_CELLS}, FEType::Type{H1BR{2}}, EG::Type{<:Quadril
     end
 end
 
-function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, H1BR{2}, APT}, ::Type{<:Triangle2D}) where {Tv, Ti, APT}
-    xFaceNormals::Array{Tv, 2} = FE.dofgrid[FaceNormals]
-    xCellFaces = FE.dofgrid[CellFaces]
+function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, H1BR{2}, APT}, ::Type{<:Triangle2D}, xgrid) where {Tv, Ti, APT}
+    xFaceNormals::Array{Tv, 2} = xgrid[FaceNormals]
+    xCellFaces = xgrid[CellFaces]
     return function closure(coefficients::Array{<:Real, 2}, cell)
         fill!(coefficients, 1.0)
         coefficients[1, 7] = xFaceNormals[1, xCellFaces[1, cell]]
@@ -162,9 +162,9 @@ function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, H1BR{2}, APT}, :
     end
 end
 
-function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, H1BR{2}, APT}, ::Type{<:Quadrilateral2D}) where {Tv, Ti, APT}
-    xFaceNormals::Array{Tv, 2} = FE.dofgrid[FaceNormals]
-    xCellFaces = FE.dofgrid[CellFaces]
+function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, H1BR{2}, APT}, ::Type{<:Quadrilateral2D}, xgrid) where {Tv, Ti, APT}
+    xFaceNormals::Array{Tv, 2} = xgrid[FaceNormals]
+    xCellFaces = xgrid[CellFaces]
     return function closure(coefficients::Array{<:Real, 2}, cell)
         fill!(coefficients, 1.0)
         coefficients[1, 9] = xFaceNormals[1, xCellFaces[1, cell]]
@@ -178,8 +178,8 @@ function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, H1BR{2}, APT}, :
     end
 end
 
-function get_coefficients(::Type{<:ON_FACES}, FE::FESpace{Tv, Ti, H1BR{2}, APT}, ::Type{<:Edge1D}) where {Tv, Ti, APT}
-    xFaceNormals::Array{Tv, 2} = FE.dofgrid[FaceNormals]
+function get_coefficients(::Type{<:ON_FACES}, FE::FESpace{Tv, Ti, H1BR{2}, APT}, ::Type{<:Edge1D}, xgrid) where {Tv, Ti, APT}
+    xFaceNormals::Array{Tv, 2} = xgrid[FaceNormals]
     return function closure(coefficients::Array{<:Real, 2}, face)
         # multiplication of face bubble with normal vector of face
         fill!(coefficients, 1.0)
@@ -253,9 +253,9 @@ function get_basis(AT::Type{ON_CELLS}, ::Type{H1BR{3}}, EG::Type{<:Hexahedron3D}
 end
 
 
-function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, H1BR{3}, APT}, ::Type{<:Tetrahedron3D}) where {Tv, Ti, APT}
-    xFaceNormals::Array{Tv, 2} = FE.dofgrid[FaceNormals]
-    xCellFaces::Adjacency{Ti} = FE.dofgrid[CellFaces]
+function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, H1BR{3}, APT}, ::Type{<:Tetrahedron3D}, xgrid) where {Tv, Ti, APT}
+    xFaceNormals::Array{Tv, 2} = xgrid[FaceNormals]
+    xCellFaces::Adjacency{Ti} = xgrid[CellFaces]
     return function closure(coefficients::Array{<:Real, 2}, cell)
         # multiplication with normal vectors
         fill!(coefficients, 1.0)
@@ -276,8 +276,8 @@ function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, H1BR{3}, APT}, :
 end
 
 
-function get_coefficients(::Type{<:ON_FACES}, FE::FESpace{Tv, Ti, H1BR{3}, APT}, ::Type{<:Triangle2D}) where {Tv, Ti, APT}
-    xFaceNormals::Array{Tv, 2} = FE.dofgrid[FaceNormals]
+function get_coefficients(::Type{<:ON_FACES}, FE::FESpace{Tv, Ti, H1BR{3}, APT}, ::Type{<:Triangle2D}, xgrid) where {Tv, Ti, APT}
+    xFaceNormals::Array{Tv, 2} = xgrid[FaceNormals]
     return function closure(coefficients::Array{<:Real, 2}, face)
         # multiplication of face bubble with normal vector of face
         fill!(coefficients, 1.0)
@@ -287,9 +287,9 @@ function get_coefficients(::Type{<:ON_FACES}, FE::FESpace{Tv, Ti, H1BR{3}, APT},
     end
 end
 
-function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, H1BR{3}, APT}, ::Type{<:Hexahedron3D}) where {Tv, Ti, APT}
-    xFaceNormals::Array{Tv, 2} = FE.dofgrid[FaceNormals]
-    xCellFaces::Adjacency{Ti} = FE.dofgrid[CellFaces]
+function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, H1BR{3}, APT}, ::Type{<:Hexahedron3D}, xgrid) where {Tv, Ti, APT}
+    xFaceNormals::Array{Tv, 2} = xgrid[FaceNormals]
+    xCellFaces::Adjacency{Ti} = xgrid[CellFaces]
     return function closure(coefficients::Array{<:Real, 2}, cell)
         # multiplication with normal vectors
         fill!(coefficients, 1.0)
@@ -316,8 +316,8 @@ function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, H1BR{3}, APT}, :
 end
 
 
-function get_coefficients(::Type{<:ON_FACES}, FE::FESpace{Tv, Ti, H1BR{3}, APT}, ::Type{<:Quadrilateral2D}) where {Tv, Ti, APT}
-    xFaceNormals::Array{Tv, 2} = FE.dofgrid[FaceNormals]
+function get_coefficients(::Type{<:ON_FACES}, FE::FESpace{Tv, Ti, H1BR{3}, APT}, ::Type{<:Quadrilateral2D}, xgrid) where {Tv, Ti, APT}
+    xFaceNormals::Array{Tv, 2} = xgrid[FaceNormals]
     return function closure(coefficients::Array{<:Real, 2}, face)
         # multiplication of face bubble with normal vector of face
         fill!(coefficients, 1.0)
