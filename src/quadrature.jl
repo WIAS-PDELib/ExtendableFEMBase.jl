@@ -649,10 +649,10 @@ Integration of an integrand of the signature
 
 	integrand!(result, qpinfo)
 
-over the entities AT of the grid. The result on every item is written into integral4items.
+over the entities AT of the grid. The result on every item is written into integral4items
+(at least of size nitems x length of result).
 As usual, qpinfo allows to access information
 at the current quadrature point.
-The length of the result needs to be specified via resultdim.
 
 Keyword arguments:
 - quadorder = specifies the quadrature order (default = 0)
