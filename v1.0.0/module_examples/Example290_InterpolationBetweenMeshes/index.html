@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Example290_InterpolationBetweenMeshes · ExtendableFEMBase.jl</title><meta name="title" content="Example290_InterpolationBetweenMeshes · ExtendableFEMBase.jl"/><meta property="og:title" content="Example290_InterpolationBetweenMeshes · ExtendableFEMBase.jl"/><meta property="twitter:title" content="Example290_InterpolationBetweenMeshes · ExtendableFEMBase.jl"/><meta name="description" content="Documentation for ExtendableFEMBase.jl."/><meta property="og:description" content="Documentation for ExtendableFEMBase.jl."/><meta property="twitter:description" content="Documentation for ExtendableFEMBase.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ExtendableFEMBase.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../package_index/">Index</a></li><li><a class="tocitem" href="../../fems/">List of Finite Elements</a></li><li><span class="tocitem">Base Structures</span><ul><li><a class="tocitem" href="../../fespace/">FESpace</a></li><li><a class="tocitem" href="../../fevector/">FEVector</a></li><li><a class="tocitem" href="../../fematrix/">FEMatrix</a></li><li><a class="tocitem" href="../../functionoperators/">Function Operators</a></li><li><a class="tocitem" href="../../feevaluator/">FEEvaluator</a></li><li><a class="tocitem" href="../../interpolations/">Finite Element Interpolations</a></li><li><a class="tocitem" href="../../quadrature/">Quadrature</a></li></ul></li><li><span class="tocitem">Advanced Stuff</span><ul><li><a class="tocitem" href="../../pointevaluators/">PointEvaluator</a></li><li><a class="tocitem" href="../../segmentintegrators/">SegmentIntegrator</a></li><li><a class="tocitem" href="../../plots/">Plots</a></li></ul></li><li><span class="tocitem">Tutorial Notebooks</span><ul><li><a class="tocitem" href="../../plutostatichtml_examples/LowLevelPoisson/">Low level Poisson</a></li><li><a class="tocitem" href="../../plutostatichtml_examples/LowLevelNavierStokes/">Low level Navier-Stokes</a></li></ul></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../../examples_intro/">Introduction</a></li><li><a class="tocitem" href="../Example200_LowLevelPoisson/">Example200_LowLevelPoisson</a></li><li><a class="tocitem" href="../Example205_LowLevelSpaceTimePoisson/">Example205_LowLevelSpaceTimePoisson</a></li><li><a class="tocitem" href="../Example210_LowLevelNavierStokes/">Example210_LowLevelNavierStokes</a></li><li><a class="tocitem" href="../Example280_BasisPlotter/">Example280_BasisPlotter</a></li><li><a class="tocitem" href="../Example281_DiscontinuousPlot/">Example281_DiscontinuousPlot</a></li><li class="is-active"><a class="tocitem" href>Example290_InterpolationBetweenMeshes</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Example290_InterpolationBetweenMeshes</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Example290_InterpolationBetweenMeshes</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/WIAS-PDELib/ExtendableFEMBase.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/WIAS-PDELib/ExtendableFEMBase.jl/blob/master/docs/src/module_examples/Example290_InterpolationBetweenMeshes.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="290-:-Interpolation-Between-Meshes"><a class="docs-heading-anchor" href="#290-:-Interpolation-Between-Meshes">290 : Interpolation Between Meshes</a><a id="290-:-Interpolation-Between-Meshes-1"></a><a class="docs-heading-anchor-permalink" href="#290-:-Interpolation-Between-Meshes" title="Permalink"></a></h1><p>(<a href="../Example290_InterpolationBetweenMeshes.jl">source code</a>)</p><p>This example demonstrates the interpolation between meshes feature. Here, we interpolate a function with the P2 element of a coarse triangulation and then interpolate this P2 function on two uniform refinements into some P1 function. Then, both finite element functions are plotted.</p><p>The computed solution for the default parameters looks like this:</p><p><img src="../example290.png" alt/></p><pre><code class="language-julia hljs">module Example290_InterpolationBetweenMeshes
+
+using ExtendableFEMBase
+using ExtendableGrids
+using GridVisualize
+
+# function to interpolate
+function u!(result, qpinfo)
+	x = qpinfo.x
+	result[1] = sin(4 * pi * x[1]) * sin(4 * pi * x[2])
+	result[2] = cos(4 * pi * x[1]) * cos(4 * pi * x[2])
+end
+
+# everything is wrapped in a main function
+function main(; ν = 1e-3, nrefs = 4, Plotter = nothing)
+
+	# generate two grids
+	xgrid1 = uniform_refine(grid_unitsquare(Triangle2D), nrefs)
+	xgrid2 = uniform_refine(xgrid1, 3; store_parents = true)
+
+	@show xgrid1 xgrid2
+
+	# set finite element types for the two grids
+	FEType1 = H1Pk{2, 2, 2}
+	FEType2 = H1Pk{2, 2, 1}
+
+	# generate coressponding finite element spaces and FEVectors
+	FES1 = FESpace{FEType1}(xgrid1)
+	FES2 = FESpace{FEType2}(xgrid2)
+	FEFunction1 = FEVector(FES1)
+	FEFunction2 = FEVector(FES2)
+
+	# interpolate function onto first grid
+	@time interpolate!(FEFunction1[1], u!)
+	@time interpolate!(FEFunction2[1], u!)
+
+	# interpolate onto other grid
+	@time lazy_interpolate!(FEFunction2[1], FEFunction1)
+	@time lazy_interpolate!(FEFunction2[1], FEFunction1; use_cellparents = true)
+
+	# plot
+	p = GridVisualizer(; Plotter = Plotter, layout = (1, 2), clear = true, resolution = (800, 400))
+	scalarplot!(p[1, 1], xgrid1, view(nodevalues(FEFunction1[1]), 1, :), levels = 11, title = &quot;u_h ($FEType1, coarse grid)&quot;)
+	scalarplot!(p[1, 2], xgrid2, view(nodevalues(FEFunction2[1]), 1, :), levels = 11, title = &quot;u_h ($FEType2, fine grid)&quot;)
+
+	return p
+end
+
+function generateplots(dir = pwd(); Plotter = nothing, kwargs...)
+	plt = main(; Plotter = Plotter, kwargs...)
+	scene = GridVisualize.reveal(plt)
+	GridVisualize.save(joinpath(dir, &quot;example290.png&quot;), scene; Plotter = Plotter)
+end
+
+end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example281_DiscontinuousPlot/">« Example281_DiscontinuousPlot</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.10.1 on <span class="colophon-date" title="Monday 7 April 2025 12:23">Monday 7 April 2025</span>. Using Julia version 1.11.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
