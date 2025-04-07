@@ -645,7 +645,22 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Integration that writes result on every item into integral4items.
+Integration of an integrand of the signature
+
+	integrand!(result, qpinfo)
+
+over the entities AT of the grid. The result on every item is written into integral4items
+(at least of size nitems x length of result).
+As usual, qpinfo allows to access information
+at the current quadrature point.
+
+Keyword arguments:
+- quadorder = specifies the quadrature order (default = 0)
+- regions = restricts integration to these regions (default = [] meaning all regions)
+- items = restricts integration to these item numbers (default = [] meaning all items)
+- time = sets the time to be passed to qpinfo (default = 0)
+- params = sets the params array to be passed to qpinfo (default = [])
+- offset = offset for writing into result array integral4items (default = [0]),
 """
 function integrate!(
         integral4items::AbstractArray{T},
@@ -655,6 +670,7 @@ function integrate!(
         offset = [0],
         bonus_quadorder = 0,
         quadorder = 0,
+        regions = [],
         time = 0,
         items = [],
         force_quadrature_rule = nothing,
@@ -702,6 +718,14 @@ function integrate!(
         local2global[j] = L2GTransformer(EG[j], grid, AT)
     end
 
+    ## prepare regions
+    visit_region = zeros(Bool, maximum(xItemRegions))
+    if length(regions) > 0
+        visit_region[regions] .= true
+    else
+        visit_region .= true
+    end
+
     # loop over items
     if items == []
         items = 1:nitems
@@ -734,6 +758,16 @@ function integrate!(
 
         fill!(integral4items, 0)
         for item::Int in items
+            if xItemRegions[item] > 0
+                if !(visit_region[xItemRegions[item]]) || AT == ON_IFACES
+                    continue
+                end
+            else
+                if length(regions) > 0
+                    continue
+                end
+            end
+
             # find index for CellType
             if ngeoms > 1
                 itemET = xItemGeometries[item]
@@ -764,6 +798,16 @@ function integrate!(
 
         fill!(integral4items, 0)
         for item::Int in items
+            if xItemRegions[item] > 0
+                if !(visit_region[xItemRegions[item]]) || AT == ON_IFACES
+                    continue
+                end
+            else
+                if length(regions) > 0
+                    continue
+                end
+            end
+
             # find index for CellType
             if ngeoms > 1
                 itemET = xItemGeometries[item]
@@ -779,7 +823,20 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Integration that returns total integral.
+Integration that returns total integral of an integrand of the signature
+
+	integrand!(result, qpinfo)
+
+over the entities AT of the grid. Here, qpinfo allows to access information
+at the current quadrature point.
+The length of the result needs to be specified via resultdim.
+
+Keyword arguments:
+- quadorder = specifies the quadrature order (default = 0)
+- regions = restricts integration to these regions (default = [] meaning all regions)
+- items = restricts integration to these item numbers (default = [] meaning all items)
+- time = sets the time to be passed to qpinfo (default = 0)
+- params = sets the params array to be passed to qpinfo (default = [])
 """
 function integrate(
         grid::ExtendableGrid,

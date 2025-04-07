@@ -66,7 +66,7 @@ function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{T
     xCellDofs::DofMapTypes{Ti} = FE[CellDofs]
     qf = QuadratureRule{T, EG}(max(4, 2 + bonus_quadorder))
     FEB = FEEvaluator(FE, Identity, qf; T = T)
-    QP = QPInfos(FE.dofgrid)
+    QP = QPInfos(FE.dofgrid; kwargs...)
 
     # evaluation of gradient of P1 functions
     FE3 = H1P1{1}
@@ -206,8 +206,8 @@ function get_basis(::Type{ON_CELLS}, ::Type{HDIVBDM2{2}}, ::Type{<:Triangle2D})
 end
 
 
-function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, <:HDIVBDM2, APT}, EG::Type{<:AbstractElementGeometry2D}) where {Tv, Ti, APT}
-    xCellFaceSigns::Union{VariableTargetAdjacency{Int32}, Array{Int32, 2}} = FE.dofgrid[CellFaceSigns]
+function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, <:HDIVBDM2, APT}, EG::Type{<:AbstractElementGeometry2D}, xgrid) where {Tv, Ti, APT}
+    xCellFaceSigns::Union{VariableTargetAdjacency{Int32}, Array{Int32, 2}} = xgrid[CellFaceSigns]
     nfaces::Int = num_faces(EG)
     dim::Int = dim_element(EG)
     return function closure(coefficients::Array{<:Real, 2}, cell::Int)

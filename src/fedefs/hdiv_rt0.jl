@@ -117,8 +117,8 @@ function get_basis(::Type{ON_CELLS}, ::Type{HDIVRT0{3}}, ::Type{<:Hexahedron3D})
     end
 end
 
-function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, <:HDIVRT0, APT}, EG::Type{<:AbstractElementGeometry}) where {Tv, Ti, APT}
-    xCellFaceSigns = FE.dofgrid[CellFaceSigns]
+function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, <:HDIVRT0, APT}, EG::Type{<:AbstractElementGeometry}, xgrid) where {Tv, Ti, APT}
+    xCellFaceSigns = xgrid[CellFaceSigns]
     nfaces = num_faces(EG)
     return function closure(coefficients, cell)
         # multiplication with normal vector signs

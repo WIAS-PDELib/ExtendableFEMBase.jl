@@ -201,8 +201,8 @@ function get_basis(::Type{<:AssemblyType}, ::Type{H1P3{ncomponents, edim}}, ::Ty
 end
 
 # we need to change the ordering of the face dofs on faces that have a negative orientation sign
-function get_basissubset(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, H1P3{ncomponents, edim}, APT}, EG::Type{<:Triangle2D}) where {ncomponents, edim, Tv, Ti, APT}
-    xCellFaceSigns = FE.dofgrid[CellFaceSigns]
+function get_basissubset(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, H1P3{ncomponents, edim}, APT}, EG::Type{<:Triangle2D}, xgrid) where {ncomponents, edim, Tv, Ti, APT}
+    xCellFaceSigns = xgrid[CellFaceSigns]
     nfaces::Int = num_faces(EG)
     return function closure(subset_ids::Array{Int, 1}, cell)
         for j in 1:nfaces
@@ -223,8 +223,8 @@ function get_basissubset(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, H1P3{ncomponents,
 end
 
 # we need to change the ordering of the face dofs on faces that have a negative orientation sign
-function get_basissubset(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, H1P3{ncomponents, edim}, APT}, EG::Type{<:Tetrahedron3D}) where {ncomponents, edim, Tv, Ti, APT}
-    xCellEdgeSigns = FE.dofgrid[CellEdgeSigns]
+function get_basissubset(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, H1P3{ncomponents, edim}, APT}, EG::Type{<:Tetrahedron3D}, xgrid) where {ncomponents, edim, Tv, Ti, APT}
+    xCellEdgeSigns = xgrid[CellEdgeSigns]
     nedges::Int = num_edges(EG)
     return function closure(subset_ids::Array{Int, 1}, cell)
         for j in 1:nedges
