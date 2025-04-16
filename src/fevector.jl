@@ -58,8 +58,6 @@ function Base.copy(FEV::FEVector{T, Tv, Ti}) where {T, Tv, Ti}
 end
 
 # overload stuff for AbstractArray{T,1} behaviour
-Base.IndexStyle(::Type{<:FEVector}) = LinearIndices
-Base.IndexStyle(::Type{<:FEVectorBlock}) = LinearIndices
 Base.getindex(FEF::FEVector{T, Tv, Ti}, tag) where {T, Tv, Ti} = FEF.FEVectorBlocks[findfirst(==(tag), FEF.tags)]
 Base.getindex(FEF::FEVector, i::Int) = FEF.FEVectorBlocks[i]
 Base.getindex(FEB::FEVectorBlock, i::Int) = FEB.entries[FEB.offset + i]
