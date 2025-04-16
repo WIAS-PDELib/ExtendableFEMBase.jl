@@ -26,21 +26,14 @@ function Base.copy(FEMB::FEMatrixBlock{TvM, TiM, TvG, TiG, FETypeX, FETypeY, APT
     return FEMatrixBlock{TvM, TiM, TvG, TiG, FETypeX, FETypeY, APTX, APTY}(deepcopy(FEMB.name), copy(FEMB.FES), copy(FEMB.FESY), FEMB.offset, FEMB.offsetY, FEMB.last_index, FEMB.last_indexY, entries)
 end
 
-function Base.show(io::IO, FEB::FEMatrixBlock; tol = 1.0e-14)
-    @printf(io, "\n")
-    for j in 1:(FEB.offset + 1):FEB.last_index
-        for k in 1:(FEB.offsetY + 1):FEB.last_indexY
-            if FEB.entries[j, k] > tol
-                @printf(io, " +%.1e", FEB.entries[j, k])
-            elseif FEB.entries[j, k] < -tol
-                @printf(io, " %.1e", FEB.entries[j, k])
-            else
-                @printf(io, " ********")
-            end
-        end
-        @printf(io, "\n")
-    end
-    return
+"""
+$(TYPEDSIGNATURES)
+
+Custom `show` function for `FEMatrixBlock` that prints its coordinates and the name.
+"""
+function Base.show(io::IO, FEB::FEMatrixBlock)
+    @printf(io, "[%d:%d,%d:%d]: %s", FEB.offset+1, FEB.last_index, FEB.offsetY+1, FEB.last_indexY, FEB.name)
+    return nothing
 end
 
 
@@ -100,6 +93,9 @@ Base.getindex(FEF::FEMatrix{TvM, TiM, TvG, TiG, nbrow, nbcol, nbtotal}, i::Int, 
 Base.getindex(FEB::FEMatrixBlock, i::Int, j::Int) = FEB.entries[FEB.offset + i, FEB.offsetY + j]
 Base.getindex(FEB::FEMatrixBlock, i::Any, j::Any) = FEB.entries[FEB.offset .+ i, FEB.offsetY .+ j]
 Base.setindex!(FEB::FEMatrixBlock, v, i::Int, j::Int) = setindex!(FEB.entries, v, FEB.offset + i, FEB.offsetY + j)
+Base.first(FEB::FEMatrixBlock) = (FEB.offset+1, FEB.offsetY+1)
+Base.last(FEB::FEMatrixBlock) = (FEB.last_index, FEB.last_indexY)
+
 
 
 """
@@ -147,14 +143,15 @@ Custom `show` function for `FEMatrix` that prints some information on its blocks
 function Base.show(io::IO, FEM::FEMatrix{TvM, TiM, TvG, TiG, nbrow, nbcol, nbtotal}) where {TvM, TiM, TvG, TiG, nbrow, nbcol, nbtotal}
     println(io, "\nFEMatrix information")
     println(io, "====================")
-    println(io, "  block |  ndofsX |  ndofsY | name (FETypeX, FETypeY) ")
+    println(io, "  block   |      starts      |       ends       |       size       |    name ")
     for j in 1:length(FEM)
         n = mod(j - 1, nbrow) + 1
         m = Int(ceil(j / nbrow))
-        @printf(io, "  [%d,%d] |", m, n)
-        @printf(io, "  %6d |", FEM[j].FES.ndofs)
-        @printf(io, "  %6d |", FEM[j].FESY.ndofs)
-        @printf(io, " %s (%s, %s)\n", FEM[j].name, FEM[j].FES.name, FEM[j].FESY.name)
+        @printf(io, " [%2d,%2d]  |", m, n)
+        @printf(io, "  (%6d,%6d) |", FEM[j].offset+1, FEM[j].offsetY+1)
+        @printf(io, "  (%6d,%6d) |", FEM[j].last_index, FEM[j].last_indexY)
+        @printf(io, "  (%6d,%6d) |", FEM[j].FES.ndofs, FEM[j].FESY.ndofs)
+        @printf(io, " %s \n", FEM[j].name)
     end
     return println(io, "\n    nnzvals = $(length(FEM.entries.cscmatrix.nzval))")
 end
@@ -166,19 +163,19 @@ FEMatrix{TvM,TiM}(name::String, FES::FESpace{TvG,TiG,FETypeX,APTX}) where {TvG,T
 
 Creates FEMatrix with one square block (FES,FES).
 """
-function FEMatrix(FES::FESpace; name = "auto")
+function FEMatrix(FES::FESpace; name = :automatic)
     return FEMatrix{Float64, Int64}(FES; name = name)
 end
-function FEMatrix{TvM}(FES::FESpace; name = "auto") where {TvM}
+function FEMatrix{TvM}(FES::FESpace; name = :automatic) where {TvM}
     return FEMatrix{TvM, Int64}(FES; name = name)
 end
-function FEMatrix{TvM, TiM}(FES::FESpace{TvG, TiG, FETypeX, APTX}; name = "auto") where {TvM, TiM, TvG, TiG, FETypeX, APTX}
+function FEMatrix{TvM, TiM}(FES::FESpace{TvG, TiG, FETypeX, APTX}; name = :automatic) where {TvM, TiM, TvG, TiG, FETypeX, APTX}
     return FEMatrix{TvM, TiM}([FES], [FES]; name = name)
 end
 
 """
 ````
-FEMatrix{TvM,TiM}(FESX, FESY; name = "auto")
+FEMatrix{TvM,TiM}(FESX, FESY; name = :automatic)
 ````
 
 Creates FEMatrix with one rectangular block (FESX,FESY) if FESX and FESY are single FESpaces, or
@@ -209,12 +206,12 @@ end
 
 """
 ````
-FEMatrix{TvM,TiM}(FESX, FESY; name = "auto")
+FEMatrix{TvM,TiM}(FESX, FESY; name = :automatic)
 ````
 
 Creates an FEMatrix with blocks coressponding to the ndofs of FESX (rows) and FESY (columns).
 """
-function FEMatrix{TvM, TiM}(FESX::Array{<:FESpace{TvG, TiG}, 1}, FESY::Array{<:FESpace{TvG, TiG}, 1}; entries = nothing, name = nothing, tags = nothing, tagsX = tags, tagsY = tagsX, npartitions = 1, kwargs...) where {TvM, TiM, TvG, TiG}
+function FEMatrix{TvM, TiM}(FESX::Array{<:FESpace{TvG, TiG}, 1}, FESY::Array{<:FESpace{TvG, TiG}, 1}; entries = nothing, name = :automatic, tags = nothing, tagsX = tags, tagsY = tagsX, npartitions = 1, kwargs...) where {TvM, TiM, TvG, TiG}
     ndofsX, ndofsY = 0, 0
     for j in 1:length(FESX)
         ndofsX += FESX[j].ndofs
@@ -232,7 +229,7 @@ function FEMatrix{TvM, TiM}(FESX::Array{<:FESpace{TvG, TiG}, 1}, FESY::Array{<:F
         @assert size(entries) == (ndofsX, ndofsY) "size of given entries not matching number of dofs in given FE space(s)"
     end
 
-    if name === nothing
+    if name === :automatic || name === nothing
         name = ""
     end
 
@@ -250,9 +247,9 @@ function FEMatrix{TvM, TiM}(FESX::Array{<:FESpace{TvG, TiG}, 1}, FESY::Array{<:F
         offsetY = 0
         for k in 1:length(FESY)
             if (tagsX !== nothing) && (tagsY !== nothing)
-                blockname = name * " [$(tagsX[j]),$(tagsY[k])"
+                blockname = name * " $(tagsX[j])[$(FESX[j].name)] x $(tagsY[k])[$(FESY[k].name)]"
             else
-                blockname = name * " [$j,$k]"
+                blockname = name * " $(FESX[j].name) x $(FESY[k].name)"
             end
             Blocks[(j - 1) * length(FESY) + k] =
                 FEMatrixBlock{TvM, TiM, TvG, TiG, eltype(FESX[j]), eltype(FESY[k]), assemblytype(FESX[j]), assemblytype(FESY[k])}(blockname, FESX[j], FESY[k], offset, offsetY, offset + FESX[j].ndofs, offsetY + FESY[k].ndofs, entries)
@@ -640,4 +637,13 @@ function submatrix(A::AbstractExtendableSparseMatrixCSC{Tv, Ti}, srows, scols) w
     end
     flush!(S)
     return S
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Returns the FEMatrixBlock as an ExtendableSparseMatrix
+"""
+function submatrix(A::FEMatrixBlock{Tv, Ti}) where {Tv, Ti}
+    return submatrix(A.entries, A.offset+1:A.last_index, A.offsetY+1:A.last_indexY)
 end
