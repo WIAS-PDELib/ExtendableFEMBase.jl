@@ -22,20 +22,21 @@ function Base.copy(FEB::FEVectorBlock{T, Tv, Ti, FEType, APT}, entries) where {T
     return FEVectorBlock{T, Tv, Ti, FEType, APT}(deepcopy(FEB.name), copy(FEB.FES), FEB.offset, FEB.last_index, entries)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Returns the number of components for the finite element in that block.
+"""
 get_ncomponents(FB::FEVectorBlock) = get_ncomponents(get_FEType(FB.FES))
 
-function Base.show(io::IO, FEB::FEVectorBlock; tol = 1.0e-14)
-    return @printf(io, "\n")
-    #for j=1:FEB.offset+1:FEB.last_index
-    #    if FEB.entries[j] > tol
-    #        @printf(io, "[%d] = +%.3e", j, FEB.entries[j]);
-    #    elseif FEB.entries[j] < -tol
-    #        @printf(io, "[%d] %.3e", j, FEB.entries[j]);
-    #    else
-    #        @printf(io, "[%d] ********", j );
-    #    end
-    #    @printf(io, "\n");
-    #end
+"""
+$(TYPEDSIGNATURES)
+
+Custom `show` function for `FEVectorBlock` that prints some information and the view of that block.
+"""
+function Base.show(io::IO, ::MIME"text/plain", FEB::FEVectorBlock)
+    @printf(io, "block %s [%d:%d] = ", FEB.name, FEB.offset+1, FEB.last_index)
+    show(io, view(FEB))
 end
 
 """
@@ -57,6 +58,8 @@ function Base.copy(FEV::FEVector{T, Tv, Ti}) where {T, Tv, Ti}
 end
 
 # overload stuff for AbstractArray{T,1} behaviour
+Base.IndexStyle(::Type{<:FEVector}) = LinearIndices
+Base.IndexStyle(::Type{<:FEVectorBlock}) = LinearIndices
 Base.getindex(FEF::FEVector{T, Tv, Ti}, tag) where {T, Tv, Ti} = FEF.FEVectorBlocks[findfirst(==(tag), FEF.tags)]
 Base.getindex(FEF::FEVector, i::Int) = FEF.FEVectorBlocks[i]
 Base.getindex(FEB::FEVectorBlock, i::Int) = FEB.entries[FEB.offset + i]
@@ -68,12 +71,14 @@ Base.setindex!(FEB::FEVectorBlock, v, i::AbstractArray) = (FEB.entries[FEB.offse
 Base.eltype(::FEVector{T}) where {T} = T
 Base.size(FEF::FEVector) = size(FEF.FEVectorBlocks)
 Base.size(FEB::FEVectorBlock) = FEB.last_index - FEB.offset
+Base.first(FEB::FEVectorBlock) = FEB.offset+1
+Base.last(FEB::FEVectorBlock) = FEB.last_index
 
 
 """
 $(TYPEDEF)
 
-returns a view of the part of the full FEVector that coressponds to the block. 
+Returns a view of the part of the full FEVector that coressponds to the block. 
 """
 Base.view(FEB::FEVectorBlock) = view(FEB.entries, (FEB.offset + 1):FEB.last_index)
 
@@ -88,7 +93,7 @@ end
 """
 $(TYPEDEF)
 
-returns a vector with the individual norms of all blocks
+Returns a vector with the individual norms of all blocks.
 """
 function norms(FEV::FEVector{T}, p::Real = 2) where {T}
     norms = zeros(T, length(FEV))
@@ -191,10 +196,12 @@ Custom `show` function for `FEVector` that prints some information on its blocks
 function Base.show(io::IO, FEF::FEVector)
     println(io, "\nFEVector information")
     println(io, "====================")
-    print(io, "   block  |  ndofs \t|     min  /  max    \t| FEType \t\t (name/tag)")
+    print(io, "   block  |  starts  |   ends   |  length  |     min  /  max    \t| FEType \t\t (name/tag)")
     for j in 1:length(FEF)
-        @printf(io, "\n [%5d]  | ", j)
-        @printf(io, " %6d\t|", FEF[j].FES.ndofs)
+        @printf(io, "\n [%5d]  |", j)
+        @printf(io, "  %6d  |", FEF[j].offset+1)
+        @printf(io, "  %6d  |", FEF[j].last_index)
+        @printf(io, "  %6d  |", FEF[j].FES.ndofs)
         ext = extrema(view(FEF[j]))
         @printf(io, " %.2e/%.2e  \t|", ext[1], ext[2])
         if length(FEF.tags) >= j
@@ -260,7 +267,7 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Scalar product between two FEVEctorBlocks
+Scalar product between two FEVEctorBlocks.
 """
 function LinearAlgebra.dot(a::FEVectorBlock{T}, b::FEVectorBlock{T}) where {T}
     return dot(view(a), view(b))
