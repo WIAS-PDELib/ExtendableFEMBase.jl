@@ -620,18 +620,29 @@ $(TYPEDSIGNATURES)
 Generates an ExtendableSparseMatrix from the submatrix
 for the given row and col numbers
 """
-function submatrix(A::AbstractExtendableSparseMatrixCSC{Tv, Ti}, srows, scols) where {Tv, Ti}
+function submatrix(A::AbstractExtendableSparseMatrixCSC{Tv, Ti}, srows, scols; factor = 1) where {Tv, Ti}
     cscmat::SparseMatrixCSC{Tv, Ti} = A.cscmatrix
     rows::Array{Ti, 1} = rowvals(cscmat)
+    valsA = cscmat.nzval
+    nrowsA = size(A,1)
+    ncolsA = size(A,2)
     S = ExtendableSparseMatrix{Tv, Ti}(length(srows), length(scols))
     @assert maximum(srows) <= size(A, 1) "rows exceeds rowcount of A"
     @assert maximum(scols) <= size(A, 2) "cols exceeds colcount of A"
-    for col in 1:length(scols)
-        scol = scols[col]
+    ncols = length(scols)
+    nrows = length(srows)
+    newrows = zeros(Int, nrowsA)
+    newcols = zeros(Int, ncolsA)
+    newrows[srows] = 1:nrows
+    newcols[scols] = 1:ncols
+    minrow, maxrow = minimum(srows), maximum(srows)
+
+    for scol in scols
         for r in nzrange(cscmat, scol)
-            j = findfirst(==(rows[r]), srows)
-            if j !== nothing
-                S[j, col] = A[rows[r], scol]
+            if newrows[rows[r]] > 0
+                _addnz(S, newrows[rows[r]], newcols[scol], valsA[r], factor)
+            else 
+                break
             end
         end
     end
