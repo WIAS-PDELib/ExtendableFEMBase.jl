@@ -44,7 +44,7 @@ function point_evaluation!(target::AbstractArray{T, 1}, FES::FESpace{Tv, Ti, FET
     end
     offset4component = 0:component_offset:(ncomponents * component_offset)
     # interpolate at nodes
-    xNodeCells = atranspose(FES.dofgrid[CellNodes])
+    xNodeCells = FES.dofgrid[NodeCells]
     xCellRegions = FES.dofgrid[CellRegions]
     cell::Ti = 0
     result = zeros(T, ncomponents)
