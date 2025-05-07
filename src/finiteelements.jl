@@ -81,7 +81,7 @@ struct FESpace{Tv, Ti, FEType <: AbstractFiniteElement, AT <: AssemblyType}
 end
 
 function Base.copy(FES::FESpace{Tv, Ti, FEType, AT}) where {Tv, Ti, FEType, AT}
-    return FESpace{Tv, Ti, FEType, AT}(deepcopy(FES.name), FES.broken, FES.ndofs, FES.coffset, FES.xgrid, FES.dofgrid, FES.dofmaps)
+    return FESpace{Tv, Ti, FEType, AT}(deepcopy(FES.name), FES.broken, FES.ndofs, FES.coffset, FES.xgrid, FES.dofgrid, FES.dofmaps, FES.interpolators)
 end
 
 """
