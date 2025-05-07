@@ -43,18 +43,13 @@ isdefined(FEType::Type{<:H1P2}, ::Type{<:Tetrahedron3D}) = true
 
 interior_dofs_offset(::Type{<:AssemblyType}, ::Type{H1P2{ncomponents, edim}}, ::Type{Edge1D}) where {ncomponents, edim} = 2
 
-function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{AT_NODES}, exact_function!; items = [], kwargs...) where {Tv, Ti, FEType <: H1P2, APT}
-    edim = get_edim(FEType)
-    nnodes = size(FE.dofgrid[Coordinates], 2)
-    if edim == 1
-        nedges = num_sources(FE.dofgrid[CellNodes])
-    elseif edim == 2
-        nedges = num_sources(FE.dofgrid[FaceNodes])
-    elseif edim == 3
-        nedges = num_sources(FE.dofgrid[EdgeNodes])
-    end
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{AT_NODES}) where {Tv, Ti, FEType <: H1P2, APT} = FES[AT_NODES] = NodalInterpolator(FES)
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: H1P2, APT} = FES[ON_FACES] = MomentInterpolator(FES, ON_FACES)
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_EDGES}) where {Tv, Ti, FEType <: H1P2, APT} = FES[ON_EDGES] = MomentInterpolator(FES, ON_EDGES)
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}) where {Tv, Ti, FEType <: H1P2, APT} = FES[ON_CELLS] = MomentInterpolator(FES, ON_CELLS)
 
-    return point_evaluation!(Target, FE, AT_NODES, exact_function!; items = items, component_offset = nnodes + nedges, kwargs...)
+function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{AT_NODES}, exact_function!; items = [], kwargs...) where {Tv, Ti, FEType <: H1P2, APT}
+    return FE[AT_NODES].evaluator(Target, exact_function!, items)
 end
 
 function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_EDGES}, exact_function!; items = [], kwargs...) where {Tv, Ti, FEType <: H1P2, APT}
@@ -65,7 +60,7 @@ function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, 
         interpolate!(Target, FE, AT_NODES, exact_function!; items = subitems, kwargs...)
 
         # perform edge mean interpolation
-        ensure_moments!(Target, FE, ON_EDGES, exact_function!; items = items, kwargs...)
+        FE[ON_EDGES].evaluator(Target, exact_function!, items)
     end
 end
 
@@ -77,7 +72,8 @@ function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, 
         interpolate!(Target, FE, AT_NODES, exact_function!; items = subitems, kwargs...)
 
         # perform face mean interpolation
-        ensure_moments!(Target, FE, ON_FACES, exact_function!; items = items, kwargs...)
+        #ensure_moments!(Target, FE, ON_FACES, exact_function!; items = items, kwargs...)
+        FE[ON_FACES].evaluator(Target, exact_function!, items)
     elseif edim == 3
         # delegate face edges to edge interpolation
         subitems = slice(FE.dofgrid[FaceEdges], items)
@@ -106,7 +102,7 @@ function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, 
         interpolate!(Target, FE, AT_NODES, exact_function!; items = subitems, kwargs...)
 
         # preserve cell integral
-        ensure_moments!(Target, FE, ON_CELLS, exact_function!; items = items, kwargs...)
+        FE[ON_CELLS].evaluator(Target, exact_function!, items)
     end
 end
 

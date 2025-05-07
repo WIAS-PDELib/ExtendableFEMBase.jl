@@ -32,9 +32,11 @@ isdefined(FEType::Type{<:H1P1}, ::Type{<:AbstractElementGeometry1D}) = true
 isdefined(FEType::Type{<:H1P1}, ::Type{<:Triangle2D}) = true
 isdefined(FEType::Type{<:H1P1}, ::Type{<:Tetrahedron3D}) = true
 
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{AT_NODES}) where {Tv, Ti, FEType <: H1P1, APT} = FES[AT_NODES] = NodalInterpolator(FES)
+
 function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{AT_NODES}, exact_function; items = [], kwargs...) where {Tv, Ti, FEType <: H1P1, APT}
-    nnodes = size(FE.dofgrid[Coordinates], 2)
-    return point_evaluation!(Target, FE, AT_NODES, exact_function; items = items, component_offset = nnodes, kwargs...)
+    #return point_evaluation!(Target, FE, AT_NODES, exact_function; items = items, component_offset = nnodes, kwargs...)
+    return FE[AT_NODES].evaluator(Target, exact_function, items)
 end
 
 function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_EDGES}, exact_function; items = [], kwargs...) where {Tv, Ti, FEType <: H1P1, APT}
