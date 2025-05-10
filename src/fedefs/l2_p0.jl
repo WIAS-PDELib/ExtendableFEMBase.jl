@@ -25,24 +25,12 @@ get_dofmap_pattern(FEType::Type{<:L2P0}, ::Union{Type{FaceDofs}, Type{BFaceDofs}
 
 isdefined(FEType::Type{<:L2P0}, ::Type{<:AbstractElementGeometry}) = true
 
+interior_dofs_offset(::Type{ON_CELLS}, ::Type{<:L2P0}, EG::Type{<:AbstractElementGeometry}) = 0
+
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}) where {Tv, Ti, FEType <: L2P0, APT} = MomentInterpolator(FES, ON_CELLS)
+
 function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, FEType <: L2P0, APT}
-    xCellVolumes = FE.dofgrid[CellVolumes]
-    ncells = num_sources(FE.dofgrid[CellNodes])
-    if items == []
-        items = 1:ncells
-    else
-        items = filter(!iszero, items)
-    end
-    ncomponents = get_ncomponents(FEType)
-    integrals4cell = zeros(T, ncomponents, ncells)
-    integrate!(integrals4cell, FE.dofgrid, ON_CELLS, exact_function!; items = items, kwargs...)
-    for cell in items
-        if cell != 0
-            for c in 1:ncomponents
-                Target[(cell - 1) * ncomponents + c] = integrals4cell[c, cell] / xCellVolumes[cell]
-            end
-        end
-    end
+    get_interpolator(FE, ON_CELLS).evaluate!(Target, exact_function!, items; kwargs...)
     return
 end
 

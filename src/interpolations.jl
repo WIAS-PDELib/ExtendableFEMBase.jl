@@ -443,7 +443,7 @@ function nodevalues_subset!(
     nneighbours::Int = 0
 
     nnodes = length(nodes)
-    xNodeCells = atranspose(xItemNodes)
+    xNodeCells = xgrid[NodeCells]
     countedneighbours::Int = 0
     i::Int = 0
     iEG::Int = 1

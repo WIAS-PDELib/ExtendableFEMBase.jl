@@ -29,31 +29,18 @@ get_polynomialorder(::Type{<:H1CR}, ::Type{<:Tetrahedron3D}) = 1;
 get_dofmap_pattern(FEType::Type{<:H1CR}, ::Type{CellDofs}, EG::Type{<:AbstractElementGeometry}) = "F1"
 get_dofmap_pattern(FEType::Type{<:H1CR}, ::Union{Type{FaceDofs}, Type{BFaceDofs}}, EG::Type{<:AbstractElementGeometry}) = "I1"
 
+interior_dofs_offset(::Union{Type{<:ON_FACES}, Type{<:ON_BFACES}}, ::Type{<:H1CR}, ::Type{Edge1D}) = 0
+interior_dofs_offset(::Union{Type{<:ON_FACES}, Type{<:ON_BFACES}}, ::Type{<:H1CR}, ::Type{Triangle2D}) = 0
+
 isdefined(FEType::Type{<:H1CR}, ::Type{<:AbstractElementGeometry1D}) = true
 isdefined(FEType::Type{<:H1CR}, ::Type{<:Triangle2D}) = true
 isdefined(FEType::Type{<:H1CR}, ::Type{<:Quadrilateral2D}) = true
 isdefined(FEType::Type{<:H1CR}, ::Type{<:Tetrahedron3D}) = true
 
-function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, FEType <: H1CR, APT}
-    # preserve face means
-    xItemVolumes = FE.dofgrid[FaceVolumes]
-    xItemNodes = FE.dofgrid[FaceNodes]
-    nitems = num_sources(xItemNodes)
-    ncomponents = get_ncomponents(FEType)
-    offset4component = 0:nitems:(ncomponents * nitems)
-    if items == []
-        items = 1:nitems
-    end
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: H1CR, APT} = MomentInterpolator(FES, ON_FACES; FEType_ref = L2P0{get_ncomponents(FEType)})
 
-    # compute exact face means
-    facemeans = zeros(T, ncomponents, nitems)
-    integrate!(facemeans, FE.dofgrid, ON_FACES, exact_function!; items = items, kwargs...)
-    for item in items
-        for c in 1:ncomponents
-            Target[offset4component[c] + item] = facemeans[c, item] / xItemVolumes[item]
-        end
-    end
-    return
+function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, FEType <: H1CR, APT}
+    return get_interpolator(FE, ON_FACES).evaluate!(Target, exact_function!, items; kwargs...)
 end
 
 function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}, exact_function!; items = [], kwargs...) where {Tv, Ti, FEType <: H1CR, APT}
