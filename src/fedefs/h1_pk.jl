@@ -43,23 +43,14 @@ isdefined(FEType::Type{<:H1Pk}, ::Type{<:Triangle2D}) = true
 interior_dofs_offset(::Type{<:AssemblyType}, ::Type{<:H1Pk}, ::Type{Edge1D}) = 2
 interior_dofs_offset(::Type{<:AssemblyType}, ::Type{H1Pk{n, e, o}}, ::Type{Triangle2D}) where {n, e, o} = 3 * o
 
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{AT_NODES}) where {Tv, Ti, FEType <: H1Pk, APT} = NodalInterpolator(FES)
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_EDGES}) where {Tv, Ti, FEType <: H1Pk, APT} = MomentInterpolator(FES, ON_FACES; order = FEType.parameters[3] + 1 - get_edim(FEType))
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: H1Pk, APT} = MomentInterpolator(FES, ON_FACES; order = FEType.parameters[3] - get_edim(FEType))
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}) where {Tv, Ti, FEType <: H1Pk, APT} = MomentInterpolator(FES, ON_CELLS; order = FEType.parameters[3] - 1 - get_edim(FEType))
+
 ## standard interpolation at nodes = node evaluation
 function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, H1Pk{ncomponents, edim, order}, APT}, ::Type{AT_NODES}, exact_function!; items = [], kwargs...) where {ncomponents, edim, order, Tv, Ti, APT}
-    coffset = size(FE.dofgrid[Coordinates], 2)
-    if edim == 1
-        coffset += (order - 1) * num_sources(FE.dofgrid[CellNodes])
-    elseif edim == 2
-        if order > 1
-            coffset += (order - 1) * num_sources(FE.dofgrid[FaceNodes])
-            if order > 2
-                coffset += Int(((order - 2) * (order - 1) / 2)) * num_sources(FE.dofgrid[CellNodes])
-            end
-        end
-    elseif edim == 3
-        # coffset += 2*num_sources(FE.dofgrid[EdgeNodes]) + num_sources(FE.dofgrid[FaceNodes]) + num_sources(FE.dofgrid[CellNodes])
-    end
-
-    return point_evaluation!(Target, FE, AT_NODES, exact_function!; items = items, component_offset = coffset, kwargs...)
+    return get_interpolator(FE, AT_NODES).evaluate!(Target, exact_function!, items; kwargs...)
 end
 
 ## standard interpolation on edges
@@ -85,12 +76,8 @@ function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, H1Pk{ncomponen
 
         # preserve moments on face
         if order > 1
-            ensure_moments!(Target, FE, ON_FACES, exact_function!; order = order - 2, items = items, kwargs...)
+            get_interpolator(FE, ON_FACES).evaluate!(Target, exact_function!, items; kwargs...)
         end
-        # elseif edim == 3
-        #     # delegate face edges to edge interpolation
-        #     subitems = slice(FE.dofgrid[FaceEdges], items)
-        #     interpolate!(Target, FE, ON_EDGES, exact_function!; items = subitems, time = time)
     elseif edim == 1
         # delegate face nodes to node interpolation
         subitems = slice(FE.dofgrid[FaceNodes], items)
@@ -107,7 +94,7 @@ function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, H1Pk{ncomponen
 
         # fix cell bubble value by preserving integral mean
         if order > 2
-            ensure_moments!(Target, FE, ON_CELLS, exact_function!; order = order - 3, items = items, kwargs...)
+            get_interpolator(FE, ON_CELLS).evaluate!(Target, exact_function!, items; kwargs...)
         end
         # elseif edim == 3
         #     # todo
@@ -126,7 +113,7 @@ function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, H1Pk{ncomponen
 
         # preserve cell integral
         if order > 1
-            ensure_moments!(Target, FE, ON_CELLS, exact_function!; order = order - 2, items = items, kwargs...)
+            get_interpolator(FE, ON_CELLS).evaluate!(Target, exact_function!, items; kwargs...)
         end
     end
 end

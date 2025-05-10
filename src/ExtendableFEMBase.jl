@@ -108,7 +108,7 @@ export get_polynomialorder, get_ndofs, get_ndofs_all
 export get_ncomponents, get_edim
 export get_basis, get_coefficients, get_basissubset
 
-export NodalInterpolator
+export get_interpolator, init_interpolator!, NodalInterpolator
 
 export interpolate! # must be defined separately by each FEdefinition
 export nodevalues, continuify
