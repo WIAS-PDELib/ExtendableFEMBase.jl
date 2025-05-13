@@ -35,25 +35,19 @@ isdefined(FEType::Type{<:HDIVRT0}, ::Type{<:Quadrilateral2D}) = true
 isdefined(FEType::Type{<:HDIVRT0}, ::Type{<:Tetrahedron3D}) = true
 isdefined(FEType::Type{<:HDIVRT0}, ::Type{<:Hexahedron3D}) = true
 
-function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}, data; items = [], kwargs...) where {T, Tv, Ti, FEType <: HDIVRT0, APT}
-    xFaceNormals = FE.dofgrid[FaceNormals]
-    if items == []
-        items = 1:size(xFaceNormals, 2)
-    end
+function RT0_normalflux_eval!(result, f, qpinfo)
+    return result[1] = dot(f, qpinfo.normal)
+end
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: HDIVRT0, APT} = FaceFluxEvaluator(RT0_normalflux_eval!, FES, ON_FACES)
 
-    # compute exact face means
-    data_eval = zeros(T, get_ncomponents(FEType))
-    function normalflux_eval(result, qpinfo)
-        data(data_eval, qpinfo)
-        return result[1] = dot(data_eval, view(xFaceNormals, :, qpinfo.item))
-    end
-    return integrate!(Target, FE.dofgrid, ON_FACES, normalflux_eval; items = items, kwargs...)
+function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, FEType <: HDIVRT0, APT}
+    return get_interpolator(FE, ON_FACES).evaluate!(Target, exact_function!, items; kwargs...)
 end
 
-function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}, data; items = [], kwargs...) where {Tv, Ti, FEType <: HDIVRT0, APT}
+function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}, exact_function!; items = [], kwargs...) where {Tv, Ti, FEType <: HDIVRT0, APT}
     # delegate cell faces to face interpolation
     subitems = slice(FE.dofgrid[CellFaces], items)
-    return interpolate!(Target, FE, ON_FACES, data; items = subitems, kwargs...)
+    return interpolate!(Target, FE, ON_FACES, exact_function!; items = subitems, kwargs...)
 end
 
 # only normalfluxes on faces

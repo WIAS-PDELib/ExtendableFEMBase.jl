@@ -27,30 +27,26 @@ get_dofmap_pattern(FEType::Type{<:HCURLN1{2}}, ::Union{Type{FaceDofs}, Type{BFac
 
 isdefined(FEType::Type{<:HCURLN1}, ::Type{<:Triangle2D}) = true
 
-function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_EDGES}, data; items = [], kwargs...) where {T, Tv, Ti, FEType <: HCURLN1, APT}
+function N1_tangentflux_eval_2d!(result, f, qpinfo)
+    result[1] = -f[1] * qpinfo.normal[2] # rotated normal = tangent
+    result[1] += f[2] * qpinfo.normal[1]
+    result[2] = result[1] * (qpinfo.xref[1] - 1 // 2)
+    return nothing
+end
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: HCURLN1{2}, APT} = FaceFluxEvaluator(N1_tangentflux_eval_2d!, FES, ON_FACES)
+
+
+function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_EDGES}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, FEType <: HCURLN1, APT}
     edim = get_ncomponents(FEType)
     return if edim == 3
         # todo
     end
 end
 
-function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}, data; items = [], kwargs...) where {T, Tv, Ti, FEType <: HCURLN1, APT}
+function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, FEType <: HCURLN1, APT}
     edim = get_ncomponents(FEType)
     return if edim == 2
-        xFaceNormals = FE.dofgrid[FaceNormals]
-        nfaces = num_sources(xFaceNormals)
-        if items == []
-            items = 1:size(xFaceNormals, 2)
-        end
-        # integrate normal flux of exact_function over edges
-        data_eval = zeros(T, 2)
-        function tangentflux_eval2d(result, qpinfo)
-            data(data_eval, qpinfo)
-            result[1] = -data_eval[1] * xFaceNormals[2, qpinfo.item] # rotated normal = tangent
-            result[1] += data_eval[2] * xFaceNormals[1, qpinfo.item]
-            return result[2] = result[1] * (qpinfo.xref[1] - 1 // 2)
-        end
-        integrate!(Target, FE.dofgrid, ON_FACES, tangentflux_eval2d; quadorder = 2, items = items, offset = [0, nfaces], kwargs...)
+        get_interpolator(FE, ON_FACES).evaluate!(Target, exact_function!, items; kwargs...)
     elseif edim == 3
         # delegate face edges to edge interpolation
         subitems = slice(FE.dofgrid[FaceEdges], items)
