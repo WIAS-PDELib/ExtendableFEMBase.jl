@@ -10,7 +10,7 @@ using ExtendableGrids: ExtendableGrids, AT_NODES, AbstractElementGeometry,
     AbstractElementGeometry0D, AbstractElementGeometry1D,
     AbstractElementGeometry2D, AbstractElementGeometry3D,
     AbstractGridAdjacency, AbstractGridComponent,
-    AbstractGridFloatArray2D, AbstractGridIntegerArray2D, AbstractGridIntegerArray1D,
+    AbstractGridFloatArray2D, AbstractGridIntegerArray2D,
     Adjacency, AssemblyType, BEdgeEdges, BEdgeGeometries,
     BEdgeRegions, BEdgeVolumes, BFaceEdges, BFaceFaces,
     BFaceGeometries, BFaceParents, BFaceRegions,
@@ -108,7 +108,7 @@ export get_polynomialorder, get_ndofs, get_ndofs_all
 export get_ncomponents, get_edim
 export get_basis, get_coefficients, get_basissubset
 
-export get_interpolator, init_interpolator!, NodalInterpolator
+export NodalInterpolator
 
 export interpolate! # must be defined separately by each FEdefinition
 export nodevalues, continuify
