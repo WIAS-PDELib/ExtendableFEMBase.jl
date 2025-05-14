@@ -31,6 +31,7 @@ get_dofmap_pattern(FEType::Type{<:L2P1}, ::Type{CellDofs}, EG::Type{<:AbstractEl
 
 isdefined(FEType::Type{<:L2P1}, ::Type{<:AbstractElementGeometry}) = true
 
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{AT_NODES}) where {Tv, Ti, FEType <: L2P1, APT} = NodalInterpolator(FES)
 function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{AT_NODES}, exact_function!; items = [], kwargs...) where {Tv, Ti, FEType <: L2P1, APT}
     return get_interpolator(FE, AT_NODES).evaluate!(Target, exact_function!, items; kwargs...)
 end
@@ -50,7 +51,7 @@ end
 function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}, exact_function!; items = [], kwargs...) where {Tv, Ti, FEType <: L2P1, APT}
     return if FE.broken == true
         # broken interpolation
-        interpolate!(Target, FE, AT_NODES, exact_function!; items = items, kwargs...)
+        get_interpolator(FE, AT_NODES).evaluate!(Target, exact_function!, items; kwargs...)
     else
         # delegate cell nodes to node interpolation
         subitems = slice(FE.dofgrid[CellNodes], items)

@@ -34,7 +34,6 @@ function NodalInterpolator(
     kwargs...) where {T}
     FEType = eltype(FES)
     ncomponents = get_ncomponents(FEType)
-    offset4component = 0:component_offset:(ncomponents * component_offset)
     xCoordinates = grid[Coordinates]
     xCellRegions = grid[CellRegions]
     result = zeros(T, ncomponents)
@@ -59,7 +58,7 @@ function NodalInterpolator(
                 for n in 1:nnodes_on_cell
                     j = xCellNodes[n, cell]
                     QP.x .= view(xCoordinates, :, j)
-                    exact_function(result, QP)
+                    exact_function!(result, QP)
                     for k in 1:ncomponents
                         target[xCellDofs[1, cell] + n - 1 + (k - 1) * nnodes_on_cell] = result[k]
                     end
@@ -69,6 +68,7 @@ function NodalInterpolator(
         return NodalInterpolator(evaluate_broken!)
     else
         ## FE space is continuous in node, so only one evaluation is required
+        offset4component = 0:component_offset:(ncomponents * component_offset)
         nnodes = num_nodes(grid)
         xNodeCells = atranspose(grid[CellNodes])
         function evaluate!(target, exact_function!, items; time = 0, params = [], kwargs...)

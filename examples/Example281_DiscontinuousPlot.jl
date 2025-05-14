@@ -61,9 +61,11 @@ function main(; broken = false, nrefs = 3, abs = false, Plotter = nothing)
     nodevals4nodes2 = nodevalues(FEFunction[1], Identity; abs = abs, regions = [2], nodes = subnodes2)
 
 	## plot
-	p = GridVisualizer(; Plotter = Plotter, layout = (2, 2), clear = true, resolution = (1000, 500))
-    gridplot!(p[1,1], xgrid)
-	scalarplot!(p[1, 2], [subgrid1, subgrid2], xgrid, [view(nodevals4nodes1,:), view(nodevals4nodes2,:)], cellwise = false, levels = 11, title = "u")
+    if Plotter !== nothing
+	    p = GridVisualizer(; Plotter = Plotter, layout = (2, 2), clear = true, resolution = (1000, 500))
+        gridplot!(p[1,1], xgrid)
+	    scalarplot!(p[1, 2], [subgrid1, subgrid2], xgrid, [view(nodevals4nodes1,:), view(nodevals4nodes2,:)], cellwise = false, levels = 11, title = "u")
+    end
 
     return p
 end
