@@ -46,7 +46,7 @@ function TEB_tangentflux_eval_2d!(result, f, qpinfo)
     result[1] = -f[1] * qpinfo.normal[2] # rotated normal = tangent
     return result[1] += f[2] * qpinfo.normal[1]
 end
-function N0_tangentflux_eval_3d!(grid)
+function TEB_tangentflux_eval_3d!(grid)
     edgetangents = grid[EdgeTangents]
     function closure(result, f, qpinfo)
         result[1] = dot(f, view(edgetangents, :, qpinfo.item))
