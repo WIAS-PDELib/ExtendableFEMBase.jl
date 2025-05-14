@@ -40,18 +40,18 @@ function RTk_normalflux_eval!(order)
         end
     end
 end
-init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: HDIVRTk, APT} = FaceFluxEvaluator(RTk_normalflux_eval!(FEType.parameters[2]), FES, ON_FACES)
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: HDIVRTk, APT} = FunctionalInterpolator(RTk_normalflux_eval!(FEType.parameters[2]), FES, ON_FACES)
 init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}) where {Tv, Ti, FEType <: HDIVRTk, APT} = MomentInterpolator(FES, ON_CELLS; order = FEType.parameters[2] - 1)
 
 
-function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, HDIVRTk{edim, order}, APT}, ::Type{ON_FACES}, exact_function!; items = [], bonus_quadorder = 0, kwargs...) where {T, Tv, Ti, edim, order, APT}
+function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, HDIVRTk{edim, order}, APT}, ::Type{ON_FACES}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, edim, order, APT}
     get_interpolator(FE, ON_FACES).evaluate!(Target, exact_function!, items; kwargs...)
 end
 
-function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, HDIVRTk{edim, order}, APT}, ::Type{ON_CELLS}, exact_function!; items = [], time = 0, bonus_quadorder = 0, kwargs...) where {T, Tv, Ti, edim, order, APT}
+function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, HDIVRTk{edim, order}, APT}, ::Type{ON_CELLS}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, edim, order, APT}
     # delegate cell faces to face interpolation
     subitems = slice(FE.dofgrid[CellFaces], items)
-    interpolate!(Target, FE, ON_FACES, exact_function!; items = subitems, bonus_quadorder = bonus_quadorder, kwargs...)
+    interpolate!(Target, FE, ON_FACES, exact_function!; items = subitems, kwargs...)
 
     if order == 0
         return nothing

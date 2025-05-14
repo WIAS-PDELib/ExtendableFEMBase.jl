@@ -33,7 +33,7 @@ function N1_tangentflux_eval_2d!(result, f, qpinfo)
     result[2] = result[1] * (qpinfo.xref[1] - 1 // 2)
     return nothing
 end
-init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: HCURLN1{2}, APT} = FaceFluxEvaluator(N1_tangentflux_eval_2d!, FES, ON_FACES)
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: HCURLN1{2}, APT} = FunctionalInterpolator(N1_tangentflux_eval_2d!, FES, ON_FACES)
 
 
 function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_EDGES}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, FEType <: HCURLN1, APT}

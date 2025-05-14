@@ -49,7 +49,7 @@ function RT1_normalflux_eval!(dim)
         end
     end
 end
-init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: HDIVRT1, APT} = FaceFluxEvaluator(RT1_normalflux_eval!(get_ncomponents(FEType)), FES, ON_FACES)
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: HDIVRT1, APT} = FunctionalInterpolator(RT1_normalflux_eval!(get_ncomponents(FEType)), FES, ON_FACES)
 init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}) where {Tv, Ti, FEType <: HDIVRT1, APT} = MomentInterpolator(FES, ON_CELLS)
 
 function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, FEType <: HDIVRT1, APT}

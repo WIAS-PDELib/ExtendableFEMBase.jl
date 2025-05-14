@@ -1,3 +1,15 @@
+#################
+# INTERPOLATORS #
+#################
+#
+# this file contains interpolating structures to compose full finite element interpolations
+# and to be carried in the interpolators backpack of the finite element space
+#
+# there are three interpolators:
+# - NodalInterpolator (for point evaluating degrees of freedom)
+# - FunctionalInterpolator (for functional degrees of freedom and dual basis functions -> cheap evaluations)
+# - MomentInterpolator (for functional degrees of freedom and non-dual basis functions -> solves local problems)
+
 get_interpolator(FES::FESpace, entity::Type{<:AssemblyType}) = get!(() -> init_interpolator!(FES, entity), FES.interpolators, entity)
 
 struct NodalInterpolator{EFT} <: AbstractInterpolationOperator
@@ -7,26 +19,35 @@ end
 
 """
 ````
-function NodalInterpolator(FES::FESpace{T}, grid = FES.dofgrid; broken = FES.broken, component_offset = FES.coffset, time = 0, kwargs...)
+function NodalInterpolator(FES::FESpace{T}, grid = FES.dofgrid; broken = FES.broken, component_offset = FES.coffset, kwargs...)
 ````
 
-Prepares a structure that has an evaluate! function that evaluates some function at the nodes of the grid.
+Constructs an interpolator structure that has an evaluate! function that evaluates some
+function at the requested nodes (items) of the grid. In broken mode only ON_CELL the items
+refer to cells and all nodes of these cells are evaluated.
 """
-function NodalInterpolator(FES::FESpace{T}, grid = FES.dofgrid; broken = FES.broken, component_offset = FES.coffset, time = 0, kwargs...) where {T}
+function NodalInterpolator(
+    FES::FESpace{T},
+    grid = FES.dofgrid;
+    broken = FES.broken,
+    component_offset = FES.coffset,
+    kwargs...) where {T}
     FEType = eltype(FES)
     ncomponents = get_ncomponents(FEType)
     offset4component = 0:component_offset:(ncomponents * component_offset)
     xCoordinates = grid[Coordinates]
     xCellRegions = grid[CellRegions]
     result = zeros(T, ncomponents)
-    QP = QPInfos(grid; time, kwargs...)
+    QP = QPInfos(grid; time = 0)
 
     if broken
         ## FE space is broken
         xCellNodes = grid[CellNodes]
         xCellDofs = FES[CellDofs]
         ncells = num_cells(grid)
-        function evaluate_broken!(target, exact_function!, items; kwargs...)
+        function evaluate_broken!(target, exact_function!, items; time = 0, params = [], kwargs...)
+            QP.time = time
+            QP.params = params
             if isempty(items)
                 items = 1 : ncells
             end
@@ -50,7 +71,9 @@ function NodalInterpolator(FES::FESpace{T}, grid = FES.dofgrid; broken = FES.bro
         ## FE space is continuous in node, so only one evaluation is required
         nnodes = num_nodes(grid)
         xNodeCells = atranspose(grid[CellNodes])
-        function evaluate!(target, exact_function!, items; kwargs...)
+        function evaluate!(target, exact_function!, items; time = 0, params = [], kwargs...)
+            QP.time = time
+            QP.params = params
             if isempty(items)
                 items = 1 : nnodes
             end
@@ -77,13 +100,16 @@ end
 
 """
 ````
-function MomentInterpolator(FE::FESpace{Tv, Ti, FEType, APT}, AT::Type{<:AssemblyType}, xgrid = FE.dofgrid; FEType_ref = "auto", bestapprox = false, order = 0, items = [], kwargs...) where {Tv, Ti, FEType <: AbstractFiniteElement, APT}
+function MomentInterpolator(FE::FESpace{Tv, Ti, FEType, APT}, AT::Type{<:AssemblyType}, xgrid = FE.dofgrid; operator = Identity, FEType_ref = :auto, FEType_moments = :auto, moments_operator = operator, moments_dofs = Int[], bestapprox = false, order = 0, coffset::Int = -1, componentwise = true, kwargs...) where {Tv, Ti, FEType <: AbstractFiniteElement, APT}
 ````
 
-Prepares a structure that has an evaluate! function that sets the interior degrees of freedom
-such that the moments of the given function are preserved up to the given order.
+Constructs an interpolation structure that has an evaluate! function that sets the interior degrees of freedom
+such that the moments of the given function are preserved up to the given order. For this small local problems
+are solved with a mass matrix of interior basis functions (evaluated with operator) and (by moments_dofs selected)
+basis functions of the moments of type FEType_ref and with moments_operator. In the bestapprox mode
+the mass matrix instead is formed from the scalar product of the interior basis functions.
 """
-function MomentInterpolator(FE::FESpace{Tv, Ti, FEType, APT}, AT::Type{<:AssemblyType}, xgrid = FE.dofgrid; FEType_ref = :auto, FEType_moments = :auto, moments_operator = Identity, moments_dofs = Int[], bestapprox = false, order = 0, items = [], kwargs...) where {Tv, Ti, FEType <: AbstractFiniteElement, APT}
+function MomentInterpolator(FE::FESpace{Tv, Ti, FEType, APT}, AT::Type{<:AssemblyType}, xgrid = FE.dofgrid; operator = Identity, FEType_ref = :auto, FEType_moments = :auto, moments_operator = operator, moments_dofs = Int[], bestapprox = false, order = 0, coffset::Int = -1, componentwise = true, kwargs...) where {Tv, Ti, FEType <: AbstractFiniteElement, APT}
 
     itemvolumes = xgrid[GridComponentVolumes4AssemblyType(AT)]
     itemnodes = xgrid[GridComponentNodes4AssemblyType(AT)]
@@ -103,16 +129,14 @@ function MomentInterpolator(FE::FESpace{Tv, Ti, FEType, APT}, AT::Type{<:Assembl
     EG = EGs[1]
 
     nitems::Int = num_sources(itemnodes)
-    if items == []
-        items = 1:nitems
-    end
     ncomponents::Int = get_ncomponents(FEType)
     edim::Int = dim_element(EG)
     order_FE = get_polynomialorder(FEType, EG)
-    coffset::Int = FEType <: AbstractH1FiniteElement ? get_ndofs(AT, FEType, EG) / ncomponents : 0
+    if coffset == -1
+        coffset = FEType <: AbstractH1FiniteElement ? Int(get_ndofs(AT, FEType, EG) / ncomponents) : Int(0)
+    end
     interior_offset = interior_dofs_offset(AT, FEType, EG)
     @assert interior_offset >= 0 "This FEType seems to missing a definition for interior_dofs_offset!"
-
 
     ## reference basis for FE on EG
     ## here we assume that the FEType looks like a H1Pk element on EG (which is true for all H1Pk elements)
@@ -144,14 +168,14 @@ function MomentInterpolator(FE::FESpace{Tv, Ti, FEType, APT}, AT::Type{<:Assembl
     end
 
     ## check if mass matrix can be computed once or needs to be recomputed on every mesh
-    if FEType_ref <: AbstractH1FiniteElement && FEType_moments <: AbstractH1FiniteElement && moments_operator == Identity
+    if FEType_ref <: AbstractH1FiniteElement && !(FEType_ref <: AbstractH1FiniteElementWithCoefficients) && FEType_moments <: AbstractH1FiniteElement && moments_operator == Identity
         fixed_mass_matrix = true
     else
         fixed_mass_matrix = false
     end
 
-    moments_basis! = get_basis(ON_CELLS, FEType_moments, EG)
-    nmoments::Int = get_ndofs_all(ON_CELLS, FEType_moments, EG)
+    moments_basis! = get_basis(AT, FEType_moments, EG)
+    nmoments::Int = get_ndofs_all(AT, FEType_moments, EG)
     if isempty(moments_dofs)
         moments_dofs = Array{Int,1}(1:nmoments)
     else
@@ -161,10 +185,10 @@ function MomentInterpolator(FE::FESpace{Tv, Ti, FEType, APT}, AT::Type{<:Assembl
     idofs = zeros(Int, 0)
     if bestapprox 
         FEType_moments = FEType_ref
-        append!(idofs, interior_offset+1:get_ndofs(ON_CELLS, FEType_ref, EG))
+        append!(idofs, interior_offset+1:get_ndofs(AT, FEType_ref, EG))
         nmoments = length(idofs)
     else
-        if FEType_ref <: AbstractH1FiniteElement
+        if FEType_ref <: AbstractH1FiniteElement && componentwise
             nmoments4c::Int = nmoments / ncomponents
             for c in 1:ncomponents, m in 1:nmoments4c
                 push!(idofs, (c - 1) * coffset + interior_offset + m)
@@ -179,8 +203,8 @@ function MomentInterpolator(FE::FESpace{Tv, Ti, FEType, APT}, AT::Type{<:Assembl
 
     MOMxBASIS::Array{Float64, 2} = zeros(Float64, 0, 0)
     moments_eval::Matrix{Float64} = zeros(Float64, 0, 0)
-    refbasis! = get_basis(ON_CELLS, FEType_ref, EG)
-    ndofs_ref = get_ndofs_all(ON_CELLS, FEType_ref, EG)
+    refbasis! = get_basis(AT, FEType_ref, EG)
+    ndofs_ref = get_ndofs_all(AT, FEType_ref, EG)
     refbasis_vals = zeros(Tv, ndofs_ref, ncomponents)
 
     if (bestapprox) # interior dofs are set by best-approximation
@@ -196,6 +220,7 @@ function MomentInterpolator(FE::FESpace{Tv, Ti, FEType, APT}, AT::Type{<:Assembl
             return nothing
         end
 
+        ## integrate ON_CELLS here since we are on the refenrece domain of EG!
         MOMxBASIS_temp = integrate(xgrid_ref, ON_CELLS, refbasis_times_refbasis, ndofs_ref * ndofs_ref; quadorder = 2 * order_FE)
         if ndofs_ref == 1
             MOMxBASIS_temp = [MOMxBASIS_temp]
@@ -209,12 +234,12 @@ function MomentInterpolator(FE::FESpace{Tv, Ti, FEType, APT}, AT::Type{<:Assembl
             MOMxINTERIOR[j, k] = MOMxBASIS[idofs[j], idofs[k]]
         end
         moments_eval = zeros(Float64, size(MOMxBASIS, 1), ncomponents)
-        moments_basis! = get_basis(ON_CELLS, FEType_ref, EG)
+        moments_basis! = get_basis(AT, FEType_ref, EG)
         MOMxBASIS = MOMxBASIS[:, idofs]
     else # interior dofs are set by preserving moments
 
         ## calculate moments times basis functions
-        ndofs_moment = get_ndofs(ON_CELLS, FEType_moments, EG)
+        ndofs_moment = get_ndofs_all(AT, FEType_moments, EG)
         momentbasis_vals = zeros(Tv, ndofs_moment, ncomponents)
 
         function momentbasis_times_refbasis(result, qpinfo)
@@ -262,12 +287,12 @@ function MomentInterpolator(FE::FESpace{Tv, Ti, FEType, APT}, AT::Type{<:Assembl
     QP = QPInfos(xgrid; time = 0, kwargs...)
 
     # prepare mass matrix integration
-    FEB = FEEvaluator(FE, Identity, QF; T = Tv)
+    FEB = FEEvaluator(FE, operator, QF; AT = AT, T = Tv)
     if bestapprox
         FEB_moments = FEB
     else
         FE_moments = FESpace{FEType_moments}(xgrid)
-        FEB_moments = FEEvaluator(FE_moments, moments_operator, QF; T = Tv)
+        FEB_moments = FEEvaluator(FE_moments, moments_operator, QF; AT = AT, T = Tv)
     end
     basisval = zeros(Tv, ncomponents)
     interiordofs = zeros(Int, length(idofs))
@@ -296,7 +321,7 @@ function MomentInterpolator(FE::FESpace{Tv, Ti, FEType, APT}, AT::Type{<:Assembl
                 exact_function!(result_f, QP)
                 if (bestapprox)
                     for m in 1:nmoments, k in 1:ncomponents
-                        f_moments[m] += result_f[k] * FEB_moments.cvals[k, idofs[m], qp] * weights[qp]
+                        f_moments[m] += result_f[k] * FEB.cvals[k, idofs[m], qp] * weights[qp]
                     end
                 else
                     for m in 1:nmoments, k in 1:ncomponents
@@ -337,7 +362,6 @@ function MomentInterpolator(FE::FESpace{Tv, Ti, FEType, APT}, AT::Type{<:Assembl
                 ## recompute mass matrix of interior dofs
                 fill!(MOMxINTERIOR, 0)
                 if bestapprox
-                    @info nmoments, idofs
                     for dof in 1:nmoments
                         for i in 1:nweights
                             for m in 1:nmoments, k in 1:ncomponents
@@ -369,8 +393,8 @@ function MomentInterpolator(FE::FESpace{Tv, Ti, FEType, APT}, AT::Type{<:Assembl
         if new_quadorder !== current_quadorder
             QF = QuadratureRule{Tv, EG}(new_quadorder)
             quadorder = new_quadorder
-            FEB = FEEvaluator(FE, Identity, QF; T = Tv)
-            FEB_moments = FEEvaluator(FE_moments, Identity, QF; T = Tv)
+            FEB = FEEvaluator(FE, operator, QF; T = Tv)
+            FEB_moments = FEEvaluator(FE_moments, moments_operator, QF; T = Tv)
         end
         QP.params = params
         QP.time = time
@@ -384,27 +408,31 @@ function MomentInterpolator(FE::FESpace{Tv, Ti, FEType, APT}, AT::Type{<:Assembl
     return MomentInterpolator(evaluate!)
 end
 
-
-
-
-struct FaceFluxEvaluator{EFT} <: AbstractInterpolationOperator
+struct FunctionalInterpolator{EFT} <: AbstractInterpolationOperator
     evaluate!::EFT
 end
 
 
 """
 ````
-function FluxEvaluator(FE::FESpace{Tv, Ti, FEType, APT}, AT::Type{<:AssemblyType}, xgrid = FE.dofgrid; FEType_ref = "auto", bestapprox = false, order = 0, items = [], kwargs...) where {Tv, Ti, FEType <: AbstractFiniteElement, APT}
-````
-
-Prepares a structure that has an evaluate! function that sets the degrees of freedom of Hdiv or Hcurl
-elements such that they match the normal/tangent fluxes of the given function.
-"""
-function FaceFluxEvaluator(
-    fluxes!::Function,
+function FunctionalInterpolator(
+    functionals!::Function,
     FE::FESpace{Tv, Ti, FEType, APT},
     AT::Type{<:AssemblyType} = ON_FACES,
-    xgrid = FE.dofgrid; nfluxes = 0, kwargs...) where {Tv, Ti, FEType <: AbstractFiniteElement, APT}
+    xgrid = FE.dofgrid;
+    operator = NormalFlux, nfluxes = 0, dofs = [], kwargs...) where {Tv, Ti, FEType <: AbstractFiniteElement, APT}
+````
+
+Constructs an interpolation structure that has an evaluate! function that determines the interior degrees of freedom
+(or the specified local dofs) by evaluating functionals! (the result dimension should correspond to the number of dofs)
+The functionals are corrected by the operator evaluations of fixed dofs.
+"""
+function FunctionalInterpolator(
+    functionals!::Function,
+    FE::FESpace{Tv, Ti, FEType, APT},
+    AT::Type{<:AssemblyType} = ON_FACES,
+    xgrid = FE.dofgrid;
+    operator = NormalFlux, nfluxes = 0, dofs = [], kwargs...) where {Tv, Ti, FEType <: AbstractFiniteElement, APT}
     
     itemvolumes = xgrid[GridComponentVolumes4AssemblyType(AT)]
     itemnodes = xgrid[GridComponentNodes4AssemblyType(AT)]
@@ -425,7 +453,14 @@ function FaceFluxEvaluator(
 
     # prepare integration of moments
     if nfluxes == 0
-        nfluxes = max_num_targets_per_source(itemdofs)
+        if isempty(dofs)
+            nfluxes = max_num_targets_per_source(itemdofs)
+        else
+            nfluxes = length(dofs)
+        end
+    end
+    if isempty(dofs)
+        dofs = 1 : nfluxes
     end
     ncomponents::Int = get_ncomponents(FEType)
     order_FE = get_polynomialorder(FEType, EG)
@@ -437,11 +472,17 @@ function FaceFluxEvaluator(
     QP = QPInfos(xgrid; time = 0, kwargs...)
     nitems = size(itemnodes, 2)
 
-    function assembly_loop!(target, f_fluxes, items, exact_function!, QF, L2G)
-        fill!(target, 0)
+    ## prepare evaluation of fixed dofs
+    interior_offset = interior_dofs_offset(AT, FEType, EG)
+    FEB = FEEvaluator(FE, operator, QF; AT = AT, T = Tv)
+
+    function assembly_loop!(target, f_fluxes, items, exact_function!, QF, L2G, FEB)
         weights, xref = QF.w, QF.xref
         nweights = length(weights)
         for item in items
+            for m = 1:nfluxes
+                target[itemdofs[dofs[m], item]] = 0
+            end
             QP.region = itemregions[item]
             QP.item = item
             if has_normals
@@ -449,6 +490,9 @@ function FaceFluxEvaluator(
             end
             QP.volume = itemvolumes[item]
             update_trafo!(L2G, item)
+            if interior_offset > 0
+                update_basis!(FEB, item)
+            end
             
             ## compute fluxes of function
             for qp in 1:nweights
@@ -456,11 +500,18 @@ function FaceFluxEvaluator(
                 QP.xref = xref[qp]
                 eval_trafo!(QP.x, L2G, xref[qp])
                 exact_function!(result_f, QP)
-                fluxes!(f_fluxes, result_f, QP)
+                functionals!(f_fluxes, result_f, QP)
+
+                ## subtract flux of fixed dofs
+                if interior_offset > 0
+                    for m = 1 : nfluxes, dof = 1 : interior_offset
+                        f_fluxes[m] -= FEB.cvals[m, dof, qp] * weights[qp] * itemvolumes[item]
+                    end
+                end
 
                 ## set fluxes to dofs
                 for m = 1:nfluxes
-                    target[itemdofs[m, item]] += f_fluxes[m] * weights[qp] * itemvolumes[item]
+                    target[itemdofs[dofs[m], item]] += f_fluxes[m] * weights[qp] * itemvolumes[item]
                 end
             end
         end
@@ -471,6 +522,7 @@ function FaceFluxEvaluator(
         new_quadorder = quadorder + bonus_quadorder
         if new_quadorder !== current_quadorder
             QF = QuadratureRule{Tv, EG}(new_quadorder)
+            FEB = FEEvaluator(FE, operator, QF; AT = AT, T = Tv)
             quadorder = new_quadorder
         end
         QP.params = params
@@ -478,9 +530,41 @@ function FaceFluxEvaluator(
         if isempty(items)
             items = 1:nitems
         end
-        assembly_loop!(target, f_fluxes, items, exact_function!, QF, L2G)
+        assembly_loop!(target, f_fluxes, items, exact_function!, QF, L2G, FEB)
         return nothing
     end
 
-    return FaceFluxEvaluator(evaluate!)
+    return FunctionalInterpolator(evaluate!)
+end
+
+
+
+function slice(VTA::VariableTargetAdjacency, items = [], only_unique::Bool = true)
+    subitems = zeros(Int, 0)
+    if items == []
+        items = 1:num_sources(VTA)
+    end
+    for item in items
+        append!(subitems, VTA[:, item])
+    end
+    if only_unique
+        subitems = unique(subitems)
+    end
+    return subitems
+end
+
+function slice(VTA::Array{<:Signed, 2}, items = [], only_unique::Bool = true)
+    #=
+	subitems = zeros(Int,0)
+	if items == []
+		items = 1 : size(VTA,2)
+	end
+	for item in items
+		append!(subitems, VTA[:,item])
+	end
+	if only_unique
+		subitems = unique(subitems)
+	end
+	=#
+    return unique(view(VTA, :, items))
 end

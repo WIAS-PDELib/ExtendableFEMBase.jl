@@ -38,7 +38,7 @@ isdefined(FEType::Type{<:HDIVRT0}, ::Type{<:Hexahedron3D}) = true
 function RT0_normalflux_eval!(result, f, qpinfo)
     return result[1] = dot(f, qpinfo.normal)
 end
-init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: HDIVRT0, APT} = FaceFluxEvaluator(RT0_normalflux_eval!, FES, ON_FACES)
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: HDIVRT0, APT} = FunctionalInterpolator(RT0_normalflux_eval!, FES, ON_FACES)
 
 function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, FEType <: HDIVRT0, APT}
     return get_interpolator(FE, ON_FACES).evaluate!(Target, exact_function!, items; kwargs...)

@@ -38,7 +38,7 @@ function BDM2_normalflux_eval!(dim)
         result[3] = result[1] * (qpinfo.xref[1]^2 - qpinfo.xref[1] + 1 // 6)
     end
 end
-init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: HDIVBDM2, APT} = FaceFluxEvaluator(BDM2_normalflux_eval!(FEType.parameters[1]), FES, ON_FACES)
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: HDIVBDM2, APT} = FunctionalInterpolator(BDM2_normalflux_eval!(FEType.parameters[1]), FES, ON_FACES)
 init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}) where {Tv, Ti, FEType <: HDIVBDM2{2}, APT} = MomentInterpolator(FES, ON_CELLS; FEType_moments = H1MINI{1,2}, moments_dofs = [1,2,4], moments_operator = CurlScalar)
 
 
@@ -46,7 +46,7 @@ function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{T
     get_interpolator(FE, ON_FACES).evaluate!(Target, exact_function!, items; kwargs...)
 end
 
-function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}, exact_function!; items = [], time = 0, bonus_quadorder = 0, kwargs...) where {T, Tv, Ti, FEType <: HDIVBDM2, APT}
+function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, FEType <: HDIVBDM2, APT}
     # delegate cell faces to face interpolation
     subitems = slice(FE.dofgrid[CellFaces], items)
     interpolate!(Target, FE, ON_FACES, exact_function!; items = subitems, kwargs...)

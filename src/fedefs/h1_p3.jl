@@ -20,10 +20,11 @@ end
 get_ncomponents(FEType::Type{<:H1P3}) = FEType.parameters[1]
 get_edim(FEType::Type{<:H1P3}) = FEType.parameters[2]
 
-get_ndofs(::Type{<:AssemblyType}, FEType::Type{<:H1P3}, EG::Type{<:AbstractElementGeometry0D}) = FEType.parameters[1]
-get_ndofs(::Union{Type{<:ON_EDGES}, Type{<:ON_BEDGES}}, FEType::Type{<:H1P3}, EG::Type{<:Union{AbstractElementGeometry1D}}) = FEType.parameters[1] * Int(factorial(FEType.parameters[2] + 1) / (6 * factorial(FEType.parameters[2] - 2)))
-get_ndofs(::Union{Type{<:ON_FACES}, Type{<:ON_BFACES}}, FEType::Type{<:H1P3}, EG::Type{<:Union{AbstractElementGeometry1D, Triangle2D}}) = FEType.parameters[1] * Int(factorial(FEType.parameters[2] + 2) / (6 * factorial(FEType.parameters[2] - 1)))
-get_ndofs(::Type{<:ON_CELLS}, FEType::Type{<:H1P3}, EG::Type{<:Union{AbstractElementGeometry1D, Triangle2D, Tetrahedron3D}}) = FEType.parameters[1] * Int(factorial(FEType.parameters[2] + 3) / (6 * factorial(FEType.parameters[2])))
+get_ndofs(::Type{<:AssemblyType}, FEType::Type{H1P3{n, e}}, EG::Type{<:AbstractElementGeometry0D}) where {n, e} = n
+get_ndofs(::Type{<:AssemblyType}, FEType::Type{H1P3{n, e}}, EG::Type{<:AbstractElementGeometry1D}) where {n, e} = 4 * n
+get_ndofs(::Type{<:AssemblyType}, FEType::Type{H1P3{n, e}}, EG::Type{<:Triangle2D}) where {n, e} = 10 * n
+get_ndofs(::Type{<:AssemblyType}, FEType::Type{H1P3{n, e}}, EG::Type{<:Tetrahedron3D}) where {n, e} = 20 * n
+
 
 get_polynomialorder(::Type{<:H1P3}, ::Type{<:Edge1D}) = 3;
 get_polynomialorder(::Type{<:H1P3}, ::Type{<:Triangle2D}) = 3;

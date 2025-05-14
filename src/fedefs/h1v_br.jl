@@ -37,10 +37,19 @@ isdefined(FEType::Type{<:H1BR}, ::Type{<:Triangle2D}) = true
 isdefined(FEType::Type{<:H1BR}, ::Type{<:Quadrilateral2D}) = true
 isdefined(FEType::Type{<:H1BR}, ::Type{<:Tetrahedron3D}) = true
 
+interior_dofs_offset(::Union{Type{<:ON_FACES}, Type{<:ON_BFACES}}, ::Type{H1BR{2}}, ::Type{Edge1D}) = 4
+interior_dofs_offset(::Union{Type{<:ON_FACES}, Type{<:ON_BFACES}}, ::Type{H1BR{3}}, ::Type{Triangle2D}) = 9
 
-function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{AT_NODES}, exact_function!; kwargs...) where {Tv, Ti, FEType <: H1BR, APT}
-    nnodes = size(FE.dofgrid[Coordinates], 2)
-    return point_evaluation!(Target, FE, AT_NODES, exact_function!; component_offset = nnodes, kwargs...)
+function BR_normalflux_eval!(result, f, qpinfo)
+    return result[1] = dot(f, qpinfo.normal)
+end
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{AT_NODES}) where {Tv, Ti, FEType <: H1BR, APT} = NodalInterpolator(FES)
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: H1BR{2}, APT} = FunctionalInterpolator(BR_normalflux_eval!, FES, ON_FACES; operator = NormalFlux, dofs = [5])
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: H1BR{3}, APT} = FunctionalInterpolator(BR_normalflux_eval!, FES, ON_FACES; operator = NormalFlux, dofs = [10])
+
+
+function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{AT_NODES}, exact_function!; items = [], kwargs...) where {Tv, Ti, FEType <: H1BR, APT}
+    return get_interpolator(FE, AT_NODES).evaluate!(Target, exact_function!, items; kwargs...)
 end
 
 function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_EDGES}, exact_function!; items = [], kwargs...) where {Tv, Ti, FEType <: H1BR, APT}
@@ -49,47 +58,13 @@ function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, 
     return interpolate!(Target, FE, AT_NODES, exact_function!; items = subitems, kwargs...)
 end
 
-function ExtendableGrids.interpolate!(Target::AbstractVector{T}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}, exact_function!; items = [], bonus_quadorder = 0, kwargs...) where {T, Tv, Ti, FEType <: H1BR, APT}
+function ExtendableGrids.interpolate!(Target::AbstractVector{T}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, FEType <: H1BR, APT}
     # delegate face nodes to node interpolation
     subitems = slice(FE.dofgrid[FaceNodes], items)
     interpolate!(Target, FE, AT_NODES, exact_function!; items = subitems, kwargs...)
 
     # preserve face means in normal direction
-    xItemVolumes = FE.dofgrid[FaceVolumes]
-    xItemNodes = FE.dofgrid[FaceNodes]
-    xItemGeometries = FE.dofgrid[FaceGeometries]
-    xFaceNormals = FE.dofgrid[FaceNormals]
-    xItemDofs = FE[FaceDofs]
-    nnodes = size(FE.dofgrid[Coordinates], 2)
-    nitems = num_sources(xItemNodes)
-    ncomponents = get_ncomponents(FEType)
-    offset = ncomponents * nnodes
-    if items == []
-        items = 1:nitems
-    end
-
-    # compute exact face means
-    facemeans = zeros(T, ncomponents, nitems)
-    integrate!(facemeans, FE.dofgrid, ON_FACES, exact_function!; quadorder = 2 + bonus_quadorder, items = items, kwargs...)
-    P1flux::T = 0
-    value::T = 0
-    itemEG = Edge1D
-    nitemnodes::Int = 0
-    for item in items
-        itemEG = xItemGeometries[item]
-        nitemnodes = num_nodes(itemEG)
-        # compute normal flux (minus linear part)
-        value = 0
-        for c in 1:ncomponents
-            P1flux = 0
-            for dof in 1:nitemnodes
-                P1flux += Target[xItemDofs[(c - 1) * nitemnodes + dof, item]] * xItemVolumes[item] / nitemnodes
-            end
-            value += (facemeans[c, item] - P1flux) * xFaceNormals[c, item]
-        end
-        # set face bubble value
-        Target[offset + item] = value / xItemVolumes[item]
-    end
+    get_interpolator(FE, ON_FACES).evaluate!(Target, exact_function!, items; kwargs...)
     return
 end
 

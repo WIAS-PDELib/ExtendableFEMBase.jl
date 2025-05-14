@@ -42,16 +42,26 @@ isdefined(FEType::Type{<:H1P1TEB}, ::Type{<:Triangle2D}) = true
 isdefined(FEType::Type{<:H1P1TEB}, ::Type{<:Tetrahedron3D}) = true
 
 
+function TEB_tangentflux_eval_2d!(result, f, qpinfo)
+    result[1] = -f[1] * qpinfo.normal[2] # rotated normal = tangent
+    return result[1] += f[2] * qpinfo.normal[1]
+end
+function N0_tangentflux_eval_3d!(grid)
+    edgetangents = grid[EdgeTangents]
+    function closure(result, f, qpinfo)
+        result[1] = dot(f, view(edgetangents, :, qpinfo.item))
+    end
+    return closure
+end
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{AT_NODES}) where {Tv, Ti, FEType <: H1P1TEB, APT} = NodalInterpolator(FES)
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: H1P1TEB{2}, APT} = FunctionalInterpolator(TEB_normalflux_eval_2d!, FES, ON_FACES; operator = TangentFlux, dofs = [5])
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: H1P1TEB{3}, APT} = FunctionalInterpolator(TEB_normalflux_eval_3d!(FES.dofgrid), FES, ON_FACES; operator = TangentFlux, dofs = [10])
+
+
 function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{AT_NODES}, exact_function!; items = [], kwargs...) where {Tv, Ti, FEType <: H1P1TEB, APT}
-    nnodes = size(FE.dofgrid[Coordinates], 2)
-    return point_evaluation!(Target, FE, AT_NODES, exact_function!; items = items, component_offset = nnodes, kwargs...)
+    return get_interpolator(FE, AT_NODES).evaluate!(Target, exact_function!, items; kwargs...)
 end
 
-function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_EDGES}, exact_function!; items = [], kwargs...) where {Tv, Ti, FEType <: H1P1TEB{2}, APT}
-    # delegate edge nodes to node interpolation
-    subitems = slice(FE.dofgrid[EdgeNodes], items)
-    return interpolate!(Target, FE, AT_NODES, exact_function!; items = subitems, kwargs...)
-end
 
 function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}, exact_function!; items = [], kwargs...) where {Tv, Ti, FEType <: H1P1TEB{3}, APT}
     # delegate edges to edge interpolation
@@ -59,96 +69,24 @@ function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, 
     return interpolate!(Target, FE, ON_EDGES, exact_function!; items = subitems, kwargs...)
 end
 
-function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}, exact_function!; items = [], bonus_quadorder = 0, kwargs...) where {T, Tv, Ti, FEType <: H1P1TEB{2}, APT}
+function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, FEType <: H1P1TEB{2}, APT}
     # delegate face nodes to node interpolation
     subitems = slice(FE.dofgrid[FaceNodes], items)
     interpolate!(Target, FE, AT_NODES, exact_function!; items = subitems, kwargs...)
 
     # preserve face means in tangential direction
-    xItemVolumes = FE.dofgrid[FaceVolumes]
-    xItemNodes = FE.dofgrid[FaceNodes]
-    xItemGeometries = FE.dofgrid[FaceGeometries]
-    xFaceNormals = FE.dofgrid[FaceNormals]
-    xItemDofs = FE[FaceDofs]
-    ncomponents = get_ncomponents(FEType)
-    nnodes = size(FE.dofgrid[Coordinates], 2)
-    nitems = num_sources(xItemNodes)
-    offset = ncomponents * nnodes
-    if items == []
-        items = 1:nitems
-    end
-
-    # compute exact face means
-    facemeans = zeros(T, ncomponents, nitems)
-    integrate!(facemeans, FE.dofgrid, ON_FACES, exact_function!; quadorder = 2 + bonus_quadorder, items = items, kwargs...)
-    P1flux::T = 0
-    value::T = 0
-    itemEG = Edge1D
-    nitemnodes::Int = 0
-    for item in items
-        itemEG = xItemGeometries[item]
-        nitemnodes = num_nodes(itemEG)
-        # compute normal flux (minus linear part)
-        value = 0
-        for c in 1:ncomponents
-            P1flux = 0
-            for dof in 1:nitemnodes
-                P1flux += Target[xItemDofs[(c - 1) * nitemnodes + dof, item]] * xItemVolumes[item] / nitemnodes
-            end
-            if c == 1
-                value -= (facemeans[c, item] - P1flux) * xFaceNormals[2, item]
-            else
-                value += (facemeans[c, item] - P1flux) * xFaceNormals[1, item]
-            end
-        end
-        # set face bubble value
-        Target[offset + item] = value / xItemVolumes[item]
-    end
+    get_interpolator(FE, AT_NODES).evaluate!(Target, exact_function!, items; kwargs...)
     return
 end
 
 
-function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_EDGES}, exact_function!; items = [], bonus_quadorder = 0, kwargs...) where {T, Tv, Ti, FEType <: H1P1TEB{3}, APT}
+function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_EDGES}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, FEType <: H1P1TEB{3}, APT}
     # delegate face nodes to node interpolation
     subitems = slice(FE.dofgrid[EdgeNodes], items)
     interpolate!(Target, FE, AT_NODES, exact_function!; items = subitems, kwargs...)
 
-    # preserve edge means in tangential direction
-    xItemVolumes = FE.dofgrid[EdgeVolumes]
-    xItemNodes = FE.dofgrid[EdgeNodes]
-    xItemGeometries = FE.dofgrid[EdgeGeometries]
-    xEdgeTangents = FE.dofgrid[EdgeTangents]
-    xItemDofs = FE[EdgeDofs]
-    nnodes = size(FE.dofgrid[Coordinates], 2)
-    nitems = num_sources(xItemNodes)
-    ncomponents = get_ncomponents(FEType)
-    offset = ncomponents * nnodes
-    if items == []
-        items = 1:nitems
-    end
-
-    # compute exact face means
-    edgemeans = zeros(T, ncomponents, nitems)
-    integrate!(edgemeans, FE.dofgrid, ON_EDGES, exact_function!; quadorder = 2 + bonus_quadorder, items = items, kwargs...)
-    P1flux::T = 0
-    value::T = 0
-    itemEG = Edge1D
-    nitemnodes::Int = 0
-    for item in items
-        itemEG = xItemGeometries[item]
-        nitemnodes = num_nodes(itemEG)
-        # compute normal flux (minus linear part)
-        value = 0
-        for c in 1:ncomponents
-            P1flux = 0
-            for dof in 1:nitemnodes
-                P1flux += Target[xItemDofs[(c - 1) * nitemnodes + dof, item]] * xItemVolumes[item] / nitemnodes
-            end
-            value += (edgemeans[c, item] - P1flux) * xEdgeTangents[c, item]
-        end
-        # set face bubble value
-        Target[offset + item] = value / xItemVolumes[item]
-    end
+    # preserve face means in tangential direction
+    get_interpolator(FE, AT_NODES).evaluate!(Target, exact_function!, items; kwargs...)
     return
 end
 

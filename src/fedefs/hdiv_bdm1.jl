@@ -49,7 +49,7 @@ function BDM1_normalflux_eval!(dim)
         end
     end
 end
-init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: HDIVBDM1, APT} = FaceFluxEvaluator(BDM1_normalflux_eval!(FEType.parameters[1]), FES, ON_FACES)
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: HDIVBDM1, APT} = FunctionalInterpolator(BDM1_normalflux_eval!(FEType.parameters[1]), FES, ON_FACES)
 
 
 function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, FEType <: HDIVBDM1, APT}

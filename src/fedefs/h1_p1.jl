@@ -52,8 +52,8 @@ end
 
 function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}, exact_function!; items = [], kwargs...) where {Tv, Ti, FEType <: H1P1, APT}
     return if FE.broken == true
-        # broken interpolation
-        point_evaluation_broken!(Target, FE, ON_CELLS, exact_function!; items = items, time = time)
+        # broken nodal interpolation piecewise on cells
+        interpolate!(Target, FE, AT_NODES, exact_function!; items = items, kwargs...)
     else
         # delegate cell nodes to node interpolation
         subitems = slice(FE.dofgrid[CellNodes], items)

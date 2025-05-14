@@ -42,7 +42,7 @@ function N0_tangentflux_eval_2d!(result, f, qpinfo)
     result[1] = -f[1] * qpinfo.normal[2] # rotated normal = tangent
     return result[1] += f[2] * qpinfo.normal[1]
 end
-init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: HCURLN0{2}, APT} = FaceFluxEvaluator(N0_tangentflux_eval_2d!, FES, ON_FACES)
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: HCURLN0{2}, APT} = FunctionalInterpolator(N0_tangentflux_eval_2d!, FES, ON_FACES)
 
 function N0_tangentflux_eval_3d!(grid)
     edgetangents = grid[EdgeTangents]
@@ -51,7 +51,7 @@ function N0_tangentflux_eval_3d!(grid)
     end
     return closure
 end
-init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_EDGES}) where {Tv, Ti, FEType <: HCURLN0{3}, APT} = FaceFluxEvaluator(N0_tangentflux_eval_3d!(FES.dofgrid), FES, ON_EDGES)
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_EDGES}) where {Tv, Ti, FEType <: HCURLN0{3}, APT} = FunctionalInterpolator(N0_tangentflux_eval_3d!(FES.dofgrid), FES, ON_EDGES)
 
 function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_EDGES}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, FEType <: HCURLN0, APT}
     edim = get_ncomponents(FEType)
