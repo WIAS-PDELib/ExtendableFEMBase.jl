@@ -132,6 +132,7 @@ function run_interpolator_tests()
         println("============================")
         for EG in [Triangle2D, Parallelogram2D]
             xgrid = uniform_refine(reference_domain(EG), 1)
+            println("EG = $EG")
             for n in 1:length(TestCatalog2D), broken in (false, true)
                 if ExtendableFEMBase.isdefined(TestCatalog2D[n], EG, broken)
                     test_interpolation(xgrid, TestCatalog2D[n], ExpectedOrders2D[n], broken)

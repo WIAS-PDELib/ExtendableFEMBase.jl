@@ -3,10 +3,12 @@
 abstract type L2P1{ncomponents} <: AbstractH1FiniteElement where {ncomponents<:Int}
 ````
 
-Discontinuous piecewise first-order linear polynomials.
+Discontinuous piecewise first-order linear polynomials (same as H1P1 but enforces broken = true).
 
 allowed ElementGeometries:
-- any
+- Edge1D
+- Triangle2D
+- Tetrahedron3D
 """
 abstract type L2P1{ncomponents} <: AbstractH1FiniteElement where {ncomponents <: Int} end
 L2P1(ncomponents::Int) = L2P1{ncomponents}
@@ -29,7 +31,9 @@ get_dofmap_pattern(FEType::Type{<:L2P1}, ::Type{CellDofs}, EG::Type{<:AbstractEl
 get_dofmap_pattern(FEType::Type{<:L2P1}, ::Type{CellDofs}, EG::Type{<:AbstractElementGeometry2D}) = "I3"
 get_dofmap_pattern(FEType::Type{<:L2P1}, ::Type{CellDofs}, EG::Type{<:AbstractElementGeometry3D}) = "I4"
 
-isdefined(FEType::Type{<:L2P1}, ::Type{<:AbstractElementGeometry}) = true
+isdefined(FEType::Type{<:L2P1}, ::Type{<:AbstractElementGeometry1D}) = true
+isdefined(FEType::Type{<:L2P1}, ::Type{<:Triangle2D}) = true
+isdefined(FEType::Type{<:L2P1}, ::Type{<:Tetrahedron3D}) = true
 
 init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{AT_NODES}) where {Tv, Ti, FEType <: L2P1, APT} = NodalInterpolator(FES)
 function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{AT_NODES}, exact_function!; items = [], kwargs...) where {Tv, Ti, FEType <: L2P1, APT}
