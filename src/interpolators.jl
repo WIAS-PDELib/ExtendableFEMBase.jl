@@ -37,7 +37,7 @@ function NodalInterpolator(
     xCoordinates = grid[Coordinates]
     xCellRegions = grid[CellRegions]
     result = zeros(T, ncomponents)
-    QP = QPInfos(grid; time = 0)
+    QP = QPInfos(grid; time = 0.0)
 
     if broken
         ## FE space is broken
@@ -46,11 +46,14 @@ function NodalInterpolator(
         ncells = num_cells(grid)
         function evaluate_broken!(target, exact_function!, items; time = 0, params = [], kwargs...)
             QP.time = time
-            QP.params = params
+            QP.params = params === nothing ? [] : params
             if isempty(items)
                 items = 1 : ncells
             end
             for cell in items
+                if cell < 1
+                    continue
+                end
                 nnodes_on_cell = num_targets(xCellNodes, cell)
                 QP.item = cell
                 QP.cell = cell
@@ -73,11 +76,14 @@ function NodalInterpolator(
         xNodeCells = atranspose(grid[CellNodes])
         function evaluate!(target, exact_function!, items; time = 0, params = [], kwargs...)
             QP.time = time
-            QP.params = params
+            QP.params = params === nothing ? [] : params
             if isempty(items)
                 items = 1 : nnodes
             end
             for j in items
+                if j < 1
+                    continue
+                end
                 cell = xNodeCells[1, j]
                 QP.item = cell
                 QP.cell = cell
@@ -284,7 +290,7 @@ function MomentInterpolator(FE::FESpace{Tv, Ti, FEType, APT}, AT::Type{<:Assembl
     QF = QuadratureRule{Tv, EG}(current_quadorder)
     f_moments = zeros(Tv, nmoments)
     result_f = zeros(Tv, ncomponents)
-    QP = QPInfos(xgrid; time = 0, kwargs...)
+    QP = QPInfos(xgrid; time = 0.0, kwargs...)
 
     # prepare mass matrix integration
     FEB = FEEvaluator(FE, operator, QF; AT = AT, T = Tv)
@@ -300,7 +306,10 @@ function MomentInterpolator(FE::FESpace{Tv, Ti, FEType, APT}, AT::Type{<:Assembl
     function assembly_loop!(target, f_moments, items, exact_function!, QF, L2G, FEB, FEB_moments)
         weights, xref = QF.w, QF.xref
         nweights = length(weights)
-        for item in items
+        for item::Int in items
+            if item < 1
+                continue
+            end
             QP.region = itemregions[item]
             QP.item = item
             if has_normals
@@ -396,7 +405,7 @@ function MomentInterpolator(FE::FESpace{Tv, Ti, FEType, APT}, AT::Type{<:Assembl
             FEB = FEEvaluator(FE, operator, QF; T = Tv)
             FEB_moments = FEEvaluator(FE_moments, moments_operator, QF; T = Tv)
         end
-        QP.params = params
+        QP.params = params === nothing ? [] : params
         QP.time = time
         if isempty(items)
             items = 1:nitems
@@ -424,15 +433,18 @@ function FunctionalInterpolator(
 ````
 
 Constructs an interpolation structure that has an evaluate! function that determines the interior degrees of freedom
-(or the specified local dofs) by evaluating functionals! (the result dimension should correspond to the number of dofs)
-The functionals are corrected by the operator evaluations of fixed dofs.
+(or the specified local dofs) by evaluating functionals! (the result dimension nfluxes should correspond to the number of dofs,
+both are set to the number of interior dofs as defaults).
+The functionals are corrected by the operator evaluations of the fixed dofs.
+The mean parameter decides if the functional is divided by the area in the end (if mean = true).
 """
 function FunctionalInterpolator(
     functionals!::Function,
     FE::FESpace{Tv, Ti, FEType, APT},
     AT::Type{<:AssemblyType} = ON_FACES,
     xgrid = FE.dofgrid;
-    operator = NormalFlux, nfluxes = 0, dofs = [], kwargs...) where {Tv, Ti, FEType <: AbstractFiniteElement, APT}
+    bonus_quadorder = 0,
+    operator = NormalFlux, nfluxes = 0, dofs = [], mean = false, kwargs...) where {Tv, Ti, FEType <: AbstractFiniteElement, APT}
     
     itemvolumes = xgrid[GridComponentVolumes4AssemblyType(AT)]
     itemnodes = xgrid[GridComponentNodes4AssemblyType(AT)]
@@ -465,21 +477,24 @@ function FunctionalInterpolator(
     ncomponents::Int = get_ncomponents(FEType)
     order_FE = get_polynomialorder(FEType, EG)
     L2G = L2GTransformer(EG, xgrid, AT)
-    current_quadorder = 2*order_FE
+    current_quadorder = order_FE + bonus_quadorder
     QF = QuadratureRule{Tv, EG}(current_quadorder)
     f_fluxes = zeros(Tv, nfluxes)
     result_f = zeros(Tv, ncomponents)
-    QP = QPInfos(xgrid; time = 0, kwargs...)
+    QP = QPInfos(xgrid; time = 0.0, kwargs...)
     nitems = size(itemnodes, 2)
 
     ## prepare evaluation of fixed dofs
     interior_offset = interior_dofs_offset(AT, FEType, EG)
-    FEB = FEEvaluator(FE, operator, QF; AT = AT, T = Tv)
+    FEB = FEEvaluator(FE, operator, QF; AT = AT, T = Tv, L2G = L2G)
 
     function assembly_loop!(target, f_fluxes, items, exact_function!, QF, L2G, FEB)
         weights, xref = QF.w, QF.xref
         nweights = length(weights)
-        for item in items
+        for item::Int in items
+            if item < 1
+                continue
+            end
             for m = 1:nfluxes
                 target[itemdofs[dofs[m], item]] = 0
             end
@@ -505,13 +520,18 @@ function FunctionalInterpolator(
                 ## subtract flux of fixed dofs
                 if interior_offset > 0
                     for m = 1 : nfluxes, dof = 1 : interior_offset
-                        f_fluxes[m] -= FEB.cvals[m, dof, qp] * weights[qp] * itemvolumes[item]
+                        f_fluxes[m] -= target[itemdofs[dof, item]] * FEB.cvals[m, dof, qp] 
                     end
+                end
+
+                weight = weights[qp]
+                if !mean
+                    weight *= itemvolumes[item]
                 end
 
                 ## set fluxes to dofs
                 for m = 1:nfluxes
-                    target[itemdofs[dofs[m], item]] += f_fluxes[m] * weights[qp] * itemvolumes[item]
+                    target[itemdofs[dofs[m], item]] += f_fluxes[m] * weight
                 end
             end
         end
@@ -525,7 +545,7 @@ function FunctionalInterpolator(
             FEB = FEEvaluator(FE, operator, QF; AT = AT, T = Tv)
             quadorder = new_quadorder
         end
-        QP.params = params
+        QP.params = params === nothing ? [] : params
         QP.time = time
         if isempty(items)
             items = 1:nitems
@@ -543,12 +563,14 @@ function slice(VTA::VariableTargetAdjacency, items = [], only_unique::Bool = tru
     subitems = zeros(Int, 0)
     if items == []
         items = 1:num_sources(VTA)
-    end
-    for item in items
-        append!(subitems, VTA[:, item])
-    end
-    if only_unique
-        subitems = unique(subitems)
+        subitems = VTA.colentries
+    else
+        for item in items
+            append!(subitems, VTA[:, item])
+        end
+        if only_unique
+            subitems = unique(subitems)
+        end
     end
     return subitems
 end

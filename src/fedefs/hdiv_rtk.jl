@@ -40,7 +40,7 @@ function RTk_normalflux_eval!(order)
         end
     end
 end
-init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: HDIVRTk, APT} = FunctionalInterpolator(RTk_normalflux_eval!(FEType.parameters[2]), FES, ON_FACES)
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: HDIVRTk, APT} = FunctionalInterpolator(RTk_normalflux_eval!(FEType.parameters[2]), FES, ON_FACES; bonus_quadorder = FEType.parameters[2])
 init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}) where {Tv, Ti, FEType <: HDIVRTk, APT} = MomentInterpolator(FES, ON_CELLS; order = FEType.parameters[2] - 1)
 
 

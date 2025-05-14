@@ -54,8 +54,8 @@ function TEB_tangentflux_eval_3d!(grid)
     return closure
 end
 init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{AT_NODES}) where {Tv, Ti, FEType <: H1P1TEB, APT} = NodalInterpolator(FES)
-init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: H1P1TEB{2}, APT} = FunctionalInterpolator(TEB_normalflux_eval_2d!, FES, ON_FACES; operator = TangentFlux, dofs = [5])
-init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: H1P1TEB{3}, APT} = FunctionalInterpolator(TEB_normalflux_eval_3d!(FES.dofgrid), FES, ON_FACES; operator = TangentFlux, dofs = [10])
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: H1P1TEB{2}, APT} = FunctionalInterpolator(TEB_normalflux_eval_2d!, FES, ON_FACES; operator = TangentFlux, dofs = [5], mean = true)
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: H1P1TEB{3}, APT} = FunctionalInterpolator(TEB_normalflux_eval_3d!(FES.dofgrid), FES, ON_FACES; operator = TangentFlux, dofs = [10], mean = true)
 
 
 function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{AT_NODES}, exact_function!; items = [], kwargs...) where {Tv, Ti, FEType <: H1P1TEB, APT}

@@ -44,8 +44,8 @@ function BR_normalflux_eval!(result, f, qpinfo)
     return result[1] = dot(f, qpinfo.normal)
 end
 init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{AT_NODES}) where {Tv, Ti, FEType <: H1BR, APT} = NodalInterpolator(FES)
-init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: H1BR{2}, APT} = FunctionalInterpolator(BR_normalflux_eval!, FES, ON_FACES; operator = NormalFlux, dofs = [5])
-init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: H1BR{3}, APT} = FunctionalInterpolator(BR_normalflux_eval!, FES, ON_FACES; operator = NormalFlux, dofs = [10])
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: H1BR{2}, APT} = FunctionalInterpolator(BR_normalflux_eval!, FES, ON_FACES; operator = NormalFlux, dofs = [5], mean = true)
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: H1BR{3}, APT} = FunctionalInterpolator(BR_normalflux_eval!, FES, ON_FACES; operator = NormalFlux, dofs = [10], mean = true)
 
 
 function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{AT_NODES}, exact_function!; items = [], kwargs...) where {Tv, Ti, FEType <: H1BR, APT}
