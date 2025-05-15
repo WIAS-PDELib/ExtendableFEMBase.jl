@@ -2,6 +2,7 @@
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://wias-pdelib.github.io/ExtendableFEMBase.jl/stable/index.html)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://wias-pdelib.github.io/ExtendableFEMBase.jl/dev/index.html)
 [![DOI](https://zenodo.org/badge/667751152.svg)](https://zenodo.org/doi/10.5281/zenodo.10563410)
+[![code style: runic](https://img.shields.io/badge/code_style-%E1%9A%B1%E1%9A%A2%E1%9A%BE%E1>
 
 # ExtendableFEMBase
 

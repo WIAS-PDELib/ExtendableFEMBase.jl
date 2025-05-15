@@ -41,10 +41,10 @@ isdefined(FEType::Type{<:HDIVBDM1}, ::Type{<:Quadrilateral2D}) = true
 isdefined(FEType::Type{<:HDIVBDM1}, ::Type{<:Tetrahedron3D}) = true
 
 function BDM1_normalflux_eval!(dim)
-    function closure(result, f, qpinfo)
+    return function closure(result, f, qpinfo)
         result[1] = dot(f, qpinfo.normal)
         result[2] = result[1] * (qpinfo.xref[1] - 1 // dim)
-        if dim == 3
+        return if dim == 3
             result[3] = result[1] * (qpinfo.xref[2] - 1 // dim)
         end
     end
@@ -53,7 +53,7 @@ init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {T
 
 
 function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, FEType <: HDIVBDM1, APT}
-    get_interpolator(FE, ON_FACES).evaluate!(Target, exact_function!, items; kwargs...)
+    return get_interpolator(FE, ON_FACES).evaluate!(Target, exact_function!, items; kwargs...)
 end
 
 function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}, data; items = [], kwargs...) where {Tv, Ti, FEType <: HDIVBDM1, APT}

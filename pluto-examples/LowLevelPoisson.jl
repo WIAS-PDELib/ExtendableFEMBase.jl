@@ -6,11 +6,11 @@ using InteractiveUtils
 
 # ╔═╡ 014c3380-b361-11ed-273e-37541f1ed74f
 begin
-	using ExtendableFEMBase
-	using ExtendableGrids
-	using ExtendableSparse
-	using GridVisualize
-	using PlutoVista
+    using ExtendableFEMBase
+    using ExtendableGrids
+    using ExtendableSparse
+    using GridVisualize
+    using PlutoVista
     GridVisualize.default_plotter!(PlutoVista)
 end
 
@@ -37,38 +37,38 @@ The weak formulation seeks ``u \in V := H^1_0(\Omega)`` such that
 
 # ╔═╡ 6160364e-6ab2-475d-9345-3436e6f2b3e3
 begin
-	## PDE data
-	μ = 1.0
-	f = x -> x[1] - x[2]
+    ## PDE data
+    μ = 1.0
+    f = x -> x[1] - x[2]
 
-	## discretization parameters
-	nref = 9
-	order = 1
+    ## discretization parameters
+    nref = 9
+    order = 1
 end
 
 # ╔═╡ 8e0a11e7-7998-403a-8484-7d0180ea40b2
 begin
-	## create grid
-	X = LinRange(0,1,2^nref+1)
-	Y = LinRange(0,1,2^nref+1)
-	println("Creating grid...")
-	@time xgrid = simplexgrid(X,Y)
-	println("Preparing FaceNodes...")
-	@time xgrid[FaceNodes]
-	println("Preparing CellVolumes...")
+    ## create grid
+    X = LinRange(0, 1, 2^nref + 1)
+    Y = LinRange(0, 1, 2^nref + 1)
+    println("Creating grid...")
+    @time xgrid = simplexgrid(X, Y)
+    println("Preparing FaceNodes...")
+    @time xgrid[FaceNodes]
+    println("Preparing CellVolumes...")
     @time xgrid[CellVolumes]
-	xgrid
+    xgrid
 end
 
 # ╔═╡ 7e2a082f-5457-47ac-96d5-b688a70a5506
 begin
-	## create finite element space
-    FEType = H1Pk{1,2,order}
+    ## create finite element space
+    FEType = H1Pk{1, 2, order}
 
-	## prepare finite element space and dofmaps
-	println("Creating FESpace...")
+    ## prepare finite element space and dofmaps
+    println("Creating FESpace...")
     @time FES = FESpace{FEType}(xgrid)
-	FES
+    FES
 end
 
 # ╔═╡ 6dcca265-b8fd-4043-a2a7-4ff9bf579dd5
@@ -81,126 +81,127 @@ function assemble!(A::ExtendableSparseMatrix, b::Vector, FES, f, μ = 1)
 
     ## dofmap
     CellDofs = FES[ExtendableFEMBase.CellDofs]
-	
-    ## quadrature formula
-	qf = QuadratureRule{Float64, EG}(2*(get_polynomialorder(FEType, EG)-1))
-	weights::Vector{Float64} = qf.w
-	xref::Vector{Vector{Float64}} = qf.xref
-	nweights::Int = length(weights)
-	
-	## FE basis evaluator
-	FEBasis_∇ = FEEvaluator(FES, Gradient, qf)
-	∇vals = FEBasis_∇.cvals
-	FEBasis_id = FEEvaluator(FES, Identity, qf)
-	idvals = FEBasis_id.cvals
 
-	
+    ## quadrature formula
+    qf = QuadratureRule{Float64, EG}(2 * (get_polynomialorder(FEType, EG) - 1))
+    weights::Vector{Float64} = qf.w
+    xref::Vector{Vector{Float64}} = qf.xref
+    nweights::Int = length(weights)
+
+    ## FE basis evaluator
+    FEBasis_∇ = FEEvaluator(FES, Gradient, qf)
+    ∇vals = FEBasis_∇.cvals
+    FEBasis_id = FEEvaluator(FES, Identity, qf)
+    idvals = FEBasis_id.cvals
+
+
     cellvolumes = xgrid[CellVolumes]
-   
+
     ## ASSEMBLY LOOP
     function barrier(EG, L2G::L2GTransformer)
-		## barrier function to avoid allocations by EG dispatch
-		
-    	ndofs4cell::Int = get_ndofs(ON_CELLS, FEType, EG)
-    	Aloc = zeros(Float64, ndofs4cell, ndofs4cell)
-        ncells::Int = num_cells(xgrid)
-    	dof_j::Int, dof_k::Int = 0, 0
-        x::Vector{Float64} = zeros(Float64, 2)
-        
-        for cell = 1 : ncells
-			## update FE basis evaluators
-	        FEBasis_∇.citem[] = cell
-	        update_basis!(FEBasis_∇) 
-	
-			## assemble local stiffness matrix
-	        for j = 1 : ndofs4cell, k = j : ndofs4cell
-				temp = 0
-				for qp = 1 : nweights
-					temp += weights[qp] * dot(view(∇vals,:,j,qp), view(∇vals,:,k,qp))
-				end
-				Aloc[j,k] = temp
-	        end
-	        Aloc .*= μ * cellvolumes[cell]
-	
-			## add local matrix to global matrix
-	        for j = 1 : ndofs4cell
-	            dof_j = CellDofs[j, cell]
-	            for k = j : ndofs4cell
-	                dof_k = CellDofs[k, cell]
-	                if abs(Aloc[j,k]) > 1e-15
-	                    # write into sparse matrix, only lines with allocations
-	                    rawupdateindex!(A, +, Aloc[j,k], dof_j, dof_k) 
-	                    if k > j
-	                        rawupdateindex!(A, +, Aloc[j,k], dof_k, dof_j)
-	                    end
-	                end
-	            end
-	        end
-	        fill!(Aloc, 0)
+        ## barrier function to avoid allocations by EG dispatch
 
-			## assemble right-hand side
+        ndofs4cell::Int = get_ndofs(ON_CELLS, FEType, EG)
+        Aloc = zeros(Float64, ndofs4cell, ndofs4cell)
+        ncells::Int = num_cells(xgrid)
+        dof_j::Int, dof_k::Int = 0, 0
+        x::Vector{Float64} = zeros(Float64, 2)
+
+        for cell in 1:ncells
+            ## update FE basis evaluators
+            FEBasis_∇.citem[] = cell
+            update_basis!(FEBasis_∇)
+
+            ## assemble local stiffness matrix
+            for j in 1:ndofs4cell, k in j:ndofs4cell
+                temp = 0
+                for qp in 1:nweights
+                    temp += weights[qp] * dot(view(∇vals, :, j, qp), view(∇vals, :, k, qp))
+                end
+                Aloc[j, k] = temp
+            end
+            Aloc .*= μ * cellvolumes[cell]
+
+            ## add local matrix to global matrix
+            for j in 1:ndofs4cell
+                dof_j = CellDofs[j, cell]
+                for k in j:ndofs4cell
+                    dof_k = CellDofs[k, cell]
+                    if abs(Aloc[j, k]) > 1.0e-15
+                        # write into sparse matrix, only lines with allocations
+                        rawupdateindex!(A, +, Aloc[j, k], dof_j, dof_k)
+                        if k > j
+                            rawupdateindex!(A, +, Aloc[j, k], dof_k, dof_j)
+                        end
+                    end
+                end
+            end
+            fill!(Aloc, 0)
+
+            ## assemble right-hand side
             update_trafo!(L2G, cell)
-            for j = 1 : ndofs4cell
+            for j in 1:ndofs4cell
                 ## right-hand side
                 temp = 0
-                for qp = 1 : nweights
+                for qp in 1:nweights
                     ## get global x for quadrature point
                     eval_trafo!(x, L2G, xref[qp])
                     ## evaluate (f(x), v_j(x))
                     temp += weights[qp] * idvals[1, j, qp] * f(x)
                 end
-				## write into global vector
+                ## write into global vector
                 dof_j = CellDofs[j, cell]
                 b[dof_j] += temp * cellvolumes[cell]
             end
         end
+        return
     end
     barrier(EG, L2G)
-    flush!(A)
+    return flush!(A)
 end
 
 # ╔═╡ 7299586b-6859-41af-bcd0-1a0daa454c81
 function solve_poisson_lowlevel(FES, μ, f)
-	
-	Solution = FEVector(FES)
-	FES = Solution[1].FES
-	A = FEMatrix(FES, FES)
-	b = FEVector(FES)
-	println("Assembling operators...")
-	@time assemble!(A.entries, b.entries, FES, f, μ)
+
+    Solution = FEVector(FES)
+    FES = Solution[1].FES
+    A = FEMatrix(FES, FES)
+    b = FEVector(FES)
+    println("Assembling operators...")
+    @time assemble!(A.entries, b.entries, FES, f, μ)
 
     ## fix boundary dofs
-	println("Assembling boundary data...")
-	@time begin
-		BFaceDofs::Adjacency{Int32} = FES[ExtendableFEMBase.BFaceDofs]
-		nbfaces::Int = num_sources(BFaceDofs)
-		AM::ExtendableSparseMatrix{Float64,Int64} = A.entries
-		dof_j::Int = 0
-		for bface = 1 : nbfaces
-			for j = 1 : num_targets(BFaceDofs,1)
-				dof_j = BFaceDofs[j, bface]
-				AM[dof_j,dof_j] = 1e60
-				b.entries[dof_j] = 0
-			end
-		end
-	end
-	ExtendableSparse.flush!(A.entries)
+    println("Assembling boundary data...")
+    @time begin
+        BFaceDofs::Adjacency{Int32} = FES[ExtendableFEMBase.BFaceDofs]
+        nbfaces::Int = num_sources(BFaceDofs)
+        AM::ExtendableSparseMatrix{Float64, Int64} = A.entries
+        dof_j::Int = 0
+        for bface in 1:nbfaces
+            for j in 1:num_targets(BFaceDofs, 1)
+                dof_j = BFaceDofs[j, bface]
+                AM[dof_j, dof_j] = 1.0e60
+                b.entries[dof_j] = 0
+            end
+        end
+    end
+    ExtendableSparse.flush!(A.entries)
 
     ## solve
-	println("Solving linear system...")
+    println("Solving linear system...")
     @time copyto!(Solution.entries, A.entries \ b.entries)
 
-	return Solution
+    return Solution
 end
 
 # ╔═╡ 0785624c-e95a-4e76-8071-2eea591091e0
 begin
-	## call low level solver
-	sol = solve_poisson_lowlevel(FES, μ, f)
+    ## call low level solver
+    sol = solve_poisson_lowlevel(FES, μ, f)
 end
 
 # ╔═╡ 6f7a1407-dfb3-497b-8c57-8efac6592194
-tricontour(xgrid[Coordinates],xgrid[CellNodes],sol.entries[1:num_nodes(xgrid)]; levels = 5, resolution = (500,500))
+tricontour(xgrid[Coordinates], xgrid[CellNodes], sol.entries[1:num_nodes(xgrid)]; levels = 5, resolution = (500, 500))
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """

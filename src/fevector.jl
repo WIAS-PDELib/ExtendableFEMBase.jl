@@ -35,8 +35,8 @@ $(TYPEDSIGNATURES)
 Custom `show` function for `FEVectorBlock` that prints some information and the view of that block.
 """
 function Base.show(io::IO, ::MIME"text/plain", FEB::FEVectorBlock)
-    @printf(io, "block %s [%d:%d] = ", FEB.name, FEB.offset+1, FEB.last_index)
-    show(io, view(FEB))
+    @printf(io, "block %s [%d:%d] = ", FEB.name, FEB.offset + 1, FEB.last_index)
+    return show(io, view(FEB))
 end
 
 """
@@ -69,7 +69,7 @@ Base.setindex!(FEB::FEVectorBlock, v, i::AbstractArray) = (FEB.entries[FEB.offse
 Base.eltype(::FEVector{T}) where {T} = T
 Base.size(FEF::FEVector) = size(FEF.FEVectorBlocks)
 Base.size(FEB::FEVectorBlock) = FEB.last_index - FEB.offset
-Base.first(FEB::FEVectorBlock) = FEB.offset+1
+Base.first(FEB::FEVectorBlock) = FEB.offset + 1
 Base.last(FEB::FEVectorBlock) = FEB.last_index
 
 
@@ -197,7 +197,7 @@ function Base.show(io::IO, FEF::FEVector)
     print(io, "   block  |  starts  |   ends   |  length  |     min  /  max    \t| FEType \t\t (name/tag)")
     for j in 1:length(FEF)
         @printf(io, "\n [%5d]  |", j)
-        @printf(io, "  %6d  |", FEF[j].offset+1)
+        @printf(io, "  %6d  |", FEF[j].offset + 1)
         @printf(io, "  %6d  |", FEF[j].last_index)
         @printf(io, "  %6d  |", FEF[j].FES.ndofs)
         ext = extrema(view(FEF[j]))

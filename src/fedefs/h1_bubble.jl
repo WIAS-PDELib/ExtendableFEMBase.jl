@@ -38,7 +38,7 @@ interior_dofs_offset(::Type{ON_CELLS}, ::Type{H1BUBBLE{ncomponents}}, EG::Type{<
 init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}) where {Tv, Ti, FEType <: H1BUBBLE, APT} = MomentInterpolator(FES, ON_CELLS)
 
 function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, FEType <: H1BUBBLE, APT}
-    get_interpolator(FE, ON_CELLS).evaluate!(Target, exact_function!, items, kwargs...)
+    return get_interpolator(FE, ON_CELLS).evaluate!(Target, exact_function!, items, kwargs...)
 end
 
 function get_basis(::Type{<:AssemblyType}, ::Type{H1BUBBLE{ncomponents}}, ::Type{<:AbstractElementGeometry1D}) where {ncomponents}

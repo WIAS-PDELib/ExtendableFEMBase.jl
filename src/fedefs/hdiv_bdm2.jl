@@ -32,18 +32,18 @@ interior_dofs_offset(::Type{<:ON_CELLS}, ::Type{<:HDIVBDM2{2}}, ::Type{<:Triangl
 
 function BDM2_normalflux_eval!(dim)
     @assert dim == 2 "BDM3 for dim=3 not available yet"
-    function closure(result, f, qpinfo)
+    return function closure(result, f, qpinfo)
         result[1] = dot(f, qpinfo.normal)
         result[2] = result[1] * (qpinfo.xref[1] - 1 // dim)
-        result[3] = result[1] * (qpinfo.xref[1]^2 - qpinfo.xref[1] + 1 // 6)
+        return result[3] = result[1] * (qpinfo.xref[1]^2 - qpinfo.xref[1] + 1 // 6)
     end
 end
 init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: HDIVBDM2, APT} = FunctionalInterpolator(BDM2_normalflux_eval!(FEType.parameters[1]), FES, ON_FACES; bonus_quadorder = 2)
-init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}) where {Tv, Ti, FEType <: HDIVBDM2{2}, APT} = MomentInterpolator(FES, ON_CELLS; FEType_moments = H1MINI{1,2}, moments_dofs = [1,2,4], moments_operator = CurlScalar)
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}) where {Tv, Ti, FEType <: HDIVBDM2{2}, APT} = MomentInterpolator(FES, ON_CELLS; FEType_moments = H1MINI{1, 2}, moments_dofs = [1, 2, 4], moments_operator = CurlScalar)
 
 
 function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, FEType <: HDIVBDM2, APT}
-    get_interpolator(FE, ON_FACES).evaluate!(Target, exact_function!, items; kwargs...)
+    return get_interpolator(FE, ON_FACES).evaluate!(Target, exact_function!, items; kwargs...)
 end
 
 function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, FEType <: HDIVBDM2, APT}
@@ -53,7 +53,7 @@ function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{T
 
     # set interior dofs such that moments with ∇P1 and curl(b) are preserved
     # (b is the cell bubble)
-    get_interpolator(FE, ON_CELLS).evaluate!(Target, exact_function!, items; kwargs...)
+    return get_interpolator(FE, ON_CELLS).evaluate!(Target, exact_function!, items; kwargs...)
 end
 
 ## only normalfluxes on faces

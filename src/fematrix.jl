@@ -32,7 +32,7 @@ $(TYPEDSIGNATURES)
 Custom `show` function for `FEMatrixBlock` that prints its coordinates and the name.
 """
 function Base.show(io::IO, FEB::FEMatrixBlock)
-    @printf(io, "[%d:%d,%d:%d]: %s", FEB.offset+1, FEB.last_index, FEB.offsetY+1, FEB.last_indexY, FEB.name)
+    @printf(io, "[%d:%d,%d:%d]: %s", FEB.offset + 1, FEB.last_index, FEB.offsetY + 1, FEB.last_indexY, FEB.name)
     return nothing
 end
 
@@ -93,9 +93,8 @@ Base.getindex(FEF::FEMatrix{TvM, TiM, TvG, TiG, nbrow, nbcol, nbtotal}, i::Int, 
 Base.getindex(FEB::FEMatrixBlock, i::Int, j::Int) = FEB.entries[FEB.offset + i, FEB.offsetY + j]
 Base.getindex(FEB::FEMatrixBlock, i::Any, j::Any) = FEB.entries[FEB.offset .+ i, FEB.offsetY .+ j]
 Base.setindex!(FEB::FEMatrixBlock, v, i::Int, j::Int) = setindex!(FEB.entries, v, FEB.offset + i, FEB.offsetY + j)
-Base.first(FEB::FEMatrixBlock) = (FEB.offset+1, FEB.offsetY+1)
+Base.first(FEB::FEMatrixBlock) = (FEB.offset + 1, FEB.offsetY + 1)
 Base.last(FEB::FEMatrixBlock) = (FEB.last_index, FEB.last_indexY)
-
 
 
 """
@@ -148,7 +147,7 @@ function Base.show(io::IO, FEM::FEMatrix{TvM, TiM, TvG, TiG, nbrow, nbcol, nbtot
         n = mod(j - 1, nbrow) + 1
         m = Int(ceil(j / nbrow))
         @printf(io, " [%2d,%2d]  |", m, n)
-        @printf(io, "  (%6d,%6d) |", FEM[j].offset+1, FEM[j].offsetY+1)
+        @printf(io, "  (%6d,%6d) |", FEM[j].offset + 1, FEM[j].offsetY + 1)
         @printf(io, "  (%6d,%6d) |", FEM[j].last_index, FEM[j].last_indexY)
         @printf(io, "  (%6d,%6d) |", FEM[j].FES.ndofs, FEM[j].FESY.ndofs)
         @printf(io, " %s \n", FEM[j].name)
@@ -624,8 +623,8 @@ function submatrix(A::AbstractExtendableSparseMatrixCSC{Tv, Ti}, srows, scols; f
     cscmat::SparseMatrixCSC{Tv, Ti} = A.cscmatrix
     rows::Array{Ti, 1} = rowvals(cscmat)
     valsA = cscmat.nzval
-    nrowsA = size(A,1)
-    ncolsA = size(A,2)
+    nrowsA = size(A, 1)
+    ncolsA = size(A, 2)
     S = ExtendableSparseMatrix{Tv, Ti}(length(srows), length(scols))
     @assert maximum(srows) <= size(A, 1) "rows exceeds rowcount of A"
     @assert maximum(scols) <= size(A, 2) "cols exceeds colcount of A"
@@ -641,7 +640,7 @@ function submatrix(A::AbstractExtendableSparseMatrixCSC{Tv, Ti}, srows, scols; f
         for r in nzrange(cscmat, scol)
             if newrows[rows[r]] > 0
                 _addnz(S, newrows[rows[r]], newcols[scol], valsA[r], factor)
-            else 
+            else
                 break
             end
         end
@@ -656,5 +655,5 @@ $(TYPEDSIGNATURES)
 Returns the FEMatrixBlock as an ExtendableSparseMatrix
 """
 function submatrix(A::FEMatrixBlock{Tv, Ti}) where {Tv, Ti}
-    return submatrix(A.entries, A.offset+1:A.last_index, A.offsetY+1:A.last_indexY)
+    return submatrix(A.entries, (A.offset + 1):A.last_index, (A.offsetY + 1):A.last_indexY)
 end
