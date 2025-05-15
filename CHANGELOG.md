@@ -1,6 +1,11 @@
 # CHANGES
 
-## v1.0.0
+## v1.1.0 May 15, 2025
+  - overhaul of interpolators: each finite element
+    interpolation is composed of the three new
+    structures NodalInterpolator, MomentInterpolator, FunctionalInterpolator
+  
+## v1.0.0 April 7, 2025
   - doc improvements
   - several bugfixes regarding finite elements defined on subgrids
   - integrate now reacts on regions parameter and has proper docstrings

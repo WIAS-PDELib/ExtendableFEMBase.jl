@@ -32,6 +32,7 @@ function NodalInterpolator(
     broken = FES.broken,
     component_offset = FES.coffset,
     kwargs...) where {T}
+
     FEType = eltype(FES)
     ncomponents = get_ncomponents(FEType)
     xCoordinates = grid[Coordinates]
@@ -115,7 +116,20 @@ are solved with a mass matrix of interior basis functions (evaluated with operat
 basis functions of the moments of type FEType_ref and with moments_operator. In the bestapprox mode
 the mass matrix instead is formed from the scalar product of the interior basis functions.
 """
-function MomentInterpolator(FE::FESpace{Tv, Ti, FEType, APT}, AT::Type{<:AssemblyType}, xgrid = FE.dofgrid; operator = Identity, FEType_ref = :auto, FEType_moments = :auto, moments_operator = operator, moments_dofs = Int[], bestapprox = false, order = 0, coffset::Int = -1, componentwise = true, kwargs...) where {Tv, Ti, FEType <: AbstractFiniteElement, APT}
+function MomentInterpolator(
+    FE::FESpace{Tv, Ti, FEType, APT},
+    AT::Type{<:AssemblyType},
+    xgrid = FE.dofgrid;
+    operator = Identity,
+    FEType_ref = :auto,
+    FEType_moments = :auto,
+    moments_operator = operator,
+    moments_dofs = Int[],
+    bestapprox = false,
+    order = 0,
+    coffset::Int = -1,
+    componentwise = true,
+    kwargs...) where {Tv, Ti, FEType <: AbstractFiniteElement, APT}
 
     itemvolumes = xgrid[GridComponentVolumes4AssemblyType(AT)]
     itemnodes = xgrid[GridComponentNodes4AssemblyType(AT)]
@@ -174,7 +188,10 @@ function MomentInterpolator(FE::FESpace{Tv, Ti, FEType, APT}, AT::Type{<:Assembl
     end
 
     ## check if mass matrix can be computed once or needs to be recomputed on every mesh
-    if FEType_ref <: AbstractH1FiniteElement && !(FEType_ref <: AbstractH1FiniteElementWithCoefficients) && FEType_moments <: AbstractH1FiniteElement && moments_operator == Identity
+    if FEType_ref <: AbstractH1FiniteElement &&
+        !(FEType_ref <: AbstractH1FiniteElementWithCoefficients) &&
+        FEType_moments <: AbstractH1FiniteElement &&
+         moments_operator == Identity
         fixed_mass_matrix = true
     else
         fixed_mass_matrix = false
@@ -444,7 +461,11 @@ function FunctionalInterpolator(
     AT::Type{<:AssemblyType} = ON_FACES,
     xgrid = FE.dofgrid;
     bonus_quadorder = 0,
-    operator = NormalFlux, nfluxes = 0, dofs = [], mean = false, kwargs...) where {Tv, Ti, FEType <: AbstractFiniteElement, APT}
+    operator = NormalFlux,
+    nfluxes = 0,
+    dofs = [],
+    mean = false,
+    kwargs...) where {Tv, Ti, FEType <: AbstractFiniteElement, APT}
     
     itemvolumes = xgrid[GridComponentVolumes4AssemblyType(AT)]
     itemnodes = xgrid[GridComponentNodes4AssemblyType(AT)]
