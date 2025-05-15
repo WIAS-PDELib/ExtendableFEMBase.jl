@@ -3,10 +3,12 @@
 abstract type L2P1{ncomponents} <: AbstractH1FiniteElement where {ncomponents<:Int}
 ````
 
-Discontinuous piecewise first-order linear polynomials.
+Discontinuous piecewise first-order linear polynomials (same as H1P1 but enforces broken = true).
 
 allowed ElementGeometries:
-- any
+- Edge1D
+- Triangle2D
+- Tetrahedron3D
 """
 abstract type L2P1{ncomponents} <: AbstractH1FiniteElement where {ncomponents <: Int} end
 L2P1(ncomponents::Int) = L2P1{ncomponents}
@@ -29,33 +31,35 @@ get_dofmap_pattern(FEType::Type{<:L2P1}, ::Type{CellDofs}, EG::Type{<:AbstractEl
 get_dofmap_pattern(FEType::Type{<:L2P1}, ::Type{CellDofs}, EG::Type{<:AbstractElementGeometry2D}) = "I3"
 get_dofmap_pattern(FEType::Type{<:L2P1}, ::Type{CellDofs}, EG::Type{<:AbstractElementGeometry3D}) = "I4"
 
-isdefined(FEType::Type{<:L2P1}, ::Type{<:AbstractElementGeometry}) = true
+isdefined(FEType::Type{<:L2P1}, ::Type{<:AbstractElementGeometry1D}) = true
+isdefined(FEType::Type{<:L2P1}, ::Type{<:Triangle2D}) = true
+isdefined(FEType::Type{<:L2P1}, ::Type{<:Tetrahedron3D}) = true
 
-function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{AT_NODES}, exact_function; items = [], kwargs...) where {Tv, Ti, FEType <: L2P1, APT}
-    nnodes = size(FE.dofgrid[Coordinates], 2)
-    return point_evaluation!(Target, FE, AT_NODES, exact_function; items = items, component_offset = nnodes, kwargs...)
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{AT_NODES}) where {Tv, Ti, FEType <: L2P1, APT} = NodalInterpolator(FES)
+function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{AT_NODES}, exact_function!; items = [], kwargs...) where {Tv, Ti, FEType <: L2P1, APT}
+    return get_interpolator(FE, AT_NODES).evaluate!(Target, exact_function!, items; kwargs...)
 end
 
-function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_EDGES}, exact_function; items = [], kwargs...) where {Tv, Ti, FEType <: L2P1, APT}
+function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_EDGES}, exact_function!; items = [], kwargs...) where {Tv, Ti, FEType <: L2P1, APT}
     # delegate edge nodes to node interpolation
     subitems = slice(FE.dofgrid[EdgeNodes], items)
-    return interpolate!(Target, FE, AT_NODES, exact_function; items = subitems, kwargs...)
+    return interpolaste!(Target, FE, AT_NODES, exact_function!; items = subitems, kwargs...)
 end
 
-function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}, exact_function; items = [], kwargs...) where {Tv, Ti, FEType <: L2P1, APT}
+function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}, exact_function!; items = [], kwargs...) where {Tv, Ti, FEType <: L2P1, APT}
     # delegate face nodes to node interpolation
     subitems = slice(FE.dofgrid[FaceNodes], items)
-    return interpolate!(Target, FE, AT_NODES, exact_function; items = subitems, kwargs...)
+    return interpolate!(Target, FE, AT_NODES, exact_function!; items = subitems, kwargs...)
 end
 
-function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}, exact_function; items = [], kwargs...) where {Tv, Ti, FEType <: L2P1, APT}
+function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}, exact_function!; items = [], kwargs...) where {Tv, Ti, FEType <: L2P1, APT}
     return if FE.broken == true
         # broken interpolation
-        point_evaluation_broken!(Target, FE, ON_CELLS, exact_function; items = items, kwargs...)
+        get_interpolator(FE, AT_NODES).evaluate!(Target, exact_function!, items; kwargs...)
     else
         # delegate cell nodes to node interpolation
         subitems = slice(FE.dofgrid[CellNodes], items)
-        interpolate!(Target, FE, AT_NODES, exact_function; items = subitems, kwargs...)
+        interpolate!(Target, FE, AT_NODES, exact_function!; items = subitems, kwargs...)
     end
 end
 

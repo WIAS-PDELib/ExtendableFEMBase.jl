@@ -38,78 +38,33 @@ isdefined(FEType::Type{<:HDIVRT1}, ::Type{<:Triangle2D}) = true
 isdefined(FEType::Type{<:HDIVRT1}, ::Type{<:Tetrahedron3D}) = true
 
 interior_dofs_offset(::Type{<:ON_CELLS}, ::Type{<:HDIVRT1{2}}, ::Type{<:Triangle2D}) = 6
-interior_dofs_offset(::Type{<:ON_CELLS}, ::Type{<:HDIVRT1{3}}, ::Type{<:Tetrahedron3D}) = 9
+interior_dofs_offset(::Type{<:ON_CELLS}, ::Type{<:HDIVRT1{3}}, ::Type{<:Tetrahedron3D}) = 12
 
-function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}, data; items = [], kwargs...) where {T, Tv, Ti, FEType <: HDIVRT1, APT}
-    ncomponents = get_ncomponents(FEType)
-    xFaceNormals = FE.dofgrid[FaceNormals]
-    nfaces = num_sources(xFaceNormals)
-    if items == []
-        items = 1:nfaces
-    end
-
-    # integrate normal flux of exact_function over edges
-    data_eval = zeros(T, ncomponents)
-    function normalflux_eval(result, qpinfo)
-        data(data_eval, qpinfo)
-        result[1] = dot(data_eval, view(xFaceNormals, :, qpinfo.item))
-        result[2] = result[1] * (qpinfo.xref[1] - 1 // ncomponents)
-        return if ncomponents == 3
-            result[3] = result[1] * (qpinfo.xref[2] - 1 // ncomponents)
+function RT1_normalflux_eval!(dim)
+    function closure(result, f, qpinfo)
+        result[1] = dot(f, qpinfo.normal)
+        result[2] = result[1] * (qpinfo.xref[1] - 1 // dim)
+        if dim == 3
+            result[3] = result[1] * (qpinfo.xref[2] - 1 // dim)
         end
     end
-    return integrate!(Target, FE.dofgrid, ON_FACES, normalflux_eval; quadorder = 2, items = items, offset = 0:nfaces:((ncomponents - 1) * nfaces), kwargs...)
+end
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: HDIVRT1, APT} = FunctionalInterpolator(RT1_normalflux_eval!(get_ncomponents(FEType)), FES, ON_FACES; bonus_quadorder = 1)
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}) where {Tv, Ti, FEType <: HDIVRT1, APT} = MomentInterpolator(FES, ON_CELLS)
+
+function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, FEType <: HDIVRT1, APT}
+    get_interpolator(FE, ON_FACES).evaluate!(Target, exact_function!, items; kwargs...)
 end
 
-function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}, data; items = [], kwargs...) where {T, Tv, Ti, FEType <: HDIVRT1, APT}
+function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, FEType <: HDIVRT1, APT}
     # delegate cell faces to face interpolation
     subitems = slice(FE.dofgrid[CellFaces], items)
-    interpolate!(Target, FE, ON_FACES, data; items = subitems, kwargs...)
+    interpolate!(Target, FE, ON_FACES, exact_function!; items = subitems, kwargs...)
 
-    # set values of interior RT1 functions by integrating over cell
-    # they are chosen such that integral mean of exact function is preserved on each cell
-    ncomponents = get_ncomponents(FEType)
-    ncells = num_sources(FE.dofgrid[CellNodes])
-    xCellVolumes::Array{Tv, 1} = FE.dofgrid[CellVolumes]
-    xCellDofs::DofMapTypes{Ti} = FE[CellDofs]
-    means = zeros(T, ncomponents, ncells)
-    integrate!(means, FE.dofgrid, ON_CELLS, data; quadorder = 3, kwargs...)
-    EG = (ncomponents == 2) ? Triangle2D : Tetrahedron3D
-    qf = QuadratureRule{T, EG}(2)
-    FEB = FEEvaluator(FE, Identity, qf; T = T)
-    if items == []
-        items = 1:ncells
-    end
+    # set values of interior RT1 functions such that P0 moments are preserved
+    get_interpolator(FE, ON_CELLS).evaluate!(Target, exact_function!, items; kwargs...)
 
-    basisval = zeros(T, ncomponents)
-    IMM = zeros(T, ncomponents, ncomponents)
-    interiordofs = zeros(Int, ncomponents)
-    interior_offset::Int = (ncomponents == 2) ? 6 : 12
-    for cell in items
-        update_basis!(FEB, cell)
-        # compute mean value of facial RT1 dofs
-        for dof in 1:interior_offset
-            for i in 1:length(qf.w)
-                eval_febe!(basisval, FEB, dof, i)
-                for k in 1:ncomponents
-                    means[k, cell] -= basisval[k] * Target[xCellDofs[dof, cell]] * xCellVolumes[cell] * qf.w[i]
-                end
-            end
-        end
-        # compute mass matrix of interior dofs
-        fill!(IMM, 0)
-        for dof in 1:ncomponents
-            for i in 1:length(qf.w)
-                eval_febe!(basisval, FEB, interior_offset + dof, i)
-                for k in 1:ncomponents
-                    IMM[k, dof] += basisval[k] * xCellVolumes[cell] * qf.w[i]
-                end
-            end
-            interiordofs[dof] = xCellDofs[interior_offset + dof, cell]
-        end
-        Target[interiordofs] = IMM \ means[:, cell]
-    end
-    return
+    return nothing
 end
 
 

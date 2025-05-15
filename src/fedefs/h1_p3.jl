@@ -20,10 +20,11 @@ end
 get_ncomponents(FEType::Type{<:H1P3}) = FEType.parameters[1]
 get_edim(FEType::Type{<:H1P3}) = FEType.parameters[2]
 
-get_ndofs(::Type{<:AssemblyType}, FEType::Type{<:H1P3}, EG::Type{<:AbstractElementGeometry0D}) = FEType.parameters[1]
-get_ndofs(::Union{Type{<:ON_EDGES}, Type{<:ON_BEDGES}}, FEType::Type{<:H1P3}, EG::Type{<:Union{AbstractElementGeometry1D}}) = FEType.parameters[1] * Int(factorial(FEType.parameters[2] + 1) / (6 * factorial(FEType.parameters[2] - 2)))
-get_ndofs(::Union{Type{<:ON_FACES}, Type{<:ON_BFACES}}, FEType::Type{<:H1P3}, EG::Type{<:Union{AbstractElementGeometry1D, Triangle2D}}) = FEType.parameters[1] * Int(factorial(FEType.parameters[2] + 2) / (6 * factorial(FEType.parameters[2] - 1)))
-get_ndofs(::Type{<:ON_CELLS}, FEType::Type{<:H1P3}, EG::Type{<:Union{AbstractElementGeometry1D, Triangle2D, Tetrahedron3D}}) = FEType.parameters[1] * Int(factorial(FEType.parameters[2] + 3) / (6 * factorial(FEType.parameters[2])))
+get_ndofs(::Type{<:AssemblyType}, FEType::Type{H1P3{n, e}}, EG::Type{<:AbstractElementGeometry0D}) where {n, e} = n
+get_ndofs(::Type{<:AssemblyType}, FEType::Type{H1P3{n, e}}, EG::Type{<:AbstractElementGeometry1D}) where {n, e} = 4 * n
+get_ndofs(::Type{<:AssemblyType}, FEType::Type{H1P3{n, e}}, EG::Type{<:Triangle2D}) where {n, e} = 10 * n
+get_ndofs(::Type{<:AssemblyType}, FEType::Type{H1P3{n, e}}, EG::Type{<:Tetrahedron3D}) where {n, e} = 20 * n
+
 
 get_polynomialorder(::Type{<:H1P3}, ::Type{<:Edge1D}) = 3;
 get_polynomialorder(::Type{<:H1P3}, ::Type{<:Triangle2D}) = 3;
@@ -47,18 +48,13 @@ interior_dofs_offset(::Type{<:AssemblyType}, ::Type{H1P3{ncomponents, edim}}, ::
 
 get_ref_cellmoments(::Type{<:H1P3}, ::Type{<:Triangle2D}) = [1 // 30, 1 // 30, 1 // 30, 3 // 40, 3 // 40, 3 // 40, 3 // 40, 3 // 40, 3 // 40, 1 // 1] # integrals of 1D basis functions over reference cell (divided by volume)
 
-function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{AT_NODES}, exact_function!; items = [], kwargs...) where {Tv, Ti, FEType <: H1P3, APT}
-    edim = get_edim(FEType)
-    coffset = size(FE.dofgrid[Coordinates], 2)
-    if edim == 1
-        coffset += 2 * num_sources(FE.dofgrid[CellNodes])
-    elseif edim == 2
-        coffset += 2 * num_sources(FE.dofgrid[FaceNodes]) + num_sources(FE.dofgrid[CellNodes])
-    elseif edim == 3
-        coffset += 2 * num_sources(FE.dofgrid[EdgeNodes]) + num_sources(FE.dofgrid[FaceNodes])
-    end
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{AT_NODES}) where {Tv, Ti, FEType <: H1P3, APT} = NodalInterpolator(FES)
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_EDGES}) where {Tv, Ti, FEType <: H1P3, APT} = MomentInterpolator(FES, ON_EDGES; order = 4 - get_edim(FEType))
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: H1P3, APT} = MomentInterpolator(FES, ON_FACES; order = 3 - get_edim(FEType))
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}) where {Tv, Ti, FEType <: H1P3, APT} = MomentInterpolator(FES, ON_CELLS; order = 2 - get_edim(FEType))
 
-    return point_evaluation!(Target, FE, AT_NODES, exact_function!; items = items, component_offset = coffset, kwargs...)
+function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{AT_NODES}, exact_function!; items = [], kwargs...) where {Tv, Ti, FEType <: H1P3, APT}
+    return get_interpolator(FE, AT_NODES).evaluate!(Target, exact_function!, items; kwargs...)
 end
 
 function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_EDGES}, exact_function!; items = [], kwargs...) where {Tv, Ti, FEType <: H1P3, APT}
@@ -69,7 +65,7 @@ function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, 
         interpolate!(Target, FE, AT_NODES, exact_function!; items = subitems, kwargs...)
 
         # perform edge mean interpolation
-        ensure_moments!(Target, FE, ON_EDGES, exact_function!; order = 1, items = items, kwargs...)
+        get_interpolator(FE, ON_EDGES).evaluate!(Target, exact_function!, items; kwargs...)
     end
 end
 
@@ -81,14 +77,14 @@ function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, 
         interpolate!(Target, FE, AT_NODES, exact_function!; items = subitems, kwargs...)
 
         # perform face mean interpolation
-        ensure_moments!(Target, FE, ON_FACES, exact_function!; items = items, order = 1, kwargs...)
+        get_interpolator(FE, ON_FACES).evaluate!(Target, exact_function!, items; kwargs...)
     elseif edim == 3
         # delegate face edges to edge interpolation
         subitems = slice(FE.dofgrid[FaceEdges], items)
         interpolate!(Target, FE, ON_EDGES, exact_function!; items = subitems, kwargs...)
 
         # preserve face integral
-        ensure_moments!(Target, FE, ON_FACES, exact_function!; order = 0, items = items, kwargs...)
+        get_interpolator(FE, ON_FACES).evaluate!(Target, exact_function!, items; kwargs...)
     elseif edim == 1
         # delegate face nodes to node interpolation
         subitems = slice(FE.dofgrid[FaceNodes], items)
@@ -105,7 +101,7 @@ function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, 
         interpolate!(Target, FE, ON_FACES, exact_function!; items = subitems, kwargs...)
 
         # fix cell bubble value by preserving integral mean
-        ensure_moments!(Target, FE, ON_CELLS, exact_function!; items = items, kwargs...)
+        get_interpolator(FE, ON_CELLS).evaluate!(Target, exact_function!, items; kwargs...)
     elseif edim == 3
         # delegate cell faces to face interpolation
         subitems = slice(FE.dofgrid[CellFaces], items)
@@ -116,7 +112,7 @@ function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, 
         interpolate!(Target, FE, AT_NODES, exact_function!; items = subitems, kwargs...)
 
         # preserve cell integral
-        ensure_moments!(Target, FE, ON_CELLS, exact_function!; order = 1, items = items, kwargs...)
+        get_interpolator(FE, ON_CELLS).evaluate!(Target, exact_function!, items; kwargs...)
     end
 end
 

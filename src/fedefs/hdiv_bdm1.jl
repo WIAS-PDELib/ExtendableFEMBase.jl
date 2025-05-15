@@ -40,26 +40,20 @@ isdefined(FEType::Type{<:HDIVBDM1}, ::Type{<:Triangle2D}) = true
 isdefined(FEType::Type{<:HDIVBDM1}, ::Type{<:Quadrilateral2D}) = true
 isdefined(FEType::Type{<:HDIVBDM1}, ::Type{<:Tetrahedron3D}) = true
 
-
-function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}, data; items = [], kwargs...) where {T, Tv, Ti, FEType <: HDIVBDM1, APT}
-    ncomponents = get_ncomponents(FEType)
-    xFaceNormals = FE.dofgrid[FaceNormals]
-    nfaces = num_sources(xFaceNormals)
-    if items == []
-        items = 1:nfaces
-    end
-
-    # integrate normal flux of exact_function over edges
-    data_eval = zeros(T, ncomponents)
-    function normalflux_eval(result, qpinfo)
-        data(data_eval, qpinfo)
-        result[1] = dot(data_eval, view(xFaceNormals, :, qpinfo.item))
-        result[2] = result[1] * (qpinfo.xref[1] - 1 // ncomponents)
-        return if ncomponents == 3
-            result[3] = result[1] * (qpinfo.xref[2] - 1 // ncomponents)
+function BDM1_normalflux_eval!(dim)
+    function closure(result, f, qpinfo)
+        result[1] = dot(f, qpinfo.normal)
+        result[2] = result[1] * (qpinfo.xref[1] - 1 // dim)
+        if dim == 3
+            result[3] = result[1] * (qpinfo.xref[2] - 1 // dim)
         end
     end
-    return integrate!(Target, FE.dofgrid, ON_FACES, normalflux_eval; quadorder = 2, items = items, offset = 0:nfaces:((ncomponents - 1) * nfaces), kwargs...)
+end
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: HDIVBDM1, APT} = FunctionalInterpolator(BDM1_normalflux_eval!(FEType.parameters[1]), FES, ON_FACES; bonus_quadorder = 1)
+
+
+function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, FEType <: HDIVBDM1, APT}
+    get_interpolator(FE, ON_FACES).evaluate!(Target, exact_function!, items; kwargs...)
 end
 
 function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}, data; items = [], kwargs...) where {Tv, Ti, FEType <: HDIVBDM1, APT}

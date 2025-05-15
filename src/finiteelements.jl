@@ -52,6 +52,7 @@ root type for Hcurl-conforming finite element types with additional coefficients
 """
 abstract type AbstractHcurlFiniteElement <: AbstractFiniteElement end
 
+abstract type AbstractInterpolationOperator end
 
 """
 ````
@@ -63,6 +64,7 @@ struct FESpace{Tv, Ti, FEType<:AbstractFiniteElement,AT<:AssemblyType}
 	xgrid::ExtendableGrid[Tv,Ti}          # link to xgrid 
 	dofgrid::ExtendableGrid{Tv,Ti}	      # link to (sub) grid used for dof numbering (expected to be equal to or child grid of xgrid)
 	dofmaps::Dict{Type{<:AbstractGridComponent},Any} # backpack with dofmaps
+    interpolators::Dict{Type{<:AssemblyType}, Any} # backpack with interpolators
 end
 ````
 
@@ -76,10 +78,11 @@ struct FESpace{Tv, Ti, FEType <: AbstractFiniteElement, AT <: AssemblyType}
     xgrid::ExtendableGrid{Tv, Ti}         # link to (master/parent) grid
     dofgrid::ExtendableGrid{Tv, Ti}          # link to (sub) grid used for dof numbering (expected to be equal to or child grid of xgrid)
     dofmaps::Dict{Type{<:AbstractGridComponent}, Any} # backpack with dofmaps
+    interpolators::Dict{Type{<:AssemblyType}, Any} # backpack with interpolators
 end
 
 function Base.copy(FES::FESpace{Tv, Ti, FEType, AT}) where {Tv, Ti, FEType, AT}
-    return FESpace{Tv, Ti, FEType, AT}(deepcopy(FES.name), FES.broken, FES.ndofs, FES.coffset, FES.xgrid, FES.dofgrid, FES.dofmaps)
+    return FESpace{Tv, Ti, FEType, AT}(deepcopy(FES.name), FES.broken, FES.ndofs, FES.coffset, FES.xgrid, FES.dofgrid, FES.dofmaps, FES.interpolators)
 end
 
 """
@@ -117,7 +120,6 @@ $(TYPEDSIGNATURES)
 Set new dofmap
 """
 Base.setindex!(FES::FESpace, v, DM::Type{<:DofMap}) = FES.dofmaps[DM] = v
-
 
 """
 ````
@@ -174,7 +176,7 @@ function FESpace{FEType, AT}(
         name = broken ? "$FEType (broken)" : "$FEType"
     end
     ndofs, coffset = count_ndofs(dofgrid, FEType, broken)
-    FES = FESpace{Tv, Ti, FEType, AT}(name, broken, ndofs, coffset, xgrid, dofgrid, Dict{Type{<:AbstractGridComponent}, Any}())
+    FES = FESpace{Tv, Ti, FEType, AT}(name, broken, ndofs, coffset, xgrid, dofgrid, Dict{Type{<:AbstractGridComponent}, Any}(), Dict{Type{<:AbstractInterpolationOperator}, Any}())
 
     @debug "Generated FESpace $name ($AT, ndofs=$ndofs)"
 
@@ -385,6 +387,7 @@ end
 include("fevector.jl");
 include("fematrix.jl");
 include("interpolations.jl")
+include("interpolators.jl")
 
 
 """

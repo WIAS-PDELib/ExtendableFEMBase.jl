@@ -37,7 +37,7 @@ function test_segmentintegrator_nokernel()
     error2 = sqrt((result[1] - 1 // 12)^2 + result[2]^2)
     println("error2 without kernel = $error2 (result = $result)")
 
-    return max(error1, error2) ≈ 0
+    return max(error1, error2) < 1e-15
 end
 
 function test_segmentintegrator_withkernel()

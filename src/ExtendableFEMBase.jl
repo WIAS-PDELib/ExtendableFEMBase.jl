@@ -19,10 +19,11 @@ using ExtendableGrids: ExtendableGrids, AT_NODES, AbstractElementGeometry,
     CellFinder, CellGeometries, CellNodes, CellParents,
     CellRegions, CellVolumes, Coordinates, Edge1D,
     EdgeCells, EdgeGeometries, EdgeNodes, EdgeTangents,
-    EdgeVolumes, ElementGeometries, ExtendableGrid,
+    EdgeParents, EdgeVolumes, ElementGeometries, ExtendableGrid,
     FaceCells, FaceEdgeSigns, FaceEdges, FaceGeometries,
     FaceNodes, FaceNormals, FaceParents, FaceRegions,
     FaceVolumes, GridComponentGeometries4AssemblyType,
+    NodeCells,
     GridComponentNodes4AssemblyType,
     GridComponentRegions4AssemblyType,
     GridComponentUniqueGeometries4AssemblyType,
@@ -106,6 +107,8 @@ export get_AT
 export get_polynomialorder, get_ndofs, get_ndofs_all
 export get_ncomponents, get_edim
 export get_basis, get_coefficients, get_basissubset
+
+export NodalInterpolator
 
 export interpolate! # must be defined separately by each FEdefinition
 export nodevalues, continuify
