@@ -95,6 +95,15 @@ ndofs(FES::FESpace) = FES.ndofs
 """
 $(TYPEDSIGNATURES)
 
+returns the offset between the degrees of freedom of each component
+(i.e. the number of scalar degrees of freedom that influence a component,
+vector-valued degrees of freedom are stored at the end).
+"""
+coffset(FES::FESpace) = FES.coffset
+
+"""
+$(TYPEDSIGNATURES)
+
 returns true if the finite element space is broken, false if not
 """
 broken(FES::FESpace) = FES.broken
@@ -215,12 +224,14 @@ function Base.show(io::IO, FES::FESpace{Tv, Ti, FEType, APT}) where {Tv, Ti, FET
     println(io, "\nFESpace information")
     println(io, "===================")
     println(io, "     name = $(FES.name)")
-    println(io, "   FEType = $FEType")
+    println(io, "   FEType = $FEType ($(FES.broken ? "$APT, broken" : "$APT"))")
     println(io, "  FEClass = $(supertype(FEType))")
-    println(io, "    ndofs = $(FES.ndofs)\n")
+    println(io, "    ndofs = $(FES.ndofs) $(FES.coffset !== FES.ndofs ? "(coffset = $(FES.coffset))" : "")\n")
+    println(io, "    xgrid = $(FES.xgrid)")
+    println(io, "  dofgrid = $(FES.dofgrid !== FES.xgrid ? FES.dofgrid : "xgrid")")
     println(io, "")
     println(io, "DofMaps")
-    println(io, "==========")
+    println(io, "=======")
     for tuple in FES.dofmaps
         println(io, "> $(tuple[1])")
     end

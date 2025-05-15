@@ -4,6 +4,10 @@
   - overhaul of interpolators: each finite element
     interpolation is composed of the three new
     structures NodalInterpolator, MomentInterpolator, FunctionalInterpolator
+  - improved show functions
+  - coffset function for FESpace
+  - first, last functions for FEMatrixBlocks and FEVectorBlocks
+  - improved submatrix function, submatrix function for FEMatrixBlock
   
 ## v1.0.0 April 7, 2025
   - doc improvements
