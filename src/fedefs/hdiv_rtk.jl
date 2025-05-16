@@ -33,11 +33,12 @@ interior_dofs_offset(::Type{<:ON_CELLS}, ::Type{<:HDIVRTk{2, order}}, ::Type{<:T
 
 function RTk_normalflux_eval!(order)
     moments_weights = basis.(ShiftedLegendre, (0:order))
-    function closure(result, f, qpinfo)
+    return function closure(result, f, qpinfo)
         result[1] = dot(f, qpinfo.normal)
         for j in 1:order
             result[j + 1] = result[1] * moments_weights[j + 1](qpinfo.xref[1])
         end
+        return
     end
 end
 init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: HDIVRTk, APT} = FunctionalInterpolator(RTk_normalflux_eval!(FEType.parameters[2]), FES, ON_FACES; bonus_quadorder = FEType.parameters[2])
@@ -45,7 +46,7 @@ init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}) where {T
 
 
 function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, HDIVRTk{edim, order}, APT}, ::Type{ON_FACES}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, edim, order, APT}
-    get_interpolator(FE, ON_FACES).evaluate!(Target, exact_function!, items; kwargs...)
+    return get_interpolator(FE, ON_FACES).evaluate!(Target, exact_function!, items; kwargs...)
 end
 
 function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, HDIVRTk{edim, order}, APT}, ::Type{ON_CELLS}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, edim, order, APT}

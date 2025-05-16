@@ -490,7 +490,7 @@ function get_reconstruction_matrix(T::Type{<:Real}, FE::FESpace, FER::FESpace)
     for j in 2:length(EG)
         append!(rhandlers, [get_reconstruction_coefficients(ON_CELLS, FE, FER, EG[j])])
         append!(chandlers, [get_coefficients(ON_CELLS, FER, EG[j], xgrid)])
-        append!(shandlers, [get_basissubset(ON_CELLS, FER, EG[j],)])
+        append!(shandlers, [get_basissubset(ON_CELLS, FER, EG[j])])
     end
 
     ndofs_FE = zeros(Int, length(EG))

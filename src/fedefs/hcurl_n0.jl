@@ -47,7 +47,7 @@ init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {T
 function N0_tangentflux_eval_3d!(grid)
     edgetangents = grid[EdgeTangents]
     function closure(result, f, qpinfo)
-        result[1] = dot(f, view(edgetangents, :, qpinfo.item))
+        return result[1] = dot(f, view(edgetangents, :, qpinfo.item))
     end
     return closure
 end

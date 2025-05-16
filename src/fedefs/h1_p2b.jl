@@ -95,7 +95,7 @@ function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, 
     end
 
     # fix cell bubble value by preserving integral mean
-    get_interpolator(FE, ON_CELLS).evaluate!(Target, exact_function!, items; kwargs...)
+    return get_interpolator(FE, ON_CELLS).evaluate!(Target, exact_function!, items; kwargs...)
 end
 
 function get_basis(AT::Union{Type{<:ON_FACES}, Type{<:ON_BFACES}}, ::Type{H1P2B{ncomponents, edim}}, EG::Type{<:AbstractElementGeometry}) where {ncomponents, edim}

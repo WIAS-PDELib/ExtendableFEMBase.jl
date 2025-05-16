@@ -41,10 +41,10 @@ interior_dofs_offset(::Type{<:ON_CELLS}, ::Type{<:HDIVRT1{2}}, ::Type{<:Triangle
 interior_dofs_offset(::Type{<:ON_CELLS}, ::Type{<:HDIVRT1{3}}, ::Type{<:Tetrahedron3D}) = 12
 
 function RT1_normalflux_eval!(dim)
-    function closure(result, f, qpinfo)
+    return function closure(result, f, qpinfo)
         result[1] = dot(f, qpinfo.normal)
         result[2] = result[1] * (qpinfo.xref[1] - 1 // dim)
-        if dim == 3
+        return if dim == 3
             result[3] = result[1] * (qpinfo.xref[2] - 1 // dim)
         end
     end
@@ -53,7 +53,7 @@ init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {T
 init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}) where {Tv, Ti, FEType <: HDIVRT1, APT} = MomentInterpolator(FES, ON_CELLS)
 
 function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, FEType <: HDIVRT1, APT}
-    get_interpolator(FE, ON_FACES).evaluate!(Target, exact_function!, items; kwargs...)
+    return get_interpolator(FE, ON_FACES).evaluate!(Target, exact_function!, items; kwargs...)
 end
 
 function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, FEType <: HDIVRT1, APT}

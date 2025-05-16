@@ -49,7 +49,7 @@ end
 function TEB_tangentflux_eval_3d!(grid)
     edgetangents = grid[EdgeTangents]
     function closure(result, f, qpinfo)
-        result[1] = dot(f, view(edgetangents, :, qpinfo.item))
+        return result[1] = dot(f, view(edgetangents, :, qpinfo.item))
     end
     return closure
 end
