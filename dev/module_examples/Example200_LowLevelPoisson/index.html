@@ -16,174 +16,174 @@ const f = x -&gt; x[1] - x[2]
 
 function main(; maxnref = 8, order = 2, Plotter = nothing)
 
-	# Finite element type
-	FEType = H1Pk{1, 2, order}
+    # Finite element type
+    FEType = H1Pk{1, 2, order}
 
-	# run once on a tiny mesh for compiling
-	X = LinRange(0, 1, 4)
-	xgrid = simplexgrid(X, X)
-	FES = FESpace{FEType}(xgrid)
-	sol, time_assembly, time_solve = solve_poisson_lowlevel(FES, μ, f)
+    # run once on a tiny mesh for compiling
+    X = LinRange(0, 1, 4)
+    xgrid = simplexgrid(X, X)
+    FES = FESpace{FEType}(xgrid)
+    sol, time_assembly, time_solve = solve_poisson_lowlevel(FES, μ, f)
 
-	# loop over uniform refinements + timings
-	plt = GridVisualizer(; Plotter = Plotter, layout = (1, 1), clear = true, resolution = (500, 500))
-	loop_allocations = 0
-	for level ∈ 1:maxnref
-		X = LinRange(0, 1, 2^level + 1)
-		time_grid = @elapsed xgrid = simplexgrid(X, X)
-		time_facenodes = @elapsed xgrid[FaceNodes]
-		FES = FESpace{FEType}(xgrid)
-		println(&quot;\nLEVEL = $level, ndofs = $(FES.ndofs)\n&quot;)
-		if level &lt; 4
-			println(stdout, unicode_gridplot(xgrid))
-		end
-		time_dofmap = @elapsed FES[CellDofs]
-		sol, time_assembly, time_solve = solve_poisson_lowlevel(FES, μ, f)
+    # loop over uniform refinements + timings
+    plt = GridVisualizer(; Plotter = Plotter, layout = (1, 1), clear = true, resolution = (500, 500))
+    loop_allocations = 0
+    for level in 1:maxnref
+        X = LinRange(0, 1, 2^level + 1)
+        time_grid = @elapsed xgrid = simplexgrid(X, X)
+        time_facenodes = @elapsed xgrid[FaceNodes]
+        FES = FESpace{FEType}(xgrid)
+        println(&quot;\nLEVEL = $level, ndofs = $(FES.ndofs)\n&quot;)
+        if level &lt; 4
+            println(stdout, unicode_gridplot(xgrid))
+        end
+        time_dofmap = @elapsed FES[CellDofs]
+        sol, time_assembly, time_solve = solve_poisson_lowlevel(FES, μ, f)
 
-		# plot statistics
-		println(stdout, barplot([&quot;Grid&quot;, &quot;FaceNodes&quot;, &quot;celldofs&quot;, &quot;Assembly&quot;, &quot;Solve&quot;], [time_grid, time_facenodes, time_dofmap, time_assembly, time_solve], title = &quot;Runtimes&quot;))
+        # plot statistics
+        println(stdout, barplot([&quot;Grid&quot;, &quot;FaceNodes&quot;, &quot;celldofs&quot;, &quot;Assembly&quot;, &quot;Solve&quot;], [time_grid, time_facenodes, time_dofmap, time_assembly, time_solve], title = &quot;Runtimes&quot;))
 
-		# plot
-		if Plotter !== nothing
-			scalarplot!(plt[1,1], xgrid, view(sol.entries, 1:num_nodes(xgrid)), limits = (-0.0125,0.0125))
-		else
-			sol_grad = continuify(sol[1], Gradient)
-			println(stdout, unicode_scalarplot(sol[1]))
-		end
-	end
+        # plot
+        if Plotter !== nothing
+            scalarplot!(plt[1, 1], xgrid, view(sol.entries, 1:num_nodes(xgrid)), limits = (-0.0125, 0.0125))
+        else
+            sol_grad = continuify(sol[1], Gradient)
+            println(stdout, unicode_scalarplot(sol[1]))
+        end
+    end
 
-	return sol, plt
+    return sol, plt
 end
 
 
 function solve_poisson_lowlevel(FES, μ, f)
-	Solution = FEVector(FES)
-	FES = Solution[1].FES
-	A = FEMatrix(FES, FES)
-	b = FEVector(FES)
-	println(&quot;Assembling...&quot;)
-	time_assembly = @elapsed @time begin
-		loop_allocations = assemble!(A.entries, b.entries, FES, f, μ)
+    Solution = FEVector(FES)
+    FES = Solution[1].FES
+    A = FEMatrix(FES, FES)
+    b = FEVector(FES)
+    println(&quot;Assembling...&quot;)
+    time_assembly = @elapsed @time begin
+        loop_allocations = assemble!(A.entries, b.entries, FES, f, μ)
 
-		# fix boundary dofs
-		begin
-			bdofs = boundarydofs(FES)
-			for dof in bdofs
-				A.entries[dof, dof] = 1e60
-				b.entries[dof] = 0
-			end
-		end
-		ExtendableSparse.flush!(A.entries)
-	end
+        # fix boundary dofs
+        begin
+            bdofs = boundarydofs(FES)
+            for dof in bdofs
+                A.entries[dof, dof] = 1.0e60
+                b.entries[dof] = 0
+            end
+        end
+        ExtendableSparse.flush!(A.entries)
+    end
 
-	# solve
-	println(&quot;Solving linear system...&quot;)
-	time_solve = @elapsed @time copyto!(Solution.entries, A.entries \ b.entries)
+    # solve
+    println(&quot;Solving linear system...&quot;)
+    time_solve = @elapsed @time copyto!(Solution.entries, A.entries \ b.entries)
 
-	return Solution, time_assembly, time_solve
+    return Solution, time_assembly, time_solve
 end
 
 function assemble!(A::ExtendableSparseMatrix, b::Vector, FES, f, μ = 1)
-	xgrid = FES.xgrid
-	EG = xgrid[UniqueCellGeometries][1]
-	FEType = eltype(FES)
-	L2G = L2GTransformer(EG, xgrid, ON_CELLS)
+    xgrid = FES.xgrid
+    EG = xgrid[UniqueCellGeometries][1]
+    FEType = eltype(FES)
+    L2G = L2GTransformer(EG, xgrid, ON_CELLS)
 
-	# quadrature formula
-	qf = QuadratureRule{Float64, EG}(2 * (get_polynomialorder(FEType, EG) - 1))
-	weights::Vector{Float64} = qf.w
-	xref::Vector{Vector{Float64}} = qf.xref
-	nweights::Int = length(weights)
-	cellvolumes = xgrid[CellVolumes]
+    # quadrature formula
+    qf = QuadratureRule{Float64, EG}(2 * (get_polynomialorder(FEType, EG) - 1))
+    weights::Vector{Float64} = qf.w
+    xref::Vector{Vector{Float64}} = qf.xref
+    nweights::Int = length(weights)
+    cellvolumes = xgrid[CellVolumes]
 
-	# FE basis evaluator and dofmap
-	FEBasis_∇ = FEEvaluator(FES, Gradient, qf)
-	∇vals = FEBasis_∇.cvals
-	FEBasis_id = FEEvaluator(FES, Identity, qf)
-	idvals = FEBasis_id.cvals
-	celldofs = FES[CellDofs]
+    # FE basis evaluator and dofmap
+    FEBasis_∇ = FEEvaluator(FES, Gradient, qf)
+    ∇vals = FEBasis_∇.cvals
+    FEBasis_id = FEEvaluator(FES, Identity, qf)
+    idvals = FEBasis_id.cvals
+    celldofs = FES[CellDofs]
 
-	# ASSEMBLY LOOP
-	loop_allocations = 0
-	function barrier(EG, L2G::L2GTransformer)
-		# barrier function to avoid allocations by type dispatch
-		ndofs4cell::Int = get_ndofs(ON_CELLS, FEType, EG)
-		Aloc = zeros(Float64, ndofs4cell, ndofs4cell)
-		ncells::Int = num_cells(xgrid)
-		dof_j::Int, dof_k::Int = 0, 0
-		x::Vector{Float64} = zeros(Float64, 2)
+    # ASSEMBLY LOOP
+    loop_allocations = 0
+    function barrier(EG, L2G::L2GTransformer)
+        # barrier function to avoid allocations by type dispatch
+        ndofs4cell::Int = get_ndofs(ON_CELLS, FEType, EG)
+        Aloc = zeros(Float64, ndofs4cell, ndofs4cell)
+        ncells::Int = num_cells(xgrid)
+        dof_j::Int, dof_k::Int = 0, 0
+        x::Vector{Float64} = zeros(Float64, 2)
 
-		loop_allocations += @allocated for cell ∈ 1:ncells
-			# update FE basis evaluators
-			FEBasis_∇.citem[] = cell
-			update_basis!(FEBasis_∇)
+        return loop_allocations += @allocated for cell in 1:ncells
+            # update FE basis evaluators
+            FEBasis_∇.citem[] = cell
+            update_basis!(FEBasis_∇)
 
-			# assemble local stiffness matrix
-			for j ∈ 1:ndofs4cell, k ∈ j:ndofs4cell
-				temp = 0
-				for qp ∈ 1:nweights
-					temp += weights[qp] * dot(view(∇vals, :, j, qp), view(∇vals, :, k, qp))
-				end
-				Aloc[j, k] = temp
-			end
-			Aloc .*= μ * cellvolumes[cell]
+            # assemble local stiffness matrix
+            for j in 1:ndofs4cell, k in j:ndofs4cell
+                temp = 0
+                for qp in 1:nweights
+                    temp += weights[qp] * dot(view(∇vals, :, j, qp), view(∇vals, :, k, qp))
+                end
+                Aloc[j, k] = temp
+            end
+            Aloc .*= μ * cellvolumes[cell]
 
-			# add local matrix to global matrix
-			for j ∈ 1:ndofs4cell
-				dof_j = celldofs[j, cell]
-				for k ∈ j:ndofs4cell
-					dof_k = celldofs[k, cell]
-					if abs(Aloc[j, k]) &gt; 1e-15
-						# write into sparse matrix, only lines with allocations
-						rawupdateindex!(A, +, Aloc[j, k], dof_j, dof_k)
-						if k &gt; j
-							rawupdateindex!(A, +, Aloc[j, k], dof_k, dof_j)
-						end
-					end
-				end
-			end
-			fill!(Aloc, 0)
+            # add local matrix to global matrix
+            for j in 1:ndofs4cell
+                dof_j = celldofs[j, cell]
+                for k in j:ndofs4cell
+                    dof_k = celldofs[k, cell]
+                    if abs(Aloc[j, k]) &gt; 1.0e-15
+                        # write into sparse matrix, only lines with allocations
+                        rawupdateindex!(A, +, Aloc[j, k], dof_j, dof_k)
+                        if k &gt; j
+                            rawupdateindex!(A, +, Aloc[j, k], dof_k, dof_j)
+                        end
+                    end
+                end
+            end
+            fill!(Aloc, 0)
 
-			# assemble right-hand side
-			update_trafo!(L2G, cell)
-			for j ∈ 1:ndofs4cell
-				# right-hand side
-				temp = 0
-				for qp ∈ 1:nweights
-					# get global x for quadrature point
-					eval_trafo!(x, L2G, xref[qp])
-					# evaluate (f(x), v_j(x))
-					temp += weights[qp] * idvals[1, j, qp] * f(x)
-				end
-				# write into global vector
-				dof_j = celldofs[j, cell]
-				b[dof_j] += temp * cellvolumes[cell]
-			end
-		end
-	end
-	barrier(EG, L2G)
-	flush!(A)
-	return loop_allocations
+            # assemble right-hand side
+            update_trafo!(L2G, cell)
+            for j in 1:ndofs4cell
+                # right-hand side
+                temp = 0
+                for qp in 1:nweights
+                    # get global x for quadrature point
+                    eval_trafo!(x, L2G, xref[qp])
+                    # evaluate (f(x), v_j(x))
+                    temp += weights[qp] * idvals[1, j, qp] * f(x)
+                end
+                # write into global vector
+                dof_j = celldofs[j, cell]
+                b[dof_j] += temp * cellvolumes[cell]
+            end
+        end
+    end
+    barrier(EG, L2G)
+    flush!(A)
+    return loop_allocations
 end
 
 function generateplots(dir = pwd(); Plotter = nothing, kwargs...)
-	~, plt = main(; Plotter = Plotter, kwargs...)
-	scene = GridVisualize.reveal(plt)
-	GridVisualize.save(joinpath(dir, &quot;example200.png&quot;), scene; Plotter = Plotter)
+    ~, plt = main(; Plotter = Plotter, kwargs...)
+    scene = GridVisualize.reveal(plt)
+    return GridVisualize.save(joinpath(dir, &quot;example200.png&quot;), scene; Plotter = Plotter)
 end
 
-	FEType = H1Pk{1, 2, order}
-	X = LinRange(0, 1, 64)
-	xgrid = simplexgrid(X, X)
-	FES = FESpace{FEType}(xgrid)
-	A = FEMatrix(FES, FES)
-	b = FEVector(FES)
-	@info &quot;ndofs = $(FES.ndofs)&quot;
-	# first assembly causes allocations when filling sparse matrix
-	loop_allocations = assemble!(A.entries, b.entries, FES, f, μ)
-	@info &quot;allocations in 1st assembly: $loop_allocations&quot;
-	# second assembly in same matrix should have allocation-free inner loop
-	loop_allocations = assemble!(A.entries, b.entries, FES, f, μ)
-	@info &quot;allocations in 2nd assembly: $loop_allocations&quot;
-	@test loop_allocations == 0
-end #module</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../examples_intro/">« Introduction</a><a class="docs-footer-nextpage" href="../Example205_LowLevelSpaceTimePoisson/">Example205_LowLevelSpaceTimePoisson »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.11.3 on <span class="colophon-date" title="Thursday 15 May 2025 11:41">Thursday 15 May 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+    FEType = H1Pk{1, 2, order}
+    X = LinRange(0, 1, 64)
+    xgrid = simplexgrid(X, X)
+    FES = FESpace{FEType}(xgrid)
+    A = FEMatrix(FES, FES)
+    b = FEVector(FES)
+    @info &quot;ndofs = $(FES.ndofs)&quot;
+    # first assembly causes allocations when filling sparse matrix
+    loop_allocations = assemble!(A.entries, b.entries, FES, f, μ)
+    @info &quot;allocations in 1st assembly: $loop_allocations&quot;
+    # second assembly in same matrix should have allocation-free inner loop
+    loop_allocations = assemble!(A.entries, b.entries, FES, f, μ)
+    @info &quot;allocations in 2nd assembly: $loop_allocations&quot;
+    return @test loop_allocations == 0
+end #module</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../examples_intro/">« Introduction</a><a class="docs-footer-nextpage" href="../Example205_LowLevelSpaceTimePoisson/">Example205_LowLevelSpaceTimePoisson »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.11.4 on <span class="colophon-date" title="Friday 16 May 2025 07:54">Friday 16 May 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

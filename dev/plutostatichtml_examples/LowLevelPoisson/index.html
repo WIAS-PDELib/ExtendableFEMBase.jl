@@ -25,7 +25,7 @@
 <!--
     # This information is used for caching.
     [PlutoStaticHTML.State]
-    input_sha = "158aa87807dbd295af8694a6913b8187ce0ecd29bf8a52148cb4ffc2c455d549"
+    input_sha = "94ce8bde3a99bdac13d0be8499a12c2c7703b86eae5c3a6f4d49d727d1e2809f"
     julia_version = "1.11.5"
 -->
 <pre class='language-julia'><code class='language-julia'>begin
@@ -57,8 +57,8 @@ end</code></pre>
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-f">1</pre>
 
-<pre class='language-julia'><code class='language-julia'>tricontour(xgrid[Coordinates],xgrid[CellNodes],sol.entries[1:num_nodes(xgrid)]; levels = 5, resolution = (500,500))</code></pre>
-<div style="white-space:nowrap;"><div id="622c8cc2-3181-11f0-1842-65f97c96eb0e" style="width: 440.0px; height: 440.0px; display: inline-block; "></div><canvas height="475.0" id="622c8cc2-3181-11f0-1842-65f97c96eb0ecbar" style="display: inline-block; " width="60,"></canvas></div>
+<pre class='language-julia'><code class='language-julia'>tricontour(xgrid[Coordinates], xgrid[CellNodes], sol.entries[1:num_nodes(xgrid)]; levels = 5, resolution = (500, 500))</code></pre>
+<div style="white-space:nowrap;"><div id="db88ff3e-322a-11f0-1a32-c35c3b8a724c" style="width: 440.0px; height: 440.0px; display: inline-block; "></div><canvas height="475.0" id="db88ff3e-322a-11f0-1a32-c35c3b8a724ccbar" style="display: inline-block; " width="60,"></canvas></div>
 <script>
    // overwrite handleKeyPress and others
 // kind of modeled after https://kitware.github.io/vtk-js/api/Rendering_Core_Follower.html 
@@ -723,9 +723,9 @@ function canvascolorbar(uuid,w,h,cbdict)
     }
 }
 
-   const jsdict = /* See the documentation for AbstractPlutoDingetjes.Display.published_to_js */ getPublishedObject("2391cf06-3181-11f0-14cb-83dc42689b82/754a0b1dc5bb2def")
-   plutovtkplot("622c8cc2-3181-11f0-1842-65f97c96eb0e",jsdict,invalidation)
-   canvascolorbar("622c8cc2-3181-11f0-1842-65f97c96eb0ecbar",20,500.0,jsdict)        
+   const jsdict = /* See the documentation for AbstractPlutoDingetjes.Display.published_to_js */ getPublishedObject("990888be-322a-11f0-3396-7368614892cb/fa494b506671648d")
+   plutovtkplot("db88ff3e-322a-11f0-1a32-c35c3b8a724c",jsdict,invalidation)
+   canvascolorbar("db88ff3e-322a-11f0-1a32-c35c3b8a724ccbar",20,500.0,jsdict)        
    </script>
 
 <pre class='language-julia'><code class='language-julia'>begin
@@ -738,7 +738,7 @@ end</code></pre>
  [    1]  |  263169	| -1.21e-02/1.21e-02  	| H1Pk{1,2,1}  	 (#1)</pre>
 
 <pre class='language-julia'><code class='language-julia'>function solve_poisson_lowlevel(FES, μ, f)
-    
+
     Solution = FEVector(FES)
     FES = Solution[1].FES
     A = FEMatrix(FES, FES)
@@ -751,12 +751,12 @@ end</code></pre>
     @time begin
         BFaceDofs::Adjacency{Int32} = FES[ExtendableFEMBase.BFaceDofs]
         nbfaces::Int = num_sources(BFaceDofs)
-        AM::ExtendableSparseMatrix{Float64,Int64} = A.entries
+        AM::ExtendableSparseMatrix{Float64, Int64} = A.entries
         dof_j::Int = 0
-        for bface = 1 : nbfaces
-            for j = 1 : num_targets(BFaceDofs,1)
+        for bface in 1:nbfaces
+            for j in 1:num_targets(BFaceDofs, 1)
                 dof_j = BFaceDofs[j, bface]
-                AM[dof_j,dof_j] = 1e60
+                AM[dof_j, dof_j] = 1.0e60
                 b.entries[dof_j] = 0
             end
         end
@@ -773,7 +773,7 @@ end</code></pre>
 
 <pre class='language-julia'><code class='language-julia'>begin
     ## create finite element space
-    FEType = H1Pk{1,2,order}
+    FEType = H1Pk{1, 2, order}
 
     ## prepare finite element space and dofmaps
     println("Creating FESpace...")
@@ -794,10 +794,10 @@ DofMaps
 
 <pre class='language-julia'><code class='language-julia'>begin
     ## create grid
-    X = LinRange(0,1,2^nref+1)
-    Y = LinRange(0,1,2^nref+1)
+    X = LinRange(0, 1, 2^nref + 1)
+    Y = LinRange(0, 1, 2^nref + 1)
     println("Creating grid...")
-    @time xgrid = simplexgrid(X,Y)
+    @time xgrid = simplexgrid(X, Y)
     println("Preparing FaceNodes...")
     @time xgrid[FaceNodes]
     println("Preparing CellVolumes...")
@@ -819,57 +819,57 @@ end</code></pre>
 
     ## dofmap
     CellDofs = FES[ExtendableFEMBase.CellDofs]
-    
+
     ## quadrature formula
-    qf = QuadratureRule{Float64, EG}(2*(get_polynomialorder(FEType, EG)-1))
+    qf = QuadratureRule{Float64, EG}(2 * (get_polynomialorder(FEType, EG) - 1))
     weights::Vector{Float64} = qf.w
     xref::Vector{Vector{Float64}} = qf.xref
     nweights::Int = length(weights)
-    
+
     ## FE basis evaluator
     FEBasis_∇ = FEEvaluator(FES, Gradient, qf)
     ∇vals = FEBasis_∇.cvals
     FEBasis_id = FEEvaluator(FES, Identity, qf)
     idvals = FEBasis_id.cvals
 
-    
+
     cellvolumes = xgrid[CellVolumes]
-   
+
     ## ASSEMBLY LOOP
     function barrier(EG, L2G::L2GTransformer)
         ## barrier function to avoid allocations by EG dispatch
-        
-    	ndofs4cell::Int = get_ndofs(ON_CELLS, FEType, EG)
-    	Aloc = zeros(Float64, ndofs4cell, ndofs4cell)
+
+        ndofs4cell::Int = get_ndofs(ON_CELLS, FEType, EG)
+        Aloc = zeros(Float64, ndofs4cell, ndofs4cell)
         ncells::Int = num_cells(xgrid)
-    	dof_j::Int, dof_k::Int = 0, 0
+        dof_j::Int, dof_k::Int = 0, 0
         x::Vector{Float64} = zeros(Float64, 2)
-        
-        for cell = 1 : ncells
+
+        for cell in 1:ncells
             ## update FE basis evaluators
             FEBasis_∇.citem[] = cell
-            update_basis!(FEBasis_∇) 
-    
+            update_basis!(FEBasis_∇)
+
             ## assemble local stiffness matrix
-            for j = 1 : ndofs4cell, k = j : ndofs4cell
+            for j in 1:ndofs4cell, k in j:ndofs4cell
                 temp = 0
-                for qp = 1 : nweights
-                    temp += weights[qp] * dot(view(∇vals,:,j,qp), view(∇vals,:,k,qp))
+                for qp in 1:nweights
+                    temp += weights[qp] * dot(view(∇vals, :, j, qp), view(∇vals, :, k, qp))
                 end
-                Aloc[j,k] = temp
+                Aloc[j, k] = temp
             end
             Aloc .*= μ * cellvolumes[cell]
-    
+
             ## add local matrix to global matrix
-            for j = 1 : ndofs4cell
+            for j in 1:ndofs4cell
                 dof_j = CellDofs[j, cell]
-                for k = j : ndofs4cell
+                for k in j:ndofs4cell
                     dof_k = CellDofs[k, cell]
-                    if abs(Aloc[j,k]) &gt; 1e-15
+                    if abs(Aloc[j, k]) &gt; 1.0e-15
                         # write into sparse matrix, only lines with allocations
-                        rawupdateindex!(A, +, Aloc[j,k], dof_j, dof_k) 
+                        rawupdateindex!(A, +, Aloc[j, k], dof_j, dof_k)
                         if k &gt; j
-                            rawupdateindex!(A, +, Aloc[j,k], dof_k, dof_j)
+                            rawupdateindex!(A, +, Aloc[j, k], dof_k, dof_j)
                         end
                     end
                 end
@@ -878,10 +878,10 @@ end</code></pre>
 
             ## assemble right-hand side
             update_trafo!(L2G, cell)
-            for j = 1 : ndofs4cell
+            for j in 1:ndofs4cell
                 ## right-hand side
                 temp = 0
-                for qp = 1 : nweights
+                for qp in 1:nweights
                     ## get global x for quadrature point
                     eval_trafo!(x, L2G, xref[qp])
                     ## evaluate (f(x), v_j(x))
@@ -892,9 +892,10 @@ end</code></pre>
                 b[dof_j] += temp * cellvolumes[cell]
             end
         end
+        return
     end
     barrier(EG, L2G)
-    flush!(A)
+    return flush!(A)
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-assemble!">assemble! (generic function with 2 methods)</pre>
 <div class='manifest-versions'>
@@ -906,4 +907,4 @@ GridVisualize 1.12.0<br>
 PlutoVista 1.2.1
 </div>
 
-<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../plots/">« Plots</a><a class="docs-footer-nextpage" href="../LowLevelNavierStokes/">Low level Navier-Stokes »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.11.3 on <span class="colophon-date" title="Thursday 15 May 2025 11:41">Thursday 15 May 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../plots/">« Plots</a><a class="docs-footer-nextpage" href="../LowLevelNavierStokes/">Low level Navier-Stokes »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.11.4 on <span class="colophon-date" title="Friday 16 May 2025 07:54">Friday 16 May 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

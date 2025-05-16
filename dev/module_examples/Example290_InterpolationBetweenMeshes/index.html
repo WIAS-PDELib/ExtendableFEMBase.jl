@@ -7,50 +7,50 @@ using GridVisualize
 
 # function to interpolate
 function u!(result, qpinfo)
-	x = qpinfo.x
-	result[1] = sin(4 * pi * x[1]) * sin(4 * pi * x[2])
-	result[2] = cos(4 * pi * x[1]) * cos(4 * pi * x[2])
+    x = qpinfo.x
+    result[1] = sin(4 * pi * x[1]) * sin(4 * pi * x[2])
+    return result[2] = cos(4 * pi * x[1]) * cos(4 * pi * x[2])
 end
 
 # everything is wrapped in a main function
-function main(; ν = 1e-3, nrefs = 4, Plotter = nothing)
+function main(; ν = 1.0e-3, nrefs = 4, Plotter = nothing)
 
-	# generate two grids
-	xgrid1 = uniform_refine(grid_unitsquare(Triangle2D), nrefs)
-	xgrid2 = uniform_refine(xgrid1, 3; store_parents = true)
+    # generate two grids
+    xgrid1 = uniform_refine(grid_unitsquare(Triangle2D), nrefs)
+    xgrid2 = uniform_refine(xgrid1, 3; store_parents = true)
 
-	@show xgrid1 xgrid2
+    @show xgrid1 xgrid2
 
-	# set finite element types for the two grids
-	FEType1 = H1Pk{2, 2, 2}
-	FEType2 = H1Pk{2, 2, 1}
+    # set finite element types for the two grids
+    FEType1 = H1Pk{2, 2, 2}
+    FEType2 = H1Pk{2, 2, 1}
 
-	# generate coressponding finite element spaces and FEVectors
-	FES1 = FESpace{FEType1}(xgrid1)
-	FES2 = FESpace{FEType2}(xgrid2)
-	FEFunction1 = FEVector(FES1)
-	FEFunction2 = FEVector(FES2)
+    # generate coressponding finite element spaces and FEVectors
+    FES1 = FESpace{FEType1}(xgrid1)
+    FES2 = FESpace{FEType2}(xgrid2)
+    FEFunction1 = FEVector(FES1)
+    FEFunction2 = FEVector(FES2)
 
-	# interpolate function onto first grid
-	@time interpolate!(FEFunction1[1], u!)
-	@time interpolate!(FEFunction2[1], u!)
+    # interpolate function onto first grid
+    @time interpolate!(FEFunction1[1], u!)
+    @time interpolate!(FEFunction2[1], u!)
 
-	# interpolate onto other grid
-	@time lazy_interpolate!(FEFunction2[1], FEFunction1)
-	@time lazy_interpolate!(FEFunction2[1], FEFunction1; use_cellparents = true)
+    # interpolate onto other grid
+    @time lazy_interpolate!(FEFunction2[1], FEFunction1)
+    @time lazy_interpolate!(FEFunction2[1], FEFunction1; use_cellparents = true)
 
-	# plot
-	p = GridVisualizer(; Plotter = Plotter, layout = (1, 2), clear = true, resolution = (800, 400))
-	scalarplot!(p[1, 1], xgrid1, view(nodevalues(FEFunction1[1]), 1, :), levels = 11, title = &quot;u_h ($FEType1, coarse grid)&quot;)
-	scalarplot!(p[1, 2], xgrid2, view(nodevalues(FEFunction2[1]), 1, :), levels = 11, title = &quot;u_h ($FEType2, fine grid)&quot;)
+    # plot
+    p = GridVisualizer(; Plotter = Plotter, layout = (1, 2), clear = true, resolution = (800, 400))
+    scalarplot!(p[1, 1], xgrid1, view(nodevalues(FEFunction1[1]), 1, :), levels = 11, title = &quot;u_h ($FEType1, coarse grid)&quot;)
+    scalarplot!(p[1, 2], xgrid2, view(nodevalues(FEFunction2[1]), 1, :), levels = 11, title = &quot;u_h ($FEType2, fine grid)&quot;)
 
-	return p
+    return p
 end
 
 function generateplots(dir = pwd(); Plotter = nothing, kwargs...)
-	plt = main(; Plotter = Plotter, kwargs...)
-	scene = GridVisualize.reveal(plt)
-	GridVisualize.save(joinpath(dir, &quot;example290.png&quot;), scene; Plotter = Plotter)
+    plt = main(; Plotter = Plotter, kwargs...)
+    scene = GridVisualize.reveal(plt)
+    return GridVisualize.save(joinpath(dir, &quot;example290.png&quot;), scene; Plotter = Plotter)
 end
 
-end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example281_DiscontinuousPlot/">« Example281_DiscontinuousPlot</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.11.3 on <span class="colophon-date" title="Thursday 15 May 2025 11:41">Thursday 15 May 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example281_DiscontinuousPlot/">« Example281_DiscontinuousPlot</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.11.4 on <span class="colophon-date" title="Friday 16 May 2025 07:54">Friday 16 May 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
