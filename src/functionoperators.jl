@@ -30,14 +30,7 @@ $(TYPEDEF)
 identity jump operator: evaluates face jumps of finite element function
 """
 #abstract type IdentityDisc{DT<:DiscontinuityTreatment} end # [[v_h]]
-"""
-$(TYPEDEF)
 
-reconstruction identity operator: evaluates a reconstructed version of the finite element function.
-
-FEreconst specifies the reconstruction space and reconstruction algorithm if it is defined for the finite element that it is applied to.
-"""
-abstract type AbstractFiniteElement end
 """
 $(TYPEDEF)
 
