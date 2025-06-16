@@ -1,5 +1,8 @@
 # CHANGES
 
+## v1.1.1 June 16, 2025
+  - docstring improvements
+    
 ## v1.1.0 May 15, 2025
   - overhaul of interpolators: each finite element
     interpolation is composed of the three new
