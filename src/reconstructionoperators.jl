@@ -1,22 +1,10 @@
-abstract type ReconstructionOperator <: AbstractFunctionOperator end
+StandardFunctionOperator(::Type{<:ReconstructionOperator{FETypeR, O}}) where {FETypeR, O} = O
+ReconstructionSpace(::Type{<:ReconstructionOperator{FETypeR, O}}) where {FETypeR, O} = FETypeR
 
-"""
-$(TYPEDEF)
-
-reconstruction operator: evaluates a reconstructed version of the finite element function.
-
-FETypeR specifies the reconstruction space (needs to be defined for the finite element that it is applied to).
-O specifies the StandardFunctionOperator that shall be evaluated.
-"""
-abstract type Reconstruct{FETypeR, O} <: ReconstructionOperator where {FETypeR <: AbstractFiniteElement, O <: StandardFunctionOperator} end # calculates the jump between both sides of the face
-
-
-StandardFunctionOperator(::Type{Reconstruct{FETypeR, O}}) where {FETypeR, O} = O
-ReconstructionSpace(::Type{Reconstruct{FETypeR, O}}) where {FETypeR, O} = FETypeR
-
-NeededDerivative4Operator(::Type{Reconstruct{FETypeR, O}}) where {FETypeR, O} = NeededDerivative4Operator(O)
-Length4Operator(::Type{Reconstruct{FETypeR, O}}, xdim, nc) where {FETypeR, O} = Length4Operator(O, xdim, nc)
+NeededDerivative4Operator(::Type{<:ReconstructionOperator{FETypeR, O}}) where {FETypeR, O} = NeededDerivative4Operator(O)
+Length4Operator(::Type{<:ReconstructionOperator{FETypeR, O}}, xdim, nc) where {FETypeR, O} = Length4Operator(O, xdim, nc)
 DefaultName4Operator(::Type{Reconstruct{FETypeR, O}}) where {FETypeR, O} = "R(" * DefaultName4Operator(O) * ")"
+DefaultName4Operator(::Type{WeightedReconstruct{FETypeR, O}}) where {FETypeR, O} = "R(r" * DefaultName4Operator(O) * ")"
 
 struct FEReconstEvaluator{T, TvG, TiG, FEType, FEType2, stdop, O <: ReconstructionOperator} <: FEEvaluator{T, TvG, TiG}
     citem::Base.RefValue{Int}                       # current item
@@ -24,13 +12,13 @@ struct FEReconstEvaluator{T, TvG, TiG, FEType, FEType2, stdop, O <: Reconstructi
     FEB::SingleFEEvaluator{T, TvG, TiG, stdop, FEType2}                # FEBasisEvaluator for stdop in reconstruction space
     cvals::Array{T, 3}                               # current operator vals on item (reconstruction)
     coefficients::Array{TvG, 2}                      # additional coefficients for reconstruction
-    reconst_handler::ReconstructionHandler{T, TiG}  # handler for reconstruction coefficients
+    reconst_handler::ReconstructionHandler{T, TiG, O}  # handler for reconstruction coefficients
 end
 
 # constructor for reconstruction operators
 function FEEvaluator(
         FE::FESpace{TvG, TiG, FEType, FEAPT},
-        operator::Type{<:Reconstruct{FETypeReconst, stdop}},
+        operator::Type{<:ReconstructionOperator{FETypeReconst, stdop}},
         qrule::QuadratureRule{TvR, EG},
         xgrid = FE.xgrid;
         L2G = nothing,
@@ -65,7 +53,7 @@ function FEEvaluator(
     FEB = FEEvaluator(FE2, stdop, qrule, xgrid; L2G = L2G, T = T, AT = AT)
 
     ## reconstruction coefficient handler
-    reconst_handler = ReconstructionHandler(FE, FE2, AT, EG)
+    reconst_handler = ReconstructionHandler(FE, FE2, AT, EG, operator)
 
     return FEReconstEvaluator{T, TvG, TiG, FEType, FETypeReconst, stdop, operator}(FEB.citem, FE, FEB, cvals, coefficients2, reconst_handler)
 end
