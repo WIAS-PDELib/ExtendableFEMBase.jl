@@ -260,170 +260,6 @@ end
 """
 ````
 function nodevalues!(
-	target::AbstractArray{<:Real,2},
-	source::AbstractArray{T,1},
-	FE::FESpace{Tv,Ti,FEType,AT},
-	operator::Type{<:AbstractFunctionOperator} = Identity;
-	kwargs...)
-````
-
-calls the nodevalues_subset! function with all nodes of the dofgrid, see nodevalues_subset!(target, source, FE, operator; nodes = 1:num_nodes(FE.dofgrid), kwargs...)
-"""
-function nodevalues!(
-        target::AbstractArray{T, 2},
-        source::AbstractArray{T, 1},
-        FE::FESpace{Tv, Ti, FEType, AT},
-        operator::Type{<:AbstractFunctionOperator} = Identity;
-        kwargs...
-    ) where {T, Tv, Ti, FEType, AT}
-
-    nodevalues_subset!(target, source, FE, operator; nodes = 1:num_nodes(FE.dofgrid), kwargs...)
-
-    return nothing
-end
-
-"""
-````
-piecewise_nodevalues!(
-        target::AbstractArray{T, 2},
-        source::AbstractArray{T, 1},
-        FE::FESpace{Tv, Ti, FEType, AT},
-        operator::Type{<:AbstractFunctionOperator} = Identity;
-        abs::Bool = false,
-        factor = 1,
-        regions::Array{Int, 1} = [0],
-        target_offset::Int = 0,
-        source_offset::Int = 0,
-        zero_target::Bool = true,
-        continuous::Bool = false
-    )
-````
-
-Evaluate a finite element function (given by the coefficient vector `source` and FE space `FE`) at all nodes, but store the results in a piecewise (cellwise) fashion, i.e., for each cell, the values at its local nodes are written into `target`. The result is organized so that each column of `target` corresponds to a cell, and each row corresponds to the values at the cell's nodes.
-
-# Arguments
-- `target`: Output array to store the evaluated values (size: result dimension × number of nodes per cell, number of cells).
-- `source`: Coefficient vector for the FE function.
-- `FE`: The finite element space.
-- `operator`: Function operator to apply (default: `Identity`).
-- `abs`: If `true`, store the Euclidean norm of the result at each node (default: `false`).
-- `factor`: Scaling factor applied to the result (default: `1`).
-- `regions`: List of region indices to restrict evaluation (default: all regions).
-- `target_offset`: Offset for writing into `target` (default: `0`).
-- `source_offset`: Offset for reading from `source` (default: `0`).
-- `zero_target`: If `true`, zero out `target` before writing (default: `true`).
-- `continuous`: If `true`, evaluate only once per node; otherwise, average over all neighboring cells (default: `false`).
-
-# Notes
-- The result dimension is determined by the FE space, the operator, and the `abs` argument.
-"""
-function piecewise_nodevalues!(
-        target::AbstractArray{T, 2},
-        source::AbstractArray{T, 1},
-        FE::FESpace{Tv, Ti, FEType, AT},
-        operator::Type{<:AbstractFunctionOperator} = Identity;
-        abs::Bool = false,
-        factor = 1,
-        regions::Array{Int, 1} = [0],
-        target_offset::Int = 0,
-        source_offset::Int = 0,
-        zero_target::Bool = true
-    ) where {T, Tv, Ti, FEType, AT}
-
-    xgrid = FE.dofgrid
-    xItemGeometries = xgrid[CellGeometries]
-    xItemRegions::GridRegionTypes{Ti} = xgrid[CellRegions]
-    xItemDofs::DofMapTypes{Ti} = FE[CellDofs]
-    xItemNodes::Adjacency{Ti} = xgrid[CellNodes]
-    nitems = num_sources(xItemNodes)
-    target_resultdim::Int = 0
-
-    if regions == [0]
-        try
-            regions = Array{Int, 1}(Base.unique(xItemRegions[:]))
-        catch
-            regions = [xItemRegions[1]]
-        end
-    end
-    nregions = length(regions)
-
-    # setup basisevaler for each unique cell geometries
-    EG = xgrid[UniqueCellGeometries]
-
-    if zero_target
-        fill!(target, 0)
-    end
-
-    function barrier(EG, qf, BE)
-        node::Int = 0
-        dof::Ti = 0
-        weights::Array{T, 1} = qf.w
-        nweights = length(weights)
-        basisvals = BE.cvals
-        ndofs = size(basisvals, 2)
-        cvals_resultdim::Int = size(basisvals, 1)
-        temp::Array{T, 1} = zeros(T, cvals_resultdim)
-        localT::Array{T, 1} = zeros(T, cvals_resultdim)
-        target_resultdim = abs ? 1 : cvals_resultdim
-        @assert size(target, 1) >= target_resultdim "too small target dimension"
-
-        for item in 1:nitems
-            for r in 1:nregions
-                # check if item region is in regions
-                if xItemRegions[item] == regions[r] && xItemGeometries[item] == EG
-
-                    # update FEbasisevaler
-                    update_basis!(BE, item)
-
-                    for i in eachindex(weights) # vertices
-                        node = xItemNodes[i, item]
-                        fill!(localT, 0)
-
-                        for dof_i in 1:ndofs
-                            dof = xItemDofs[dof_i, item]
-                            eval_febe!(temp, BE, dof_i, i)
-                            for k in 1:cvals_resultdim
-                                localT[k] += source[source_offset + dof] * temp[k]
-                                #target[k+target_offset,node] += temp[k] * source[source_offset + dof]
-                            end
-                        end
-                        localT .*= factor
-                        if abs
-                            for k in 1:cvals_resultdim
-                                target[target_offset + i, item] += localT[k]^2
-                            end
-                        else
-                            for k in 1:cvals_resultdim
-                                target[target_offset + i + (k - 1) * nweights, item] += localT[k]
-                            end
-                        end
-                    end
-
-                    if abs
-                        for i in 1:nweights
-                            target[i + target_offset, item] = sqrt(target[i + target_offset, item])
-                        end
-                    end
-                    break # region for loop
-                end # if in region
-            end # region for loop
-        end # item for loop
-        return
-    end # barrier
-
-    for j in 1:length(EG)
-        qf = VertexRule(EG[j])
-        BE = FEEvaluator(FE, operator, qf; T = T)
-        barrier(EG[j], qf, BE)
-    end
-
-    return nothing
-end
-
-
-"""
-````
-function nodevalues!(
         target::AbstractArray{<:Real,2},
         source::AbstractArray{T,1},
         FE::FESpace{Tv,Ti,FEType,AT},
@@ -577,6 +413,144 @@ function nodevalues!(
         for n in 1:nnodes
             target[1 + target_offset, n] = sqrt(target[1 + target_offset, n])
         end
+    end
+
+    return nothing
+end
+
+"""
+````
+piecewise_nodevalues!(
+        target::AbstractArray{T, 2},
+        source::AbstractArray{T, 1},
+        FE::FESpace{Tv, Ti, FEType, AT},
+        operator::Type{<:AbstractFunctionOperator} = Identity;
+        abs::Bool = false,
+        factor = 1,
+        regions::Array{Int, 1} = [0],
+        target_offset::Int = 0,
+        source_offset::Int = 0,
+        zero_target::Bool = true,
+        continuous::Bool = false
+    )
+````
+
+Evaluate a finite element function (given by the coefficient vector `source` and FE space `FE`) at all nodes, but store the results in a piecewise (cellwise) fashion, i.e., for each cell, the values at its local nodes are written into `target`. The result is organized so that each column of `target` corresponds to a cell, and each row corresponds to the values at the cell's nodes.
+
+# Arguments
+- `target`: Output array to store the evaluated values (size: result dimension × number of nodes per cell, number of cells).
+- `source`: Coefficient vector for the FE function.
+- `FE`: The finite element space.
+- `operator`: Function operator to apply (default: `Identity`).
+- `abs`: If `true`, store the Euclidean norm of the result at each node (default: `false`).
+- `factor`: Scaling factor applied to the result (default: `1`).
+- `regions`: List of region indices to restrict evaluation (default: all regions).
+- `target_offset`: Offset for writing into `target` (default: `0`).
+- `source_offset`: Offset for reading from `source` (default: `0`).
+- `zero_target`: If `true`, zero out `target` before writing (default: `true`).
+- `continuous`: If `true`, evaluate only once per node; otherwise, average over all neighboring cells (default: `false`).
+
+# Notes
+- The result dimension is determined by the FE space, the operator, and the `abs` argument.
+"""
+function piecewise_nodevalues!(
+        target::AbstractArray{T, 2},
+        source::AbstractArray{T, 1},
+        FE::FESpace{Tv, Ti, FEType, AT},
+        operator::Type{<:AbstractFunctionOperator} = Identity;
+        abs::Bool = false,
+        factor = 1,
+        regions::Array{Int, 1} = [0],
+        target_offset::Int = 0,
+        source_offset::Int = 0,
+        zero_target::Bool = true
+    ) where {T, Tv, Ti, FEType, AT}
+
+    xgrid = FE.dofgrid
+    xItemGeometries = xgrid[CellGeometries]
+    xItemRegions::GridRegionTypes{Ti} = xgrid[CellRegions]
+    xItemDofs::DofMapTypes{Ti} = FE[CellDofs]
+    xItemNodes::Adjacency{Ti} = xgrid[CellNodes]
+    nitems = num_sources(xItemNodes)
+    target_resultdim::Int = 0
+
+    if regions == [0]
+        try
+            regions = Array{Int, 1}(Base.unique(xItemRegions[:]))
+        catch
+            regions = [xItemRegions[1]]
+        end
+    end
+    nregions = length(regions)
+
+    # setup basisevaler for each unique cell geometries
+    EG = xgrid[UniqueCellGeometries]
+
+    if zero_target
+        fill!(target, 0)
+    end
+
+    function barrier(EG, qf, BE)
+        node::Int = 0
+        dof::Ti = 0
+        weights::Array{T, 1} = qf.w
+        nweights = length(weights)
+        basisvals = BE.cvals
+        ndofs = size(basisvals, 2)
+        cvals_resultdim::Int = size(basisvals, 1)
+        temp::Array{T, 1} = zeros(T, cvals_resultdim)
+        localT::Array{T, 1} = zeros(T, cvals_resultdim)
+        target_resultdim = abs ? 1 : cvals_resultdim
+        @assert size(target, 1) >= target_resultdim "too small target dimension"
+
+        for item in 1:nitems
+            for r in 1:nregions
+                # check if item region is in regions
+                if xItemRegions[item] == regions[r] && xItemGeometries[item] == EG
+
+                    # update FEbasisevaler
+                    update_basis!(BE, item)
+
+                    for i in eachindex(weights) # vertices
+                        node = xItemNodes[i, item]
+                        fill!(localT, 0)
+
+                        for dof_i in 1:ndofs
+                            dof = xItemDofs[dof_i, item]
+                            eval_febe!(temp, BE, dof_i, i)
+                            for k in 1:cvals_resultdim
+                                localT[k] += source[source_offset + dof] * temp[k]
+                                #target[k+target_offset,node] += temp[k] * source[source_offset + dof]
+                            end
+                        end
+                        localT .*= factor
+                        if abs
+                            for k in 1:cvals_resultdim
+                                target[target_offset + i, item] += localT[k]^2
+                            end
+                        else
+                            for k in 1:cvals_resultdim
+                                target[target_offset + i + (k - 1) * nweights, item] += localT[k]
+                            end
+                        end
+                    end
+
+                    if abs
+                        for i in 1:nweights
+                            target[i + target_offset, item] = sqrt(target[i + target_offset, item])
+                        end
+                    end
+                    break # region for loop
+                end # if in region
+            end # region for loop
+        end # item for loop
+        return
+    end # barrier
+
+    for j in 1:length(EG)
+        qf = VertexRule(EG[j])
+        BE = FEEvaluator(FE, operator, qf; T = T)
+        barrier(EG[j], qf, BE)
     end
 
     return nothing
