@@ -1,6 +1,6 @@
 # FEVector
 
-A FEVector consists of FEVectorBlocks that share a common one-dimensional array. Each block is associated to a FESpace and can only write into a region of the common array specified by offsets that stores the degrees of freedom of that FEspace.
+A `FEVector` represents a block-structured vector used in finite element computations. It consists of one or more `FEVectorBlock`s, each associated with a specific `FESpace`. All blocks share a common one-dimensional array that stores the global degrees of freedom (DoFs). Each block can only write to a region of the array specified by offsets, ensuring that each `FESpace` manages its own DoFs within the global vector.
 
 
 ```@autodocs

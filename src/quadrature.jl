@@ -645,22 +645,29 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Integration of an integrand of the signature
+Compute cellwise (or per-entity) integrals of a user-supplied integrand over entities of type `AT` in the given `grid`, writing the result for each entity into `integral4items`.
 
-	integrand!(result, qpinfo)
+# Arguments
+- `integral4items::AbstractArray{T}`: Preallocated array to store the integral for each entity (e.g., cell, edge, or face). The shape should be compatible with the number of entities and the integrand's output dimension.
+- `grid::ExtendableGrid{Tv, Ti}`: The grid or mesh over which to integrate.
+- `AT::Type{<:AssemblyType}`: The entity type to integrate over (e.g., `ON_CELLS`, `ON_EDGES`, `ON_FACES`).
+- `integrand!`: A function with signature `integrand!(result, qpinfo)` that computes the integrand at a quadrature point. The function should write its output into `result` (a preallocated vector) and use `qpinfo` to access quadrature point data.
 
-over the entities AT of the grid. The result on every item is written into integral4items
-(at least of size nitems x length of result).
-As usual, qpinfo allows to access information
-at the current quadrature point.
+# Keyword Arguments
+- `offset`: Offset(s) for writing into `integral4items` (default: `[0]`).
+- `bonus_quadorder`: Additional quadrature order to add to `quadorder` (default: `0`).
+- `quadorder`: Quadrature order (default: `0`).
+- `regions`: Restrict integration to these region indices (default: `[]`, meaning all regions).
+- `items`: Restrict integration to these item numbers (default: `[]`, meaning all items).
+- `time`: Time value to be passed to `qpinfo` (default: `0`).
+- `force_quadrature_rule`: Use this quadrature rule instead of the default (default: `nothing`).
+- Additional keyword arguments (`kwargs...`) are forwarded to the quadrature point info constructor.
 
-Keyword arguments:
-- quadorder = specifies the quadrature order (default = 0)
-- regions = restricts integration to these regions (default = [] meaning all regions)
-- items = restricts integration to these item numbers (default = [] meaning all items)
-- time = sets the time to be passed to qpinfo (default = 0)
-- params = sets the params array to be passed to qpinfo (default = [])
-- offset = offset for writing into result array integral4items (default = [0]),
+# Notes
+- The function loops over all specified entities (cells, edges, or faces), applies the quadrature rule, and accumulates the result for each entity in `integral4items`.
+- The integrand function is called at each quadrature point and should write its output in-place to the provided result vector.
+- For total (global) integrals, use [`integrate`](@ref) instead, which is more memory-efficient.
+- The shape of `integral4items` determines whether the result is stored as a vector per entity or as a matrix (e.g., for multiple components).
 """
 function integrate!(
         integral4items::AbstractArray{T},
@@ -823,20 +830,30 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Integration that returns total integral of an integrand of the signature
+Compute the total integral of a user-supplied integrand over entities of type `AT` in the given `grid`.
 
-	integrand!(result, qpinfo)
+# Arguments
+- `grid::ExtendableGrid`: The grid or mesh over which to integrate.
+- `AT::Type{<:AssemblyType}`: The entity type to integrate over (e.g., `ON_CELLS`, `ON_EDGES`).
+- `integrand!`: A function with signature `integrand!(result, qpinfo)` that computes the integrand at a quadrature point. The function should write its output into `result` (a preallocated vector) and use `qpinfo` to access quadrature point data.
+- `resultdim::Int`: The length of the result vector expected from `integrand!` (i.e., the number of components to integrate).
 
-over the entities AT of the grid. Here, qpinfo allows to access information
-at the current quadrature point.
-The length of the result needs to be specified via resultdim.
+# Keyword Arguments
+- `T`: The number type for accumulation (default: `Float64`).
+- `quadorder`: Quadrature order (default: `0`).
+- `regions`: Restrict integration to these region indices (default: `[]`, meaning all regions).
+- `items`: Restrict integration to these item numbers (default: `[]`, meaning all items).
+- `time`: Time value to be passed to `qpinfo` (default: `0`).
+- `params`: Parameter array to be passed to `qpinfo` (default: `[]`).
+- Additional keyword arguments are forwarded to the quadrature point info constructor.
 
-Keyword arguments:
-- quadorder = specifies the quadrature order (default = 0)
-- regions = restricts integration to these regions (default = [] meaning all regions)
-- items = restricts integration to these item numbers (default = [] meaning all items)
-- time = sets the time to be passed to qpinfo (default = 0)
-- params = sets the params array to be passed to qpinfo (default = [])
+# Returns
+- If `resultdim == 1`, returns a scalar value (the total integral).
+- If `resultdim > 1`, returns a vector of length `resultdim` (componentwise integrals).
+
+# Notes
+- This function is memory-efficient and accumulates the total integral directly, without storing per-entity results. For cellwise or per-entity integration, use [`integrate!`](@ref) instead.
+
 """
 function integrate(
         grid::ExtendableGrid,

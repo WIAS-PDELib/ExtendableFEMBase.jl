@@ -1,9 +1,21 @@
 """
 $(TYPEDEF)
 
-Dofmaps are stored as an ExtendableGrids.AbstractGridAdjacency in the finite element space and collect
-information with respect to different AssemblyTypes. They are generated automatically on demand and the dofmaps
-associated to each subtype can be accessed via FESpace[DofMap].
+A `DofMap` encodes the association of global DoF indices to mesh entities of a given type (e.g., cells, faces, edges) for a particular finite element space. This mapping is essential for assembling system matrices and vectors, applying boundary conditions, and extracting solution values.
+DofMaps are typically not constructed directly by users. Instead, they are generated/managed internally by the finite element space and accessed as needed for assembly or evaluation tasks.
+
+# Implementation
+
+- All concrete `DofMap` subtypes (e.g., `CellDofs`, `FaceDofs`, `EdgeDofs`, etc.) specify the mesh entity type to which DoFs are attached.
+- DofMaps are stored as `ExtendableGrids.AbstractGridAdjacency` (usually VariableTargetAdjacency, SerialVariableTargetAdjacency or AbstractGridIntegerArray2D) objects within the finite element space and are generated automatically as needed.
+- The appropriate DofMap for a given assembly type can be accessed via `FESpace[DofMapSubtype]`.
+
+# Example
+
+```julia
+cell_dofs = FESpace[CellDofs]   # Get the cell-based DoF map
+face_dofs = FESpace[FaceDofs]   # Get the face-based DoF map
+```
 """
 abstract type DofMap <: AbstractGridAdjacency end
 

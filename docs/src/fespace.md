@@ -1,7 +1,7 @@
 
 # FESpace
 
-To generate a finite element space only a finite element type and a grid is needed, dofmaps are generated automatically on their first demand.
+A **finite element space** (FESpace) represents the set of all functions that can be expressed using a particular finite element type on a given computational grid. In ExtendableFEMBase, constructing a finite element space requires only specifying the finite element type and the grid; all necessary degree-of-freedom (dof) mappings are generated automatically on first access. 
 
 ```@autodocs
 Modules = [ExtendableFEMBase]

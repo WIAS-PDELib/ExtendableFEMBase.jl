@@ -1,5 +1,8 @@
 # CHANGES
 
+## v1.2.0 June 24, 2025
+  - major documentation overhaul
+    
 ## v1.1.1 June 16, 2025
   - docstring improvements
     

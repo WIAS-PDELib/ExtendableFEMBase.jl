@@ -1,12 +1,10 @@
-
 # Function Operators
 
 ## StandardFunctionOperators
 
-StandardFunctionOperators are abstract types that encode primitive (linear) operators (like Identity, Gradient etc.)
-used to dispatch different evaluations of finite element basis functions.
+`StandardFunctionOperators` are abstract types that represent fundamental (linear) operators, such as the identity, gradient, divergence, and others. These operators provide a unified interface for evaluating finite element basis functions in various ways.
 
-### List of primitive operators
+### List of Primitive Operators
 
 | StandardFunctionOperator                                    | Description                                              | Mathematically                                                            |
 | :--------------------------------------------------- | :------------------------------------------------------- | :------------------------------------------------------------------------ |
@@ -28,12 +26,9 @@ used to dispatch different evaluations of finite element basis functions.
 
 !!! note
 
-    As each finite element type is transformed differently from the reference domain to the general domain,
-    the evaluation of each function operator has to be implemented for each finite element class.
-    Currently, not every function operator works in any dimension and for any finite element. More evaluations
-    are added as soon as they are needed (and possibly upon request).
-    Also, the function operators can be combined with user-defined actions to evaluate other operators that
-    can be build from the ones available (e.g. the deviator).
+    The transformation from the reference domain to the physical domain differs for each finite element class. As a result, the evaluation of each function operator must be implemented specifically for every finite element class. Not all function operators are currently available for every dimension or element type, but new implementations are added as needed or upon request.
+    
+    Additionally, function operators can be combined with user-defined kernels to postprocess/construct more advanced operators from the available primitives (for example, the deviatoric part of a tensor).
 
 
 ```@autodocs
@@ -45,8 +40,7 @@ Order   = [:type, :function]
 
 ## ReconstructionOperators
 
-There are special operators that allow to evaluate a primitive operator of some discrete
-reconstructed version of a testfunction. 
+Special operators are provided to evaluate a primitive operator on a reconstructed version of a test function. These are useful for advanced discretizations and post-processing.
 
 ```@autodocs
 Modules = [ExtendableFEMBase]
@@ -54,16 +48,14 @@ Pages = ["reconstructionoperators.jl"]
 Order   = [:type, :function]
 ```
 
-### Divergence-free reconstruction operators
-For gradient-robust discretisations of certain classical non divergence-conforming ansatz spaces,
-reconstruction operators are available that map a discretely divergence-free H1 function to a pointwise divergence-free
-Hdiv function. So far such operators are available for the vector-valued Crouzeix-Raviart (H1CR) and Bernardi--Raugel (H1BR) finite element types,
-as well as for the P2-bubble (H1P2B) finite element type in two dimensions.
+### Divergence-Free Reconstruction Operators
 
-**Example:** Reconst{HDIVRT0{d}, Identity} gives the reconstruction of the Identity operator into HDIVRT0 (and is available for H1BR{d} and H1CR{d} for d = 1,2)
+For gradient-robust discretizations of certain classical non-divergence-conforming ansatz spaces, reconstruction operators are available that map a discretely divergence-free H1 function to a pointwise divergence-free H(div) function. Currently, such operators are implemented for the vector-valued Crouzeix-Raviart (H1CR) and Bernardi–Raugel (H1BR) finite element types, as well as for the P2-bubble (H1P2B) element in two dimensions.
+
+**Example:** `Reconst{HDIVRT0{d}, Identity}` reconstructs the identity operator into HDIVRT0, and is available for `H1BR{d}` and `H1CR{d}` for `d = 1, 2`.
 
 
 
-## Operator Pairs (experimental)
+## Operator Pairs (Experimental)
 
-Two function operators can be put into an OperatorPair so that one can provide effectively two operators in each argument of an assembly pattern. However, the user should make sure that both operators can be evaluated together reasonably (meaning both should be well-defined on the element geometries and the finite element space where the argument will be evaluated, and the action of the operator has to operate with coressponding input and result fields). This feature is still experimental and might have issues in some cases. OperatorTriple for a combination of three operators is also available.
+Two function operators can be combined into an `OperatorPair`, allowing you to provide two operators in each argument of an assembly pattern. Both operators must be well-defined on the relevant element geometries and finite element spaces, and their actions must be compatible with the input and result fields. This feature is experimental and may have limitations in some cases. An `OperatorTriple` is also available for combining three operators.

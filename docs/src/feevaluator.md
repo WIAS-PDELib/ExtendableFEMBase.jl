@@ -1,7 +1,8 @@
 
 # FEEvaluator
 
-FEEvaluators provide a structure that handles the evaluation of finite element basis functions for a given function operator, quadrature rule and item geometry. It stores the evaluations on the reference geometry (where derivatives are computed by automatic differentiation) and on the current mesh item. The current mesh item can be changed via the update! call.
+The `FEEvaluator` provides a unified interface for evaluating finite element basis functions, their derivatives, and related quantities for a given function operator, quadrature rule, and mesh entity. It manages the storage and reuse of basis evaluations both on the reference element (where derivatives are computed via automatic differentiation) and on the current mesh item. The mesh item context can be updated dynamically using the `update!` function.
+
 
 ```@autodocs
 Modules = [ExtendableFEMBase]

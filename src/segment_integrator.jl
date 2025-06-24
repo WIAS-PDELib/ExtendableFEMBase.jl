@@ -44,27 +44,31 @@ function SegmentIntegrator(
 	kwargs...)
 ````
 
-Generates an SegmentIntegrator that can integrate over segments
-of the specified geometry EG.
-To do so, it evaluates, at each quadrature point, the specified operator evaluations,
-postprocesses them with the kernel function (if provided)
-and accumulates the results with the quadrature weights.
-If no kernel is given, the arguments
-are integrated directly. If a kernel is provided it has be conform
-to the interface
+Construct a `SegmentIntegrator` for integrating over segments of the given element geometry `EG`.
 
-	kernel!(result, eval_args, qpinfo)
+At each quadrature point, the specified operator evaluations are performed, optionally postprocessed by the provided `kernel!` function, and accumulated using the quadrature weights. If no kernel is given, the operator arguments are integrated directly.
 
-where qpinfo allows to access information at the current quadrature point.
-Additionally the length of the result needs to be specified via the kwargs.
+# Arguments
+- `EG::ElementGeometry`: The segment geometry over which to integrate.
+- `kernel!::Function` (optional): A function of the form `kernel!(result, eval_args, qpinfo)` that postprocesses operator evaluations at each quadrature point. If omitted, a default kernel is used.
+- `oa_args::Array{<:Tuple{Any, DataType},1}`: Array of tuples `(tag, FunctionOperator)`, where `tag` identifies the unknown or vector position, and `FunctionOperator` specifies the operator to evaluate.
 
-Evaluation can be triggered via the integrate_segment! function after an initialize!
-
-Operator evaluations are tuples that pair a tag (to identify an unknown or the position in the vector)
-with a FunctionOperator.
-
-Keyword arguments:
+# Keyword arguments:
 $(_myprint(default_segint_kwargs()))
+
+# Kernel Function Interface
+
+    kernel!(result, eval_args, qpinfo)
+
+- `result`: Preallocated array to store the kernel output.
+- `eval_args`: Array of operator evaluations at the current quadrature point.
+- `qpinfo`: `QPInfos` struct with information about the current quadrature point.
+
+# Usage
+
+After construction, call `initialize!` to prepare the integrator for a given solution, then use `integrate_segment!` to perform integration over a segment.
+
+
 """
 function SegmentIntegrator(EG, kernel, oa_args::Array{<:Tuple{Union{<:Any, Int}, DataType}, 1}; kwargs...)
     u_args = [oa[1] for oa in oa_args]

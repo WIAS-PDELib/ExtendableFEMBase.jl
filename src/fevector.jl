@@ -8,7 +8,26 @@
 """
 $(TYPEDEF)
 
-block of an FEVector that carries coefficients for an associated FESpace and can be assigned as an AbstractArray (getindex, setindex, size, length)
+A block within an `FEVector` representing a contiguous segment of coefficients associated with a specific finite element space (`FESpace`).
+
+Each `FEVectorBlock` provides array-like access to the degrees of freedom (DOFs) for its associated `FESpace`, mapping local indices to a shared global coefficient array. This enables efficient block-wise operations, assembly, and extraction of sub-vectors corresponding to different FE spaces.
+
+# Type Parameters
+- `T`: Value type of the vector entries (e.g., `Float64`).
+- `Tv`: Value type for the associated `FESpace`.
+- `Ti`: Integer type for the associated `FESpace`.
+- `FEType`: Type of the finite element.
+- `APT`: Assembly type for the finite element.
+
+# Fields
+- `name::String`: Name or label for this block (for identification or debugging).
+- `FES::FESpace{Tv, Ti, FEType, APT}`: The finite element space associated with this block.
+- `offset::Int`: Global offset (start index in the global vector).
+- `last_index::Int`: Global end index (inclusive).
+- `entries::Array{T, 1}`: Reference to the global coefficient array (shared with the parent `FEVector`).
+
+# Usage
+`FEVectorBlock` is typically created internally by `FEVector` constructors and provides efficient access to the coefficients for a particular FE space. Supports standard array operations (`getindex`, `setindex!`, `size`, `length`, etc.) and can be used for block-wise assembly, extraction, and manipulation.
 """
 struct FEVectorBlock{T, Tv, Ti, FEType, APT} <: AbstractArray{T, 1}
     name::String
@@ -42,9 +61,20 @@ end
 """
 $(TYPEDEF)
 
-a plain array but with an additional layer of several FEVectorBlock subdivisions each carrying coefficients for their associated FESpace.
-The j-th block can be accessed by getindex(::FEVector, j) or by getindex(::FEVector, tag) if tags are associated.
-The full vector can be accessed via FEVector.entries 
+A block-structured vector for storing coefficients associated with one or more finite element spaces (`FESpace`).
+
+An `FEVector` consists of a global coefficient array subdivided into multiple `FEVectorBlock`s, each corresponding to a specific `FESpace`. This structure enables efficient block-wise access, assembly, and manipulation of solution vectors in finite element computations, especially for multi-field or mixed problems.
+
+# Type Parameters
+- `T`: Value type of the vector entries (e.g., `Float64`).
+- `Tv`: Value type for the associated `FESpace`.
+- `Ti`: Integer type for the associated `FESpace`.
+
+# Fields
+- `FEVectorBlocks::Array{FEVectorBlock{T, Tv, Ti}, 1}`: Array of blocks, each representing a segment of the global vector for a specific `FESpace`.
+- `entries::Array{T, 1}`: The global coefficient array, shared by all blocks.
+- `tags::Vector{Any}`: Optional tags for identifying or accessing blocks (e.g., by name or symbol).
+
 """
 struct FEVector{T, Tv, Ti} #<: AbstractVector{T}
     FEVectorBlocks::Array{FEVectorBlock{T, Tv, Ti}, 1}
@@ -135,9 +165,24 @@ Base.length(FEB::FEVectorBlock) = FEB.last_index - FEB.offset
 FEVector{T}(FES; name = nothing, tags = nothing, kwargs...) where T <: Real
 ````
 
-Creates FEVector that has one block if FES is a single FESpace, and a blockwise FEVector if FES is a vector of FESpaces.
-Optionally a name for the vector (as a String) or each of the blocks (as a vector of Strings), or tags (as an Array{Any})
-for the blocks can be specified.
+Constructs an `FEVector` for storing coefficients associated with one or more finite element spaces (`FESpace`).
+
+- If `FES` is a single `FESpace`, the resulting `FEVector` contains one block.
+- If `FES` is a vector of `FESpace` objects, the resulting `FEVector` is block-structured, with one block per space.
+
+Optionally, you can assign a name (as a `String` for all blocks, or a vector of `String` for each block) and/or tags (as an array of any type) to the blocks for identification and access.
+
+# Arguments
+- `FES::FESpace` or `FES::Vector{<:FESpace}`: The finite element space(s) for which to create the vector.
+
+# Keyword Arguments
+- `entries`: Optional array of coefficients. If not provided, a zero vector of appropriate length is created.
+- `name`: Name for the vector or for each block (default: `nothing` causes auto naming by index or tag).
+- `tags`: Array of tags for the blocks (default: `[]`, i.e. block access only by index).
+
+# Returns
+- An `FEVector` object with one or more `FEVectorBlock`s, each corresponding to a given `FESpace`.
+
 """
 function FEVector(FES::FESpace{Tv, Ti, FEType, APT}; kwargs...) where {Tv, Ti, FEType, APT}
     return FEVector{Float64}([FES]; kwargs...)
@@ -192,23 +237,25 @@ $(TYPEDSIGNATURES)
 Custom `show` function for `FEVector` that prints some information on its blocks.
 """
 function Base.show(io::IO, FEF::FEVector)
+    if length(FEF) == 0
+        println(io, "FEVector is empty.")
+        return
+    end
     println(io, "\nFEVector information")
     println(io, "====================")
-    print(io, "   block  |  starts  |   ends   |  length  |     min  /  max    \t| FEType \t\t (name/tag)")
+    @printf(io, "   block | starts |  ends  | length |     min      /     max      | FEType           | (name/tag)\n")
     for j in 1:length(FEF)
-        @printf(io, "\n [%5d]  |", j)
-        @printf(io, "  %6d  |", FEF[j].offset + 1)
-        @printf(io, "  %6d  |", FEF[j].last_index)
-        @printf(io, "  %6d  |", FEF[j].FES.ndofs)
         ext = extrema(view(FEF[j]))
-        @printf(io, " %.2e/%.2e  \t|", ext[1], ext[2])
-        if length(FEF.tags) >= j
-            @printf(io, " %s  \t (%s)", FEF[j].FES.name, FEF.tags[j])
-        else
-            @printf(io, " %s  \t (%s)", FEF[j].FES.name, FEF[j].name)
-        end
+        name = FEF[j].FES.name
+        tag = length(FEF.tags) >= j ? FEF.tags[j] : FEF[j].name
+        @printf(
+            io, " [%5d] | %6d | %6d | %6d | %12.4e / %12.4e | %-16s | %s\n",
+            j, FEF[j].offset + 1, FEF[j].last_index, FEF[j].FES.ndofs, ext[1], ext[2], name, tag
+        )
     end
-    return
+    total_dofs = sum(FEF[j].FES.ndofs for j in 1:length(FEF))
+    println(io, "\n total size = $total_dofs")
+    return nothing
 end
 
 

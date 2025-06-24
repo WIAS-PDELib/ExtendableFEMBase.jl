@@ -33,12 +33,42 @@ Base.getindex(FEB::FEEvaluator, c, dof, qp) = FEB.cvals[c, dof, qp]
 function FEEvaluator(FE::FESpace, operator::AbstractFunctionOperator, qrule::QuadratureRule; T = Float64, AT = ON_CELLS, L2G = nothing)
 ````
 
-Constructs a FEEvaluator that handles evaluations of finite element basis function evaluation for the given FESpace, operator
-at the quadrature points of the given QuadratureRule. It has an update! function to update the evaluation upon entry to a new cell.
-Evaluations can be accessed via FEEvaluator.cvals[j,k,i] where i is the quadrature point id, k is the local dof number and j
-is the component. 
+Construct a finite element basis function evaluator for a given finite element space, operator, and quadrature rule.
 
-Note that matrix-valued operators evaluations, e.g. for Gradient, are given as a long vector (in component-wise order).
+# Arguments
+- `FE::FESpace`: The finite element space whose basis functions are to be evaluated.
+- `operator::AbstractFunctionOperator`: The operator to apply to the basis functions (e.g., `Identity`, `Gradient`, etc.).
+- `qrule::QuadratureRule`: The quadrature rule specifying the evaluation points (quadrature points) on the reference element.
+- `xgrid`: (optional, defaults to `FE.dofgrid`) The grid on which the FE space is defined. Used for geometric information.
+- `L2G`: (optional) A local-to-global transformation object. If not provided, it is constructed automatically.
+- `T`: (optional, default `Float64`) The floating-point type for computations.
+- `AT`: (optional, default `ON_CELLS`) The assembly type, specifying the geometric entity (cells, faces, etc.) for evaluation.
+
+# Returns
+A `FEEvaluator` object that can efficiently evaluate (and cache) the values of the specified operator applied to the FE basis functions at the quadrature points of each cell (or other entity). The evaluator supports fast updates to new cells via `update_basis!`.
+
+# Usage
+
+- After construction, call `update_basis!(FEB, cellid)` to update the evaluator to a new cell.
+- Access the evaluated values via `FEB.cvals[component, dof, qp]`, where:
+    - `component`: the output component (e.g., vector or matrix entry)
+    - `dof`: the local basis function index
+    - `qp`: the quadrature point index
+
+# Notes
+
+- For matrix-valued operators (e.g., `Gradient`), the result is stored as a long vector in component-wise order.
+- The evaluator is designed for high performance in assembly loops and supports both scalar and vector-valued elements and operators.
+- For advanced use, the evaluator exposes internal fields for basis values, derivatives, and transformation matrices.
+
+# Example
+
+```julia
+FEB = FEEvaluator(FE, Gradient, qrule)
+for cell in 1:ncells
+    update_basis!(FEB, cell)
+    # Access FEB.cvals for basis gradients at quadrature points
+end
 """
 function FEEvaluator(
         FE::FESpace{TvG, TiG, FEType, FEAPT},
