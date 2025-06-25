@@ -88,8 +88,19 @@ function Base.copy(FEV::FEVector{T, Tv, Ti}) where {T, Tv, Ti}
 end
 
 # overload stuff for AbstractArray{T,1} behaviour
-Base.getindex(FEF::FEVector{T, Tv, Ti}, tag) where {T, Tv, Ti} = FEF.FEVectorBlocks[findfirst(==(tag), FEF.tags)]
-Base.getindex(FEF::FEVector, i::Int) = FEF.FEVectorBlocks[i]
+Base.getindex(FEF::FEVector{T, Tv, Ti}, tag) where {T, Tv, Ti} = begin
+    idx = findfirst(==(tag), FEF.tags)
+    if idx === nothing
+        error("Tag '$(tag)' not found in FEVector. Available tags: $(FEF.tags)")
+    end
+    FEF.FEVectorBlocks[idx]
+end
+Base.getindex(FEF::FEVector, i::Int) = begin
+    if i < 1 || i > length(FEF.FEVectorBlocks)
+        error("Index $(i) out of bounds for FEVector with $(length(FEF.FEVectorBlocks)) blocks.")
+    end
+    FEF.FEVectorBlocks[i]
+end
 Base.getindex(FEB::FEVectorBlock, i::Int) = FEB.entries[FEB.offset + i]
 Base.getindex(FEB::FEVectorBlock, i::AbstractArray) = FEB.entries[FEB.offset .+ i]
 Base.getindex(FEB::FEVectorBlock, ::Colon) = FEB.entries[(FEB.offset + 1):FEB.last_index]
@@ -109,6 +120,21 @@ $(TYPEDEF)
 Returns a view of the part of the full FEVector that coressponds to the block. 
 """
 Base.view(FEB::FEVectorBlock) = view(FEB.entries, (FEB.offset + 1):FEB.last_index)
+
+
+"""
+Returns a view of a slice of the FEVectorBlock, specified by local indices `inds` (which can be an integer, a range, or an array of indices).
+The indices are relative to the block (i.e., `1` corresponds to the first entry of the block).
+
+# Arguments
+- `FEB::FEVectorBlock`: The FEVectorBlock to view.
+- `inds`: Indices relative to the block (e.g., `1:30`, `[2,4,6]`).
+
+# Returns
+- A view into the underlying entries array for the specified slice.
+"""
+Base.view(FEB::FEVectorBlock, inds) = view(FEB.entries, FEB.offset .+ inds)
+
 
 function LinearAlgebra.norm(FEV::FEVector, p::Real = 2)
     return norm(FEV.entries, p)
@@ -317,3 +343,18 @@ Scalar product between two FEVEctorBlocks.
 function LinearAlgebra.dot(a::FEVectorBlock{T}, b::FEVectorBlock{T}) where {T}
     return dot(view(a), view(b))
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+Convert an `FEVector` to a standard Julia array containing all coefficients.
+"""
+Base.Array(FEV::FEVector) = copy(FEV.entries)
+
+"""
+$(TYPEDSIGNATURES)
+
+Convert an `FEVectorBlock` to a standard Julia array containing the coefficients for that block.
+"""
+Base.Array(FEB::FEVectorBlock) = copy(FEB.entries[(FEB.offset + 1):FEB.last_index])
+``````

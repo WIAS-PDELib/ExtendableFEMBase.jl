@@ -432,7 +432,6 @@ piecewise_nodevalues!(
         source_offset::Int = 0,
         zero_target::Bool = true,
         continuous::Bool = false
-    )
 ````
 
 Evaluate a finite element function (given by the coefficient vector `source` and FE space `FE`) at all nodes, but store the results in a piecewise (cellwise) fashion, i.e., for each cell, the values at its local nodes are written into `target`. The result is organized so that each column of `target` corresponds to a cell, and each row corresponds to the values at the cell's nodes.
@@ -909,4 +908,18 @@ function displace_mesh(xgrid::ExtendableGrid, source::FEVectorBlock; kwargs...)
     xgrid_displaced = deepcopy(xgrid)
     displace_mesh!(xgrid_displaced, source; kwargs...)
     return xgrid_displaced
+end
+
+"""
+Convenience method: Evaluate a finite element function (given by the FEVectorBlock), applying an optional function operator, and write the results into `target`.
+
+This forwards to the main nodevalues! method using a view of the block's entries and its FESpace.
+"""
+function nodevalues!(
+        target::AbstractArray{T, 2},
+        block::FEVectorBlock{T, Tv, Ti, FEType, AT},
+        operator::Type{<:AbstractFunctionOperator} = Identity;
+        kwargs...
+    ) where {T, Tv, Ti, FEType, AT}
+    return nodevalues!(target, view(block), block.FES, operator; kwargs...)
 end
