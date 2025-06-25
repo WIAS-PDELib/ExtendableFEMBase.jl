@@ -19,7 +19,21 @@ abstract type QuadratureRule{T <: Real, ET <: AbstractElementGeometry} end
 """
 $(TYPEDEF)
 
-A struct that contains the name of the quadrature rule, the reference points and the weights for the parameter-determined element geometry.
+A concrete quadrature rule for a given element geometry and number type.
+
+It represents a set of quadrature (integration) points and weights for a specific reference element geometry (such as an interval, triangle, quadrilateral, tetrahedron, or hexahedron) and number type.
+
+# Fields
+- `name::String`: A descriptive name for the quadrature rule (e.g., "midpoint rule", "Gauss rule order 3").
+- `xref::Vector{Vector{T}}`: Reference coordinates of the quadrature points, given as a vector of coordinate vectors (one per point, each of length `dim`).
+- `w::Vector{T}`: Weights associated with each quadrature point, typically summing to the measure of the reference element.
+
+# Type Parameters
+- `T <: Real`: Number type for coordinates and weights (e.g., `Float64`, `Rational{Int}`).
+- `ET <: AbstractElementGeometry`: The reference element geometry type (e.g., `Edge1D`, `Triangle2D`).
+- `dim`: The topological dimension of the element geometry.
+- `npoints`: The number of quadrature points.
+
 """
 struct SQuadratureRule{T <: Real, ET <: AbstractElementGeometry, dim, npoints} <: QuadratureRule{T, ET}
     name::String
@@ -61,9 +75,18 @@ end
 """
 $(TYPEDSIGNATURES)
 
-sets up a quadrature rule that evaluates at vertices of element geometry;
-not optimal from quadrature point of view, but helpful when interpolating.
-Note, that order of xref matches dof order of H1Pk element
+Constructs a quadrature rule that evaluates at the vertices of the reference element geometry `ET`.
+
+This rule is not optimal for numerical integration, but is especially useful for nodal interpolation, visualization, and extracting nodal values in finite element computations. The order parameter determines the inclusion of higher-order nodes (e.g., edge, face or cell nodes for higher-order Lagrange elements).
+
+# Arguments
+- `ET::Type{<:AbstractElementGeometry}`: The reference element geometry (e.g., `Edge1D`, `Triangle2D`, `Parallelogram2D`, `Tetrahedron3D`, `Parallelepiped3D`).
+- `order::Integer`: Polynomial order of the finite element (default: `1`). Higher orders include additional points corresponding to edge, face, or cell dofs.
+- `T`: Number type for the coordinates and weights (default: `Float64`).
+
+# Returns
+- A quadrature rule containing the nodal points (`xref`) and equal weights (`w`), matching the dof structure of the corresponding Lagrange element.
+
 """
 function VertexRule(ET::Type{Edge1D}, order = 1; T = Float64)
     if order == 0
