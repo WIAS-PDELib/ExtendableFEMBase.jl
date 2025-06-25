@@ -112,6 +112,8 @@ Base.size(FEF::FEVector) = size(FEF.FEVectorBlocks)
 Base.size(FEB::FEVectorBlock) = FEB.last_index - FEB.offset
 Base.first(FEB::FEVectorBlock) = FEB.offset + 1
 Base.last(FEB::FEVectorBlock) = FEB.last_index
+Base.iterate(FEV::FEVector) = iterate(FEV.FEVectorBlocks)
+Base.iterate(FEV::FEVector, state) = iterate(FEV.FEVectorBlocks, state)
 
 
 """
