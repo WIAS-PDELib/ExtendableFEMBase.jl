@@ -115,7 +115,7 @@ Base.last(FEB::FEVectorBlock) = FEB.last_index
 
 
 """
-$(TYPEDEF)
+$(TYPEDSIGNATURES)
 
 Returns a view of the part of the full FEVector that coressponds to the block. 
 """
@@ -123,6 +123,8 @@ Base.view(FEB::FEVectorBlock) = view(FEB.entries, (FEB.offset + 1):FEB.last_inde
 
 
 """
+$(TYPEDSIGNATURES)
+
 Returns a view of a slice of the FEVectorBlock, specified by local indices `inds` (which can be an integer, a range, or an array of indices).
 The indices are relative to the block (i.e., `1` corresponds to the first entry of the block).
 
@@ -133,7 +135,7 @@ The indices are relative to the block (i.e., `1` corresponds to the first entry 
 # Returns
 - A view into the underlying entries array for the specified slice.
 """
-Base.view(FEB::FEVectorBlock, inds) = view(FEB.entries, FEB.offset .+ inds)
+Base.view(FEB::FEVectorBlock, inds::Union{Integer, AbstractArray{<:Integer}, UnitRange{<:Integer}}) = view(FEB.entries, FEB.offset .+ inds)
 
 
 function LinearAlgebra.norm(FEV::FEVector, p::Real = 2)
@@ -145,7 +147,7 @@ function LinearAlgebra.norm(FEV::FEVectorBlock, p::Real = 2)
 end
 
 """
-$(TYPEDEF)
+$(TYPEDSIGNATURES)
 
 Returns a vector with the individual norms of all blocks.
 """
