@@ -32,7 +32,7 @@
 
 
 
-<div class="markdown"><h1>Tutorial notebook: Navier–Stokes problem</h1><p>Consider the Navier-Stokes problem that seeks <span class="tex">\(u\)</span> and <span class="tex">\(p\)</span> such that</p><p class="tex">$$\begin{aligned}
+<div class="markdown"><h1 id="Tutorial-notebook:-Navier–Stokes-problem">Tutorial notebook: Navier–Stokes problem</h1><p>Consider the Navier-Stokes problem that seeks <span class="tex">\(u\)</span> and <span class="tex">\(p\)</span> such that</p><p class="tex">$$\begin{aligned}
 	- \mu \Delta u + (u \cdot \nabla) u + \nabla p &amp;= f\\
 			\mathrm{div}(u) &amp; = 0.
 \end{aligned}$$</p><p>The weak formulation seeks <span class="tex">\(u \in V := H^1_0(\Omega)\)</span> and <span class="tex">\(p \in Q := L^2_0(\Omega)\)</span> such that</p><p class="tex">$$\begin{aligned}
@@ -47,8 +47,8 @@
 
 
 <pre class="code-output documenter-example-output" id="var-hash399166">2-element Vector{PlutoVTKPlot}:
- PlutoVTKPlot(Dict{String, Any}("2axisfontsize" =&gt; 10, "1" =&gt; "tricontour", "2ylabel" =&gt; "y", "2" =&gt; "axis", "cbar_levels" =&gt; [6.123233995736766e-17, 0.16667347690578882, 0.3333469538115776, 0.5000204307173663, 0.6666939076231551, 0.833367384528944, 1.0000408614347327], "cbar" =&gt; 1, "2xlabel" =&gt; "x", "2zlabel" =&gt; "z", "cbar_stops" =&gt; [0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09  …  0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1.0], "2zoom" =&gt; 1.0…), 300.0, 300.0, false, (title = "", titlefontsize = 12, axisfontsize = 10, tickfontsize = 10, xlabel = "x", ylabel = "y", zlabel = "z", aspect = 1.0, zoom = 1.0, legendfontsize = 10, colorbarticks = :default, clear = false, levels = 5), "478b7b38-4a9c-11f0-3c42-c3cfe86216fe")
- PlutoVTKPlot(Dict{String, Any}("2axisfontsize" =&gt; 10, "1" =&gt; "tricontour", "2ylabel" =&gt; "y", "2" =&gt; "axis", "cbar_levels" =&gt; [-0.5064542228750328, -0.33763730567358835, -0.1688203884721439, -3.4712706993289544e-6, 0.16881344593074513, 0.3376303631321897, 0.5064472803336342], "cbar" =&gt; 1, "2xlabel" =&gt; "x", "2zlabel" =&gt; "z", "cbar_stops" =&gt; [0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09  …  0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1.0], "2zoom" =&gt; 1.0…), 300.0, 300.0, false, (title = "", titlefontsize = 12, axisfontsize = 10, tickfontsize = 10, xlabel = "x", ylabel = "y", zlabel = "z", aspect = 1.0, zoom = 1.0, legendfontsize = 10, colorbarticks = :default, clear = false, levels = 5), "4844ab1c-4a9c-11f0-2888-5b32a8da68b8")</pre>
+ PlutoVTKPlot(Dict{String, Any}("2axisfontsize" =&gt; 10, "1" =&gt; "tricontour", "2ylabel" =&gt; "y", "2" =&gt; "axis", "cbar_levels" =&gt; [6.123233995736766e-17, 0.16667347690578882, 0.3333469538115776, 0.5000204307173663, 0.6666939076231551, 0.833367384528944, 1.0000408614347327], "cbar" =&gt; 1, "2xlabel" =&gt; "x", "2zlabel" =&gt; "z", "cbar_stops" =&gt; [0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09  …  0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1.0], "2zoom" =&gt; 1.0…), 300.0, 300.0, false, (title = "", titlefontsize = 12, axisfontsize = 10, tickfontsize = 10, xlabel = "x", ylabel = "y", zlabel = "z", aspect = 1.0, zoom = 1.0, legendfontsize = 10, colorbarticks = :default, clear = false, levels = 5), "50716380-5289-11f0-32c6-bf1ee8030e6b")
+ PlutoVTKPlot(Dict{String, Any}("2axisfontsize" =&gt; 10, "1" =&gt; "tricontour", "2ylabel" =&gt; "y", "2" =&gt; "axis", "cbar_levels" =&gt; [-0.5064542228750328, -0.33763730567358835, -0.1688203884721439, -3.4712706993289544e-6, 0.16881344593074513, 0.3376303631321897, 0.5064472803336342], "cbar" =&gt; 1, "2xlabel" =&gt; "x", "2zlabel" =&gt; "z", "cbar_stops" =&gt; [0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09  …  0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1.0], "2zoom" =&gt; 1.0…), 300.0, 300.0, false, (title = "", titlefontsize = 12, axisfontsize = 10, tickfontsize = 10, xlabel = "x", ylabel = "y", zlabel = "z", aspect = 1.0, zoom = 1.0, legendfontsize = 10, colorbarticks = :default, clear = false, levels = 5), "512f5eda-5289-11f0-2db8-9b392757eeb6")</pre>
 
 <pre class='language-julia'><code class='language-julia'>begin
     ## PDE data
@@ -93,11 +93,10 @@ end</code></pre>
     @time xgrid[CellVolumes]
     xgrid
 end</code></pre>
-<pre class="code-output documenter-example-output" id="var-xgrid">ExtendableGrids.ExtendableGrid{Float64, Int32}
-      dim =       2
-   nnodes =    1089
-   ncells =    2048
-  nbfaces =     128</pre>
+<pre class="code-output documenter-example-output" id="var-xgrid">ExtendableGrids.ExtendableGrid{Float64, Int32};
+dim: 2 nodes: 1089 cells: 2048 bfaces: 128
+
+</pre>
 
 <pre class='language-julia'><code class='language-julia'>begin
     ## create finite element space (Taylor--Hood)
@@ -113,29 +112,25 @@ end</code></pre>
 FESpace information
 ===================
      name = velocity space
-   FEType = H1Pk{2,2,2} (ON_CELLS)
+   FEType = H1Pk{2,2,2}
   FEClass = ExtendableFEMBase.AbstractH1FiniteElement
-    ndofs = 8450 (coffset = 4225)
+    ndofs = 8450
 
-    xgrid = ExtendableGrids.ExtendableGrid{Float64, Int32}(dim=2, nnodes=1089, ncells=2048, nbfaces=128)
-  dofgrid = xgrid
 
 DofMaps
-=======
+==========
 
  
 FESpace information
 ===================
      name = pressure space
-   FEType = H1Pk{1,2,1} (ON_CELLS)
+   FEType = H1Pk{1,2,1}
   FEClass = ExtendableFEMBase.AbstractH1FiniteElement
-    ndofs = 1089 
+    ndofs = 1089
 
-    xgrid = ExtendableGrids.ExtendableGrid{Float64, Int32}(dim=2, nnodes=1089, ncells=2048, nbfaces=128)
-  dofgrid = xgrid
 
 DofMaps
-=======
+==========
 </pre>
 
 <pre class='language-julia'><code class='language-julia'>begin
@@ -145,9 +140,9 @@ DofMaps
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-u_init">FEVector information
 ====================
-   block  |  starts  |   ends   |  length  |     min  /  max    	| FEType 		 (name/tag)
- [    1]  |       1  |    8450  |    8450  | -1.00e+00/1.00e+00  	| velocity space  	 (#1)
- [    2]  |    8451  |    9539  |    1089  | -5.06e-01/5.06e-01  	| pressure space  	 (#2)</pre>
+   block  |  ndofs 	|     min  /  max    	| FEType 		 (name/tag)
+ [    1]  |    8450	| -1.00e+00/1.00e+00  	| velocity space  	 (#1)
+ [    2]  |    1089	| -5.06e-01/5.06e-01  	| pressure space  	 (#2)</pre>
 
 <pre class='language-julia'><code class='language-julia'>function solve_stokes_lowlevel(FES, μ, f!)
 
@@ -405,13 +400,13 @@ end</code></pre>
 <div class='manifest-versions'>
 <p>Built with Julia 1.11.5 and</p>
 DiffResults 1.1.0<br>
-ExtendableFEMBase 1.1.0<br>
-ExtendableGrids 1.13.1<br>
-ExtendableSparse 1.7.1<br>
-ForwardDiff 1.0.1<br>
-GridVisualize 1.14.0<br>
+ExtendableFEMBase 0.2.0<br>
+ExtendableGrids 1.2.3<br>
+ExtendableSparse 1.2.1<br>
+ForwardDiff 0.10.38<br>
+GridVisualize 1.5.1<br>
 LinearAlgebra 1.11.0<br>
-PlutoVista 1.2.1
+PlutoVista 1.0.1
 </div>
 
-<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../LowLevelPoisson/">« Low level Poisson</a><a class="docs-footer-nextpage" href="../../examples_intro/">Introduction »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.12.0 on <span class="colophon-date" title="Monday 16 June 2025 10:26">Monday 16 June 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../LowLevelPoisson/">« Low level Poisson</a><a class="docs-footer-nextpage" href="../../examples_intro/">Introduction »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.13.0 on <span class="colophon-date" title="Thursday 26 June 2025 12:30">Thursday 26 June 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

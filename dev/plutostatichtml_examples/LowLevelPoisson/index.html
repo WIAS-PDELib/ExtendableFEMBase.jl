@@ -39,7 +39,7 @@ end</code></pre>
 <pre class="code-output documenter-example-output" id="var-PlutoVista">PlutoVista</pre>
 
 
-<div class="markdown"><h1>Tutorial notebook: Poisson problem</h1><p>This notebook demonstrates how to implement the Poisson problem with the low level structures provided by ExtendableFEMBase. The Poisson problem with homogeneous Dirichlet boundary data seeks <span class="tex">\(u\)</span> such that</p><p class="tex">$$\begin{aligned}
+<div class="markdown"><h1 id="Tutorial-notebook:-Poisson-problem">Tutorial notebook: Poisson problem</h1><p>This notebook demonstrates how to implement the Poisson problem with the low level structures provided by ExtendableFEMBase. The Poisson problem with homogeneous Dirichlet boundary data seeks <span class="tex">\(u\)</span> such that</p><p class="tex">$$\begin{aligned}
 	- \mu \Delta u = f.
 \end{aligned}$$</p><p>The weak formulation seeks <span class="tex">\(u \in V := H^1_0(\Omega)\)</span> such that</p><p class="tex">$$\begin{aligned}
 	\mu (\nabla u, \nabla v) = (f, v)
@@ -58,7 +58,7 @@ end</code></pre>
 <pre class="code-output documenter-example-output" id="var-f">1</pre>
 
 <pre class='language-julia'><code class='language-julia'>tricontour(xgrid[Coordinates], xgrid[CellNodes], sol.entries[1:num_nodes(xgrid)]; levels = 5, resolution = (500, 500))</code></pre>
-<div style="white-space:nowrap;"><div id="3ecf2a44-4a9c-11f0-0a02-a15003cd85df" style="width: 440.0px; height: 440.0px; display: inline-block; "></div><canvas height="475.0" id="3ecf2a44-4a9c-11f0-0a02-a15003cd85dfcbar" style="display: inline-block; " width="60,"></canvas></div>
+<div style="white-space:nowrap;"><div id="47f37c5c-5289-11f0-2735-b91dd29e1bc1" style="width: 440.0px; height: 440.0px; display: inline-block; "></div><canvas height="475.0" id="47f37c5c-5289-11f0-2735-b91dd29e1bc1cbar" style="display: inline-block; " width="60,"></canvas></div>
 <script>
    // overwrite handleKeyPress and others
 // kind of modeled after https://kitware.github.io/vtk-js/api/Rendering_Core_Follower.html 
@@ -723,9 +723,9 @@ function canvascolorbar(uuid,w,h,cbdict)
     }
 }
 
-   const jsdict = /* See the documentation for AbstractPlutoDingetjes.Display.published_to_js */ getPublishedObject("fbd9cbfe-4a9b-11f0-1903-a9743cce0fcc/865c2daa0bc26825")
-   plutovtkplot("3ecf2a44-4a9c-11f0-0a02-a15003cd85df",jsdict,invalidation)
-   canvascolorbar("3ecf2a44-4a9c-11f0-0a02-a15003cd85dfcbar",20,500.0,jsdict)        
+   const jsdict = /* See the documentation for AbstractPlutoDingetjes.Display.published_to_js */ getPublishedObject("e96f8176-5288-11f0-1530-1f0b4cebd8d0/c5c75cef2643747a")
+   plutovtkplot("47f37c5c-5289-11f0-2735-b91dd29e1bc1",jsdict,invalidation)
+   canvascolorbar("47f37c5c-5289-11f0-2735-b91dd29e1bc1cbar",20,500.0,jsdict)        
    </script>
 
 <pre class='language-julia'><code class='language-julia'>begin
@@ -734,8 +734,8 @@ function canvascolorbar(uuid,w,h,cbdict)
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-sol">FEVector information
 ====================
-   block  |  starts  |   ends   |  length  |     min  /  max    	| FEType 		 (name/tag)
- [    1]  |       1  |  263169  |  263169  | -1.21e-02/1.21e-02  	| H1Pk{1,2,1}  	 (#1)</pre>
+   block  |  ndofs 	|     min  /  max    	| FEType 		 (name/tag)
+ [    1]  |  263169	| -1.21e-02/1.21e-02  	| H1Pk{1,2,1}  	 (#1)</pre>
 
 <pre class='language-julia'><code class='language-julia'>function solve_poisson_lowlevel(FES, μ, f)
 
@@ -783,15 +783,13 @@ end</code></pre>
 <pre class="code-output documenter-example-output" id="var-FES">FESpace information
 ===================
      name = H1Pk{1,2,1}
-   FEType = H1Pk{1,2,1} (ON_CELLS)
+   FEType = H1Pk{1,2,1}
   FEClass = ExtendableFEMBase.AbstractH1FiniteElement
-    ndofs = 263169 
+    ndofs = 263169
 
-    xgrid = ExtendableGrids.ExtendableGrid{Float64, Int32}(dim=2, nnodes=263169, ncells=524288, nbfaces=2048)
-  dofgrid = xgrid
 
 DofMaps
-=======
+==========
 </pre>
 
 <pre class='language-julia'><code class='language-julia'>begin
@@ -806,11 +804,10 @@ DofMaps
     @time xgrid[CellVolumes]
     xgrid
 end</code></pre>
-<pre class="code-output documenter-example-output" id="var-xgrid">ExtendableGrids.ExtendableGrid{Float64, Int32}
-      dim =       2
-   nnodes =  263169
-   ncells =  524288
-  nbfaces =    2048</pre>
+<pre class="code-output documenter-example-output" id="var-xgrid">ExtendableGrids.ExtendableGrid{Float64, Int32};
+dim: 2 nodes: 263169 cells: 524288 bfaces: 2048
+
+</pre>
 
 <pre class='language-julia'><code class='language-julia'>function assemble!(A::ExtendableSparseMatrix, b::Vector, FES, f, μ = 1)
 
@@ -902,11 +899,11 @@ end</code></pre>
 <pre class="code-output documenter-example-output" id="var-assemble!">assemble! (generic function with 2 methods)</pre>
 <div class='manifest-versions'>
 <p>Built with Julia 1.11.5 and</p>
-ExtendableFEMBase 1.1.0<br>
-ExtendableGrids 1.13.1<br>
-ExtendableSparse 1.7.1<br>
-GridVisualize 1.14.0<br>
-PlutoVista 1.2.1
+ExtendableFEMBase 0.2.0<br>
+ExtendableGrids 1.2.3<br>
+ExtendableSparse 1.2.1<br>
+GridVisualize 1.5.1<br>
+PlutoVista 1.0.1
 </div>
 
-<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../plots/">« Plots</a><a class="docs-footer-nextpage" href="../LowLevelNavierStokes/">Low level Navier-Stokes »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.12.0 on <span class="colophon-date" title="Monday 16 June 2025 10:26">Monday 16 June 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../plots/">« Plots</a><a class="docs-footer-nextpage" href="../LowLevelNavierStokes/">Low level Navier-Stokes »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.13.0 on <span class="colophon-date" title="Thursday 26 June 2025 12:30">Thursday 26 June 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
