@@ -1,6 +1,6 @@
 # SegmentIntegrator
 
-Segment integrators allow to integrate a finite element function (FEVector) along arbitrary lines through mesh cells.
+Segment integrators provide tools to integrate finite element functions (`FEVector`) along arbitrary line segments that pass through mesh cells.
 
 ```@autodocs
 Modules = [ExtendableFEMBase]

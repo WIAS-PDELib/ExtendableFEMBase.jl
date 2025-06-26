@@ -1,13 +1,10 @@
-
 # Implemented Finite Elements
 
-This page describes the finite element type-tree and lists all implemented finite elements.
+This page provides an overview of the finite element type hierarchy and lists all finite elements currently implemented in ExtendableFEMBase.
 
+## The Finite Element Type Hierarchy
 
-
-## The Finite Element Type-Tree
-
-Finite elements are abstract type leaves in a type-tree. The complete tree looks like this:
+Finite elements in ExtendableFEMBase are organized as leaves in an abstract type hierarchy. The complete type tree is as follows:
 
 ```
 AbstractFiniteElement
@@ -40,21 +37,20 @@ AbstractFiniteElement
 
 
 #### Remarks
-- each type depends on one/two or three parameters, the first one is always the number of components (ncomponents) that determines if the
-  finite element is scalar- or veector-valued; some elements additionally require the parameter edim <: Int if they are structurally different in different space dimensions; arbitrary order elements require a third parameter that determines the order
-- each finite elements mainly comes with a set of basis functions in reference coordinates for each applicable AbstractElementGeometry and degrees of freedom maps for each mesh entity
-- broken finite elements are possible via the broken switch in the [FESpace](@ref) constructor
-- the type steers how the basis functions are transformed from local to global coordinates and how FunctionOperators are evaluated
-- depending on additional continuity properties of the element types more basis function sets are defined:
-    - AbstractH1FiniteElements additionally have evaluations of nonzero basisfunctions on faces/bfaces
-    - AbstractHdivFiniteElements additionally have evaluations of nonzero normalfluxes of basisfunctions on faces/bfaces
-    - AbstractHcurlFiniteElements additionally have evaluations of nonzero tangentfluxes of basisfunctions on edges/bedges
-- each finite element has its own implemented standard interpolation interpolate! (see [Finite Element Interpolations](@ref)) that can be applied to a function with header function(result, qpinfo), below it is shortly described what this means for each finite element
+- Each finite element type depends on one, two, or three parameters. The first parameter is always the number of components (`ncomponents`), which determines whether the element is scalar- or vector-valued. Some elements also require the parameter `edim <: Int` if their structure differs by spatial dimension. Arbitrary order elements require a third parameter specifying the polynomial order.
+- Each finite element provides a set of basis functions in reference coordinates for each applicable `AbstractElementGeometry`, as well as degree-of-freedom (dof) maps for each mesh entity.
+- Discontinuous (broken) finite elements can be created using the `broken` switch in the [`FESpace`](@ref) constructor.
+- The element type determines how basis functions are transformed from local to global coordinates and how `FunctionOperators` are evaluated.
+- Additional continuity properties of element types lead to more specialized basis function sets:
+    - `AbstractH1FiniteElement` types provide evaluations of nonzero basis functions on faces/boundary faces.
+    - `AbstractHdivFiniteElement` types provide evaluations of nonzero normal fluxes of basis functions on faces/boundary faces.
+    - `AbstractHcurlFiniteElement` types provide evaluations of nonzero tangential fluxes of basis functions on edges/boundary edges.
+- Each finite element has its own standard interpolation routine `interpolate!` (see [Finite Element Interpolations](@ref)), which can be applied to a function with the signature `function(result, qpinfo)`. The specific interpolation behavior is described for each element below.
 
 
-## List of implemented Finite Elements
+## List of Implemented Finite Elements
 
-The following table lists all currently implemented finite elements and on which geometries they are available (in brackets a dofmap pattern for CellDofs is shown and the number of local degrees of freedom for a vector-valued realisation). Click on the FEType to find out more details.
+The following table summarizes all finite elements currently implemented in ExtendableFEMBase and indicates the reference geometries on which they are available. For each entry, the dofmap pattern for cell degrees of freedom is shown in brackets, along with the number of local degrees of freedom for a vector-valued realization. Click on an FEType to view more details.
 
 | FEType | Triangle2D | Parallelogram2D | Tetrahedron3D | Parallelepiped3D |
 | :----------------: | :----------------: |  :----------------: |  :----------------: |  :----------------: | 
@@ -86,7 +82,7 @@ The following table lists all currently implemented finite elements and on which
 | [`HDIVRTkENRICH`](@ref) | ✓ (order-dep) |  | ✓ (order-dep) | |
 
 
-Note: the dofmap pattern describes the connection of the local degrees of freedom to entities of the grid and also hints to the continuity. Here, "N" or "n" means nodes, "F" or "f" means faces, "E" or "e" means edges and "I" means interior (dofs without any continuity across elements). Capital letters cause that every component has its own degree of freedom, while small letters signalize that only one dof is associated to the entity. As an example "N1f1" (for the Bernardi-Raugel element) means that at each node sits one dof per component and at each face sits a single dof. Usually finite elements that involve small letters are only defined vector-valued (i.e. the number of components has to match the element dimension), while finite elements that only involve capital letters are available for any number of components.
+Note: The dofmap pattern describes how local degrees of freedom are associated with grid entities and provides insight into the continuity properties of the element. Here, "N" or "n" denotes nodes, "F" or "f" denotes faces, "E" or "e" denotes edges, and "I" denotes interior degrees of freedom (i.e., those without continuity across elements). Capital letters indicate that each component has its own degree of freedom, while lowercase letters mean only one degree of freedom is associated with the entity. For example, "N1f1" (as in the Bernardi-Raugel element) means that each node has one dof per component and each face has a single dof. Typically, finite elements involving lowercase letters are only defined for vector-valued cases (i.e., the number of components must match the element dimension), while those with only capital letters are available for any number of components.
 
 
 ## H1-conforming finite elements

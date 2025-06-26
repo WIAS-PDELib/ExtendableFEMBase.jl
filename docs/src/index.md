@@ -5,7 +5,7 @@
 
 # ExtendableFEMBase.jl
 
-This package provides some low level structures like finite element spaces, interpolors, matrices and vectors to assemble custom finite element solvers based on [ExtendableGrids.jl](https://github.com/j-fu/ExtendableGrids.jl) infrastructure.
+ExtendableFEMBase.jl provides foundational data structures and tools for building custom finite element solvers in Julia. The package includes flexible representations for finite element spaces, interpolators, matrices, and vectors, all designed to work seamlessly with the [ExtendableGrids.jl](https://github.com/j-fu/ExtendableGrids.jl) infrastructure.
 
 
 ### Dependencies on other Julia packages

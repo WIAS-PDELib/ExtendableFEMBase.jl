@@ -22,9 +22,27 @@ end
 function NodalInterpolator(FES::FESpace{T}, grid = FES.dofgrid; broken = FES.broken, component_offset = FES.coffset, kwargs...)
 ````
 
-Constructs an interpolator structure that has an evaluate! function that evaluates some
-function at the requested nodes (items) of the grid. In broken mode only ON_CELL the items
-refer to cells and all nodes of these cells are evaluated.
+Constructs a nodal interpolation operator for a given finite element space. The resulting object provides an `evaluate!` function that interpolates a user-supplied function at the nodal points (degrees of freedom) of the provided grid.
+
+# Arguments
+- `FES::FESpace{T}`: The finite element space for which the interpolator is constructed.
+- `grid`: The grid or mesh on which interpolation is performed. Defaults to `FES.dofgrid`.
+
+# Keywords
+- `broken`: If `true`, interpolation is performed in "broken" mode, i.e., independently on each cell (typically for discontinuous spaces). Defaults to `FES.broken`.
+- `component_offset`: Offset for vector-valued spaces, specifying the stride between components. Defaults to `FES.coffset`.
+- `kwargs...`: Additional keyword arguments passed to internal structures (e.g., `QPInfos`).
+
+# Returns
+- A `NodalInterpolator` struct containing an `evaluate!` function with the signature:
+    `evaluate!(target, exact_function!, items; time=0, params=[], kwargs...)`
+  which fills `target` with the values of `exact_function!` at the nodal points specified by `items`.
+
+# Notes
+- In "broken" mode, `items` refers to cell indices, and all nodes of each cell are evaluated.
+- In continuous mode, `items` refers to global node indices.
+- The `exact_function!` should have the signature `exact_function!(result, QP)` where `QP` is a `QPInfos` object.
+
 """
 function NodalInterpolator(
         FES::FESpace{T},
@@ -113,11 +131,38 @@ end
 function MomentInterpolator(FE::FESpace{Tv, Ti, FEType, APT}, AT::Type{<:AssemblyType}, xgrid = FE.dofgrid; operator = Identity, FEType_ref = :auto, FEType_moments = :auto, moments_operator = operator, moments_dofs = Int[], bestapprox = false, order = 0, coffset::Int = -1, componentwise = true, kwargs...) where {Tv, Ti, FEType <: AbstractFiniteElement, APT}
 ````
 
-Constructs an interpolation structure that has an evaluate! function that sets the interior degrees of freedom
-such that the moments of the given function are preserved up to the given order. For this small local problems
-are solved with a mass matrix of interior basis functions (evaluated with operator) and (by moments_dofs selected)
-basis functions of the moments of type FEType_ref and with moments_operator. In the bestapprox mode
-the mass matrix instead is formed from the scalar product of the interior basis functions.
+Constructs a moment-based interpolation operator for a given finite element space. The resulting object provides an `evaluate!` function that sets the interior degrees of freedom (DOFs) so that the moments of a user-supplied function are preserved up to a specified order. This is achieved by solving small local problems involving a mass matrix of interior basis functions and selected moment basis functions.
+
+# Arguments
+- `FE::FESpace{Tv, Ti, FEType, APT}`: The finite element space for which the interpolator is constructed.
+- `AT::Type{<:AssemblyType}`: The assembly type (e.g., `ON_CELLS`, `ON_FACES`) specifying the geometric entity for interpolation.
+- `xgrid`: The grid or mesh on which interpolation is performed. Defaults to `FE.dofgrid`.
+
+# Keywords
+- `operator`: Operator used to evaluate the basis functions (default: `Identity`).
+- `FEType_ref`: Reference finite element type for the moments (default: `:auto`).
+- `FEType_moments`: Finite element type for the moment basis (default: `:auto`).
+- `moments_operator`: Operator for evaluating the moment basis (default: `operator`).
+- `moments_dofs`: Indices of moment DOFs to use (default: all).
+- `bestapprox`: If `true`, uses best-approximation (L2 projection) for interior DOFs (default: `false`).
+- `order`: Order of moments to preserve (default: `0`).
+- `coffset`: Component offset for vector-valued spaces (default: `-1`, auto-detected).
+- `componentwise`: If `true`, moments are enforced componentwise (default: `true`).
+- `kwargs...`: Additional keyword arguments passed to internal structures (e.g., `QPInfos`).
+
+# Returns
+- A `MomentInterpolator` struct containing an `evaluate!` function with the signature:
+    `evaluate!(target, exact_function!, items; time=0, quadorder=..., params=[], bonus_quadorder=0, kwargs...)`
+  which fills `target` with DOFs such that the prescribed moments of `exact_function!` are matched on the specified entities.
+
+# Notes
+- The `exact_function!` should have the signature `exact_function!(result, QP)` where `QP` is a `QPInfos` object.
+- In `bestapprox` mode, the mass matrix is formed from the scalar product of the interior basis functions (L2 projection).
+- The interpolator currently supports grids with a single element geometry.
+- The `items` argument specifies which entities (cells/faces) to interpolate; if empty, all are used.
+- The moment basis and reference basis types are auto-selected for common cases, but can be overridden.
+- The resulting interpolator is useful for constructing higher-order or non-nodal interpolations.
+
 """
 function MomentInterpolator(
         FE::FESpace{Tv, Ti, FEType, APT},
@@ -453,11 +498,33 @@ function FunctionalInterpolator(
     operator = NormalFlux, nfluxes = 0, dofs = [], kwargs...) where {Tv, Ti, FEType <: AbstractFiniteElement, APT}
 ````
 
-Constructs an interpolation structure that has an evaluate! function that determines the interior degrees of freedom
-(or the specified local dofs) by evaluating functionals! (the result dimension nfluxes should correspond to the number of dofs,
-both are set to the number of interior dofs as defaults).
-The functionals are corrected by the operator evaluations of the fixed dofs.
-The mean parameter decides if the functional is divided by the area in the end (if mean = true).
+Constructs a FunctionalInterpolator for a given finite element space. The resulting object provides an `evaluate!` function that sets the interior degrees of freedom (DOFs) or the specified local DOFs by evaluating the supplied functionals. The number of functionals (`nfluxes`) should match the number of DOFs to be set (by default, all interior DOFs). The functionals are corrected by subtracting the operator evaluations of the fixed DOFs. Optionally, the result can be averaged by the entity volume if `mean = true`.
+
+# Arguments
+- `functionals!::Function`: A function with signature `functionals!(result, values, QP)` that computes the functionals to be interpolated, where `result` is filled with the functional values, `values` is the evaluation of the target function, and `QP` is a `QPInfos` object.
+- `FE::FESpace{Tv, Ti, FEType, APT}`: The finite element space for which the interpolator is constructed.
+- `AT::Type{<:AssemblyType}`: The assembly type (e.g., `ON_FACES`, `ON_CELLS`) specifying the geometric entity for interpolation. Defaults to `ON_FACES`.
+- `xgrid`: The grid or mesh on which interpolation is performed. Defaults to `FE.dofgrid`.
+
+# Keywords
+- `operator`: Operator used to evaluate the basis functions (default: `NormalFlux`).
+- `nfluxes`: Number of functionals/DOFs to interpolate (default: number of interior DOFs).
+- `dofs`: Indices of DOFs to set (default: all interior DOFs).
+- `mean`: If `true`, divides the functional by the entity volume (default: `false`).
+- `bonus_quadorder`: Additional quadrature order for integration (default: `0`).
+- `kwargs...`: Additional keyword arguments passed to internal structures (e.g., `QPInfos`).
+
+# Returns
+- A `FunctionalInterpolator` struct containing an `evaluate!` function with the signature:
+    `evaluate!(target, exact_function!, items; time=0, quadorder=..., params=[], bonus_quadorder=0, kwargs...)`
+  which fills `target` with DOFs such that the prescribed functionals of `exact_function!` are matched on the specified entities.
+
+# Notes
+- The `exact_function!` should have the signature `exact_function!(result, QP)` where `QP` is a `QPInfos` object.
+- The `items` argument specifies which entities (cells/faces) to interpolate; if empty, all are used.
+- The interpolator is useful for constructing DOFs associated with functionals (e.g., fluxes, averages) rather than nodal values.
+- The number of functionals and DOFs must match; both default to the number of interior DOFs if not specified.
+
 """
 function FunctionalInterpolator(
         functionals!::Function,

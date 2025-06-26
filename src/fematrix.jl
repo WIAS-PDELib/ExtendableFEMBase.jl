@@ -9,7 +9,22 @@
 """
 $(TYPEDEF)
 
-block of an FEMatrix that carries coefficients for an associated pair of FESpaces and can be assigned as an two-dimensional AbstractArray (getindex, setindex, size)
+A block of an `FEMatrix` representing the coupling between two finite element spaces.
+
+`FEMatrixBlock` acts as a two-dimensional array (subclassing `AbstractArray{TvM, 2}`) and stores the coefficients for a specific pair of row and column finite element spaces (`FESpace`).
+Each block is mapped to a submatrix of the global sparse matrix, with offsets and sizes corresponding to the degrees of freedom of the associated spaces.
+
+# Fields
+- `name::String`: Name of the block (for identification and display).
+- `FES::FESpace{TvG, TiG, FETypeX, APTX}`: Row finite element space.
+- `FESY::FESpace{TvG, TiG, FETypeY, APTY}`: Column finite element space.
+- `offset::Int64`: Row offset in the global matrix.
+- `offsetY::Int64`: Column offset in the global matrix.
+- `last_index::Int64`: Last row index for this block.
+- `last_indexY::Int64`: Last column index for this block.
+- `entries::AbstractSparseMatrix{TvM, TiM}`: Reference to the underlying global sparse matrix (shared with the parent `FEMatrix`).
+
+See also: [`FEMatrix`], [`FESpace`]
 """
 struct FEMatrixBlock{TvM, TiM, TvG, TiG, FETypeX, FETypeY, APTX, APTY} <: AbstractArray{TvM, 2}
     name::String
@@ -40,7 +55,22 @@ end
 """
 $(TYPEDEF)
 
-an AbstractMatrix (e.g. an ExtendableSparseMatrix) with an additional layer of several FEMatrixBlock subdivisions each carrying coefficients for their associated pair of FESpaces
+A block-structured sparse matrix type for finite element assembly.
+
+`FEMatrix` represents a (typically sparse) matrix with an additional layer of structure: it is subdivided into multiple `FEMatrixBlock`s, each associated with a specific pair of finite element spaces (`FESpace`).
+
+# Fields
+- `FEMatrixBlocks::Array{FEMatrixBlock{TvM, TiM, TvG, TiG}, 1}`: The array of matrix blocks, each corresponding to a pair of row and column finite element spaces.
+- `entries::AbstractSparseMatrix{TvM, TiM}`: The underlying sparse matrix storing all coefficients.
+- `tags::Matrix{Any}`: Optional tags for identifying or accessing blocks.
+
+# Type Parameters
+- `TvM`: Value type for matrix entries (e.g., `Float64`).
+- `TiM`: Integer type for matrix indices (e.g., `Int64`).
+- `TvG`, `TiG`: Value and index types for the associated finite element spaces.
+- `nbrow`: Number of block rows.
+- `nbcol`: Number of block columns.
+- `nbtotal`: Total number of blocks.
 """
 struct FEMatrix{TvM, TiM, TvG, TiG, nbrow, nbcol, nbtotal} <: AbstractSparseMatrix{TvM, TiM}
     FEMatrixBlocks::Array{FEMatrixBlock{TvM, TiM, TvG, TiG}, 1}
@@ -140,77 +170,71 @@ $(TYPEDSIGNATURES)
 Custom `show` function for `FEMatrix` that prints some information on its blocks.
 """
 function Base.show(io::IO, FEM::FEMatrix{TvM, TiM, TvG, TiG, nbrow, nbcol, nbtotal}) where {TvM, TiM, TvG, TiG, nbrow, nbcol, nbtotal}
+    if length(FEM) == 0
+        println(io, "FEMatrix is empty.")
+        return
+    end
     println(io, "\nFEMatrix information")
     println(io, "====================")
-    println(io, "  block   |      starts      |       ends       |       size       |    name ")
+    @printf(io, "  block   |   starts (row,col)   |    ends (row,col)    |   size (row,col)   |    name\n")
     for j in 1:length(FEM)
         n = mod(j - 1, nbrow) + 1
         m = Int(ceil(j / nbrow))
-        @printf(io, " [%2d,%2d]  |", m, n)
-        @printf(io, "  (%6d,%6d) |", FEM[j].offset + 1, FEM[j].offsetY + 1)
-        @printf(io, "  (%6d,%6d) |", FEM[j].last_index, FEM[j].last_indexY)
-        @printf(io, "  (%6d,%6d) |", FEM[j].FES.ndofs, FEM[j].FESY.ndofs)
-        @printf(io, " %s \n", FEM[j].name)
+        @printf(
+            io, " [%2d,%2d]  |   (%6d,%6d)    |   (%6d,%6d)    | (%6d,%6d)    | %s\n",
+            m, n,
+            FEM[j].offset + 1, FEM[j].offsetY + 1,
+            FEM[j].last_index, FEM[j].last_indexY,
+            FEM[j].FES.ndofs, FEM[j].FESY.ndofs,
+            FEM[j].name
+        )
     end
-    return println(io, "\n    nnzvals = $(length(FEM.entries.cscmatrix.nzval))")
+    println(io, "\n total size = $(size(FEM.entries, 1)) x $(size(FEM.entries, 2))")
+    println(io, "    nnzvals = $(length(FEM.entries.cscmatrix.nzval))")
+    return
 end
 
 """
 ````
-FEMatrix{TvM,TiM}(name::String, FES::FESpace{TvG,TiG,FETypeX,APTX}) where {TvG,TiG,FETypeX,APTX}
+FEMatrix(FESX::Union{FESpace, Vector{<:FESpace}}, FESY::Union{FESpace, Vector{<:FESpace}}=FESX; TvM=Float64, TiM=Int64, ...)
 ````
 
-Creates FEMatrix with one square block (FES,FES).
-"""
-function FEMatrix(FES::FESpace; name = :automatic)
-    return FEMatrix{Float64, Int64}(FES; name = name)
-end
-function FEMatrix{TvM}(FES::FESpace; name = :automatic) where {TvM}
-    return FEMatrix{TvM, Int64}(FES; name = name)
-end
-function FEMatrix{TvM, TiM}(FES::FESpace{TvG, TiG, FETypeX, APTX}; name = :automatic) where {TvM, TiM, TvG, TiG, FETypeX, APTX}
-    return FEMatrix{TvM, TiM}([FES], [FES]; name = name)
-end
+Constructs an `FEMatrix` for storing (sparse) matrix representations associated with one or more pairs of finite element spaces (`FESpace`).
+
+-- If `FESX` and `FESY` are single `FESpace` objects, the resulting `FEMatrix` contains one rectangular block.
+- If `FESX` and/or `FESY` are vectors of `FESpace` objects, the resulting `FEMatrix` is block-structured, with one block for each pair.
+
+Optionally, you can assign a name (as a `String` for all blocks) and/or tags (as arrays for rows and columns) to the blocks for identification and access.
+
+# Arguments
+- `FESX::FESpace` or `FESX::Vector{<:FESpace}`: Row finite element space(s).
+- `FESY::FESpace` or `FESY::Vector{<:FESpace}`: Column finite element space(s) (default: same as FESX).
+
+# Keyword Arguments
+- `entries`: Optional sparse matrix of coefficients. If not provided, a new sparse matrix of appropriate size is created.
+- `name`: Name for the matrix or for each block (default: `:automatic`).
+- `tags`: Array of tags for both rows and columns (default: `nothing`).
+- `tagsX`: Array of tags for the row blocks (default: `tags`).
+- `tagsY`: Array of tags for the column blocks (default: `tagsX`).
+- `npartitions`: Number of partitions for the underlying sparse matrix (default: `1`).
+- Additional keyword arguments are passed to the underlying block constructors.
+
+# Returns
+- An `FEMatrix` object with one or more `FEMatrixBlock`s, each corresponding to a given pair of `FESpace` objects.
 
 """
-````
-FEMatrix{TvM,TiM}(FESX, FESY; name = :automatic)
-````
-
-Creates FEMatrix with one rectangular block (FESX,FESY) if FESX and FESY are single FESpaces, or
-a rectangular block matrix with blocks corresponding to the entries of the FESpace vectors FESX and FESY.
-Optionally a name for the matrix can be given.
-"""
-function FEMatrix(FESX::FESpace, FESY::FESpace; kwargs...)
-    return FEMatrix{Float64, Int64}(FESX, FESY; kwargs...)
-end
-function FEMatrix(FESX::Vector{<:FESpace}, FESY::Vector{<:FESpace}; kwargs...)
-    return FEMatrix{Float64, Int64}(FESX, FESY; kwargs...)
-end
-function FEMatrix{TvM}(FESX::FESpace, FESY::FESpace; kwargs...) where {TvM}
-    return FEMatrix{TvM, Int64}(FESX, FESY; kwargs...)
-end
-function FEMatrix{TvM, TiM}(FESX::FESpace, FESY::FESpace; kwargs...) where {TvM, TiM}
-    return FEMatrix{TvM, TiM}([FESX], [FESY]; kwargs...)
-end
-function FEMatrix(FES::Array{<:FESpace{TvG, TiG}, 1}; kwargs...) where {TvG, TiG}
-    return FEMatrix{Float64, Int64}(FES; kwargs...)
-end
-function FEMatrix{TvM}(FES::Array{<:FESpace{TvG, TiG}, 1}; kwargs...) where {TvM, TvG, TiG}
-    return FEMatrix{TvM, Int64}(FES, FES; kwargs...)
-end
-function FEMatrix{TvM, TiM}(FES::Array{<:FESpace{TvG, TiG}, 1}; kwargs...) where {TvM, TiM, TvG, TiG}
-    return FEMatrix{TvM, TiM}(FES, FES; kwargs...)
+function FEMatrix(
+        FESX::Union{FESpace, Vector{<:FESpace}},
+        FESY::Union{FESpace, Vector{<:FESpace}} = FESX;
+        TvM = Float64, TiM = Int64, kwargs...
+    )
+    # Convert single FESpace to vector
+    FESXv = isa(FESX, FESpace) ? [FESX] : FESX
+    FESYv = isa(FESY, FESpace) ? [FESY] : FESY
+    return FEMatrix{TvM, TiM}(FESXv, FESYv; kwargs...)
 end
 
-"""
-````
-FEMatrix{TvM,TiM}(FESX, FESY; name = :automatic)
-````
-
-Creates an FEMatrix with blocks coressponding to the ndofs of FESX (rows) and FESY (columns).
-"""
-function FEMatrix{TvM, TiM}(FESX::Array{<:FESpace{TvG, TiG}, 1}, FESY::Array{<:FESpace{TvG, TiG}, 1}; entries = nothing, name = :automatic, tags = nothing, tagsX = tags, tagsY = tagsX, npartitions = 1, kwargs...) where {TvM, TiM, TvG, TiG}
+function FEMatrix{TvM, TiM}(FESX::Array{<:FESpace{TvG, TiG}, 1}, FESY::Array{<:FESpace{TvG, TiG}, 1} = FESX; entries = nothing, name = :automatic, tags = nothing, tagsX = tags, tagsY = tagsX, npartitions = 1, kwargs...) where {TvM, TiM, TvG, TiG}
     ndofsX, ndofsY = 0, 0
     for j in 1:length(FESX)
         ndofsX += FESX[j].ndofs

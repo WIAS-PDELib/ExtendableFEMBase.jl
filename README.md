@@ -6,19 +6,13 @@
 
 # ExtendableFEMBase
 
-This package provides basic finite element structures to setup finite element schemes on ExtendableGrids. For a full high-level API
-see [ExtendableFEM.jl](https://github.com/WIAS-PDELib/ExtendableFEM.jl).
+ExtendableFEMBase.jl provides foundational data structures and tools for assembling custom finite element solvers in Julia. It is designed for flexibility, efficiency, and extensibility, and serves as the low-level backend for [ExtendableFEM.jl](https://github.com/WIAS-PDELib/ExtendableFEM.jl). All functionality is built on top of [ExtendableGrids.jl](https://github.com/WIAS-PDELib/ExtendableGrids.jl).
 
-This low level structures in the package incorporate:
+## Features
 
-- Finite element types (Basis functions on reference geometries and dof management for several H1, Hdiv and Hcurl elements)
-- FESpace (Discrete finite element space with respect to a mesh from ExtendableGrids, knows the Dofmaps)
-- FEMatrix (block overlay for an ExtendableSparse matrix, where each block corresponds to a coupling between two FESpaces in a system)
-- FEVector (block overlay for an array, where each block corresponds to a FESpace)
-- FunctionOperators (primitive linear operators like Identity, Gradient, Divergence) and rules how to evaluate them for for different finite element types
-- FEEvaluator (finite element basis evaluators for different FunctionOperators and entities of the grid)
-- QuadratureRule (basic quadrature rules for different ElementGeometries from ExtendableGrids)
-- interpolations (standard interpolations into the provided finite element spaces, averaging routines and interpolations between meshes/FESpaces)
-- reconstruction operators (special FunctionOperators that involve an interpolation into a different finite element type)
-  
-  
+- Wide range of finite element types (H1, Hdiv, Hcurl, etc.)
+- Flexible finite element spaces (`FESpace`)
+- Block-structured matrices and vectors (`FEMatrix`, `FEVector`)
+- Primitive and composite function operators (e.g., gradient, divergence)
+- Efficient basis evaluation and quadrature routines
+- Interpolation and reconstruction operators
