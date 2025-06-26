@@ -96,6 +96,20 @@ $(_myprint(default_peval_kwargs()))
 
 # Notes
 - This function must be called before using `evaluate!` or `evaluate_bary!` with the `PointEvaluator`.
+Initializes the given `PointEvaluator` for a specified solution (FEVector or vector of FEVectorBlocks).
+
+This function prepares the `PointEvaluator` for evaluation by associating it with the provided solution vector. It sets up the necessary finite element basis evaluators, local-to-global transformations, and cell finder structures for the underlying grid.
+
+# Arguments
+- `O::PointEvaluator`: The `PointEvaluator` instance to initialize.
+- `sol`: The solution object (e.g., array of FEVectorBlocks) to be used for evaluations.
+
+# Keyword Arguments
+- `time`: (default: `0`) Time value to be passed to the quadrature point info structure.
+$(_myprint(default_peval_kwargs()))
+
+# Notes
+- This function must be called before using `evaluate!` or `evaluate_bary!` with the `PointEvaluator`.
 """
 function initialize!(O::PointEvaluator{T, UT}, sol; time = 0, kwargs...) where {T, UT}
     _update_params!(O.parameters, kwargs)
