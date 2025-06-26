@@ -1,6 +1,6 @@
 #=
 
-# 205 : Space-Time FEM for Poisson Problem
+# 205 : Space-Time FEM for Heat Equation
 ([source code](@__SOURCE_URL__))
 
 This example computes the solution ``u`` of the

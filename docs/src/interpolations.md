@@ -13,10 +13,13 @@ The qpinfo argument communicates vast information of the current quadrature poin
 | qpinfo.x           | Vector{Real}       | space coordinates of quadrature point |
 | qpinfo.time        | Real               | current time |
 | qpinfo.item        | Integer            | current item that contains qpinfo.x |
+| qpinfo.cell        | Integer            | cell number (when reasonable) |
 | qpinfo.region      | Integer            | region number of item |
 | qpinfo.xref        | Vector{Real}       | reference coordinates within item of qpinfo.x |
 | qpinfo.volume      | Real               | volume of item |
+| qpinfo.normal      | Vector{Real}       | normal vector (when reasonable) |
 | qpinfo.params      | Vector{Any}        | parameters that can be transferred via keyword arguments |
+| qpinfo.grid        | ExtendableGrid     | full access to grid |
 
 
 ## Standard Interpolations
