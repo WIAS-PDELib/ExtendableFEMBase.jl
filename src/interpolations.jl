@@ -617,15 +617,15 @@ function nodevalues(
     if nodes == []
         if cellwise
             target = zeros(T, nvals * max_num_targets_per_source(source.FES.dofgrid[CellNodes]), num_cells(source.FES.dofgrid))
-            piecewise_nodevalues!(target, source.entries, source.FES, operator; abs = abs, kwargs...)
+            piecewise_nodevalues!(target, source.entries, source.FES, operator; abs = abs, source_offset = source.offset, kwargs...)
         else
             target = zeros(T, nvals, num_nodes(source.FES.dofgrid))
-            nodevalues!(target, source.entries, source.FES, operator; continuous = continuous, abs = abs, kwargs...)
+            nodevalues!(target, source.entries, source.FES, operator; continuous = continuous, source_offset = source.offset, abs = abs, kwargs...)
         end
     else
         @assert cellwise == false
         target = zeros(T, nvals, length(nodes))
-        nodevalues_subset!(target, source.entries, source.FES, operator; continuous = continuous, abs = abs, nodes = nodes, kwargs...)
+        nodevalues_subset!(target, source.entries, source.FES, operator; continuous = continuous, source_offset = source.offset, abs = abs, nodes = nodes, kwargs...)
     end
     return target
 end
