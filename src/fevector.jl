@@ -16,6 +16,7 @@ Each `FEVectorBlock` provides array-like access to the degrees of freedom (DOFs)
 - `T`: Value type of the vector entries (e.g., `Float64`).
 - `Tv`: Value type for the associated `FESpace`.
 - `Ti`: Integer type for the associated `FESpace`.
+- `TVector`: Type of the entries vector.
 - `FEType`: Type of the finite element.
 - `APT`: Assembly type for the finite element.
 
@@ -24,21 +25,21 @@ Each `FEVectorBlock` provides array-like access to the degrees of freedom (DOFs)
 - `FES::FESpace{Tv, Ti, FEType, APT}`: The finite element space associated with this block.
 - `offset::Int`: Global offset (start index in the global vector).
 - `last_index::Int`: Global end index (inclusive).
-- `entries::Array{T, 1}`: Reference to the global coefficient array (shared with the parent `FEVector`).
+- `entries::TVector`: Reference to the global coefficient array (shared with the parent `FEVector`).
 
 # Usage
 `FEVectorBlock` is typically created internally by `FEVector` constructors and provides efficient access to the coefficients for a particular FE space. Supports standard array operations (`getindex`, `setindex!`, `size`, `length`, etc.) and can be used for block-wise assembly, extraction, and manipulation.
 """
-struct FEVectorBlock{T, Tv, Ti, FEType, APT} <: AbstractArray{T, 1}
+struct FEVectorBlock{T, Tv, Ti, TVector <: AbstractArray{T, 1}, FEType, APT} <: AbstractArray{T, 1}
     name::String
     FES::FESpace{Tv, Ti, FEType, APT}
     offset::Int
     last_index::Int
-    entries::Array{T, 1} # shares with parent object
+    entries::TVector # shares with parent object
 end
 
-function Base.copy(FEB::FEVectorBlock{T, Tv, Ti, FEType, APT}, entries) where {T, Tv, Ti, FEType, APT}
-    return FEVectorBlock{T, Tv, Ti, FEType, APT}(deepcopy(FEB.name), copy(FEB.FES), FEB.offset, FEB.last_index, entries)
+function Base.copy(FEB::FEVectorBlock{T, Tv, Ti, TVector, FEType, APT}, entries) where {T, Tv, Ti, TVector, FEType, APT}
+    return FEVectorBlock{T, Tv, Ti, TVector, FEType, APT}(deepcopy(FEB.name), copy(FEB.FES), FEB.offset, FEB.last_index, entries)
 end
 
 """
@@ -69,22 +70,23 @@ An `FEVector` consists of a global coefficient array subdivided into multiple `F
 - `T`: Value type of the vector entries (e.g., `Float64`).
 - `Tv`: Value type for the associated `FESpace`.
 - `Ti`: Integer type for the associated `FESpace`.
+- `TVector`: Type of the `entries` vector
 
 # Fields
 - `FEVectorBlocks::Array{FEVectorBlock{T, Tv, Ti}, 1}`: Array of blocks, each representing a segment of the global vector for a specific `FESpace`.
-- `entries::Array{T, 1}`: The global coefficient array, shared by all blocks.
+- `entries::TVector`: The global coefficient array, shared by all blocks.
 - `tags::Vector{Any}`: Optional tags for identifying or accessing blocks (e.g., by name or symbol).
 
 """
-struct FEVector{T, Tv, Ti} #<: AbstractVector{T}
-    FEVectorBlocks::Array{FEVectorBlock{T, Tv, Ti}, 1}
-    entries::Array{T, 1}
+struct FEVector{T, Tv, Ti, TVector <: AbstractArray{T, 1}} #<: AbstractVector{T}
+    FEVectorBlocks::Array{FEVectorBlock{T, Tv, Ti, TVector}, 1}
+    entries::TVector
     tags::Vector{Any}
 end
 
-function Base.copy(FEV::FEVector{T, Tv, Ti}) where {T, Tv, Ti}
+function Base.copy(FEV::FEVector{T, Tv, Ti, TVector}) where {T, Tv, Ti, TVector}
     entries = deepcopy(FEV.entries)
-    return FEVector{T, Tv, Ti}([copy(B, entries) for B in FEV.FEVectorBlocks], entries, [t for t in FEV.tags])
+    return FEVector{T, Tv, Ti, TVector}([copy(B, entries) for B in FEV.FEVectorBlocks], entries, [t for t in FEV.tags])
 end
 
 # overload stuff for AbstractArray{T,1} behaviour
@@ -254,10 +256,10 @@ function FEVector{T}(FES::Array{<:FESpace{Tv, Ti}, 1}; entries = nothing, name =
     Blocks = Array{FEVectorBlock{T, Tv, Ti}, 1}(undef, length(FES))
     offset = 0
     for j in 1:length(FES)
-        Blocks[j] = FEVectorBlock{T, Tv, Ti, eltype(FES[j]), assemblytype(FES[j])}(names[j], FES[j], offset, offset + FES[j].ndofs, entries)
+        Blocks[j] = FEVectorBlock{T, Tv, Ti, typeof(entries), eltype(FES[j]), assemblytype(FES[j])}(names[j], FES[j], offset, offset + FES[j].ndofs, entries)
         offset += FES[j].ndofs
     end
-    return FEVector{T, Tv, Ti}(Blocks, entries, tags)
+    return FEVector{T, Tv, Ti, typeof(entries)}(Blocks, entries, tags)
 end
 
 
