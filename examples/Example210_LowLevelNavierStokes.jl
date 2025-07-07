@@ -3,21 +3,21 @@
 # 210 : Navier-Stokes Problem
 ([source code](@__SOURCE_URL__))
 
-Consider the Navier-Stokes problem that seeks ``u`` and ``p`` such that
+Consider the Navier-Stokes problem that seeks ``\mathbf{u}`` and ``p`` such that
 ```math
 \begin{aligned}
-	- \mu \Delta u + (u \cdot \nabla) u + \nabla p &= f\\
-			\mathrm{div}(u) & = 0.
+    - \mu \Delta \mathbf{u} + (\mathbf{u} \cdot \nabla) \mathbf{u} + \nabla p &= \mathbf{f} \\
+    \mathrm{div}(\mathbf{u}) & = 0.
 \end{aligned}
 ```
 
-The weak formulation seeks ``u \in V := H^1_0(\Omega)`` and ``p \in Q := L^2_0(\Omega)`` such that
+The weak formulation seeks ``\mathbf{u} \in V := H^1_0(\Omega)^2`` and ``p \in Q := L^2_0(\Omega)`` such that
 ```math
 \begin{aligned}
-	\mu (\nabla u, \nabla v) + ((u \cdot \nabla) u, v) - (p, \mathrm{div}(v)) & = (f, v)
-	& \text{for all } v \in V\\
-	(q, \mathrm{div}(u)) & = 0
-	& \text{for all } q \in Q\\
+    \mu (\nabla \mathbf{u}, \nabla \mathbf{v}) + ((\mathbf{u} \cdot \nabla) \mathbf{u}, \mathbf{v}) - (p, \mathrm{div}(\mathbf{v})) & = (\mathbf{f}, \mathbf{v})
+    & \text{for all } \mathbf{v} \in V\\
+    (q, \mathrm{div}(\mathbf{u})) & = 0
+    & \text{for all } q \in Q\\
 \end{aligned}
 ```
 This example computes a planar lattice flow with inhomogeneous Dirichlet boundary conditions

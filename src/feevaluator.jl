@@ -58,8 +58,6 @@ A `FEEvaluator` object that can efficiently evaluate (and cache) the values of t
 # Notes
 
 - For matrix-valued operators (e.g., `Gradient`), the result is stored as a long vector in component-wise order.
-- The evaluator is designed for high performance in assembly loops and supports both scalar and vector-valued elements and operators.
-- For advanced use, the evaluator exposes internal fields for basis values, derivatives, and transformation matrices.
 
 # Example
 
@@ -69,6 +67,7 @@ for cell in 1:ncells
     update_basis!(FEB, cell)
     # Access FEB.cvals for basis gradients at quadrature points
 end
+```
 """
 function FEEvaluator(
         FE::FESpace{TvG, TiG, FEType, FEAPT},
