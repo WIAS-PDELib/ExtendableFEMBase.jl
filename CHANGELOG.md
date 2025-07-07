@@ -1,14 +1,12 @@
 # CHANGES
 
-## v1.3.0
-  - type of `entries` of `FEVectorBlock` and `FEVector` is now a template parameter
-
-## v1.2.0 June 25, 2025
+## v1.2.0 July 07, 2025
   - major documentation and docstring overhaul
   - improved show functions and constructors for FEMatrix, FEVector
   - added range check in getindex functions for FEVector
   - added slice views for FEVectorBlocks
   - added Array conversions for FEVector and FEVectorBlock
+  - type of `entries` of `FEVectorBlock` and `FEVector` is now a template parameter
     
 ## v1.1.1 June 16, 2025
   - docstring improvements
