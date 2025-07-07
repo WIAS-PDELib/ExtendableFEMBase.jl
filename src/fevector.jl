@@ -298,7 +298,7 @@ Overloaded `append` function for `FEVector` that adds a FEVectorBlock at the end
 """
 function Base.append!(FEF::FEVector{T}, FES::FESpace{Tv, Ti, FEType, APT}; name = "", tag = nothing) where {T, Tv, Ti, FEType, APT}
     append!(FEF.entries, zeros(T, FES.ndofs))
-    newBlock = FEVectorBlock{T, Tv, Ti, FEType, APT}(name, FES, FEF.FEVectorBlocks[end].last_index, FEF.FEVectorBlocks[end].last_index + FES.ndofs, FEF.entries)
+    newBlock = FEVectorBlock{T, Tv, Ti, typeof(FEF.entries), FEType, APT}(name, FES, FEF.FEVectorBlocks[end].last_index, FEF.FEVectorBlocks[end].last_index + FES.ndofs, FEF.entries)
     push!(FEF.FEVectorBlocks, newBlock)
     if tag !== nothing
         push!(FEF.tags, tag)
