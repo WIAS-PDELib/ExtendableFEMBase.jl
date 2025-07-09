@@ -1,8 +1,9 @@
 # CHANGES
 
-## v1.2.1 July 09, 2025
+## v1.3.0 July 09, 2025
   - some bugfixes related to new template parameter from 1.2.0
   - @show of FEVectorBlock does not crash anymore
+  - added show functions for FEBasisEvaluator, PointEvaluator, SegmentEvaluator
 
 ## v1.2.0 July 07, 2025
   - major documentation and docstring overhaul
