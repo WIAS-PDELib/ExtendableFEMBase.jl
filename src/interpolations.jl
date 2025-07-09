@@ -592,14 +592,14 @@ This function provides a flexible interface for extracting nodal or cellwise val
 - The result dimension is determined by the FE space, the operator, and the `abs` argument.
 """
 function nodevalues(
-        source::FEVectorBlock{T, Tv, Ti, FEType, APT},
+        source::FEVectorBlock{T, Tv, Ti, TVector, FEType, APT},
         operator::Type{<:AbstractFunctionOperator} = Identity;
         continuous = "auto",
         nodes = [],
         cellwise = false,
         abs = false,
         kwargs...
-    ) where {T, Tv, Ti, APT, FEType}
+    ) where {T, Tv, Ti, APT, TVector, FEType}
     if continuous == "auto"
         if FEType <: AbstractH1FiniteElement && operator == Identity && !source.FES.broken && !(FEType <: H1CR)
             continuous = true
@@ -655,7 +655,7 @@ This function provides efficient, zero-copy access to the nodal values of an `FE
 - Only available for unbroken H1-conforming elements and the Identity operator.
 
 """
-function nodevalues_view(source::FEVectorBlock{T, Tv, Ti, FEType, APT}, operator::Type{<:AbstractFunctionOperator} = Identity; nodes = [0]) where {T, Tv, Ti, APT, FEType}
+function nodevalues_view(source::FEVectorBlock{T, Tv, Ti, TVector, FEType, APT}, operator::Type{<:AbstractFunctionOperator} = Identity; nodes = [0]) where {T, Tv, Ti, APT, TVector, FEType}
 
     if (FEType <: AbstractH1FiniteElement) && (operator == Identity) && (source.FES.broken == false)
         # give a direct view without computing anything
@@ -721,14 +721,14 @@ This function performs nodal interpolation of the (possibly vector-valued) resul
 
 """
 function continuify(
-        source::FEVectorBlock{T, Tv, Ti, FEType, APT},
+        source::FEVectorBlock{T, Tv, Ti, TVector, FEType, APT},
         operator::Type{<:AbstractFunctionOperator} = Identity;
         abs::Bool = false,
         broken = false,
         order = "auto",
         factor = 1,
         regions::Array{Int, 1} = [0]
-    ) where {T, Tv, Ti, FEType, APT}
+    ) where {T, Tv, Ti, TVector, FEType, APT}
 
     FE = source.FES
     xgrid = FE.dofgrid
@@ -917,9 +917,9 @@ This forwards to the main nodevalues! method using a view of the block's entries
 """
 function nodevalues!(
         target::AbstractArray{T, 2},
-        block::FEVectorBlock{T, Tv, Ti, FEType, AT},
+        block::FEVectorBlock{T},
         operator::Type{<:AbstractFunctionOperator} = Identity;
         kwargs...
-    ) where {T, Tv, Ti, FEType, AT}
+    ) where {T}
     return nodevalues!(target, view(block), block.FES, operator; kwargs...)
 end
