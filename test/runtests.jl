@@ -6,7 +6,6 @@ using ExampleJuggler
 using SparseArrays
 using Aqua
 
-
 @testset "Aqua.jl" begin
     Aqua.test_all(
         ExtendableFEMBase;

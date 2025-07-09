@@ -23,7 +23,7 @@ end
 
 function test_vertex_values(EG, FEType, order)
     qf = VertexRule(EG, order; T = Rational{Int})
-    @show qf
+    show(devnull, qf)
     basis = get_basis(ON_CELLS, FEType, EG)
     ndofs = get_ndofs(ON_CELLS, FEType, EG)
     basis_vals = zeros(Rational{Int}, ndofs, 1)

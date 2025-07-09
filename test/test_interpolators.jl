@@ -73,7 +73,7 @@ function run_interpolator_tests()
             QP = QPInfos(xgrid)
             qf = VertexRule(EG, order)
             FEB = FEEvaluator(FES, Identity, qf)
-            @show FEB
+            show(devnull, FEB)
             for cell::Int in cells
                 update_trafo!(L2G, cell)
                 update_basis!(FEB, cell)
@@ -106,7 +106,7 @@ function run_interpolator_tests()
         # interpolate
         Solution = FEVector(FES)
         interpolate!(Solution[1], u; bonus_quadorder = order)
-        @show Solution
+        show(devnull, Solution)
 
         # compute error
         error = compute_error(Solution[1], u, order)
