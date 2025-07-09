@@ -11,6 +11,17 @@ mutable struct SegmentIntegrator{Tv <: Real, UT, KFT <: Function, EG}
     parameters::Dict{Symbol, Any}
 end
 
+function Base.show(io::IO, SI::SegmentIntegrator)
+    println(io, "SegmentIntegrator")
+    println(io, "-----------------")
+    println(io, "Domain geometry: ", segment_geometry(SI))
+    println(io, "Unknowns: ", SI.u_args)
+    println(io, "Operators: ", SI.ops_args)
+    println(io, "Kernel function: ", typeof(SI.kernel))
+    println(io, "Parameters: ", SI.parameters)
+    return
+end
+
 segment_geometry(::SegmentIntegrator{Tv, UT, KFT, EG}) where {Tv, UT, KFT, EG} = EG
 
 

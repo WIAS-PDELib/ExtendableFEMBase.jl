@@ -55,8 +55,12 @@ $(TYPEDSIGNATURES)
 Custom `show` function for `FEVectorBlock` that prints some information and the view of that block.
 """
 function Base.show(io::IO, ::MIME"text/plain", FEB::FEVectorBlock)
-    @printf(io, "block %s [%d:%d] = ", FEB.name, FEB.offset + 1, FEB.last_index)
     return show(io, view(FEB))
+end
+function Base.show(io::IO, FEB::FEVectorBlock)
+    @printf(io, "block %s [%d:%d] = ", FEB.name, FEB.offset + 1, FEB.last_index)
+    show(io, view(FEB))
+    return nothing
 end
 
 """
