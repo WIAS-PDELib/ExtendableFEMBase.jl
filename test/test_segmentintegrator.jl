@@ -19,6 +19,7 @@ function test_segmentintegrator_nokernel()
     ## init segment integrator
     SI = SegmentIntegrator(Edge1D, [(1, Identity)])
     initialize!(SI, uh)
+    @show SI
 
     ## integrate along line [1/4,1/4] to [3/4,1/4] in first triangle
     ## exact integral should be [3//32,0]
@@ -65,6 +66,7 @@ function test_segmentintegrator_withkernel()
     ## init segment integrator
     SI = SegmentIntegrator(Edge1D, multiply_r!, [(1, Identity)]; bonus_quadorder = 1)
     initialize!(SI, uh)
+    @show SI
 
     @show xgrid[Coordinates], xgrid[CellNodes]
 

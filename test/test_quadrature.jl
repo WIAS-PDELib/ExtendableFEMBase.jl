@@ -17,6 +17,7 @@ function run_quadrature_tests()
         for order in 1:maxorder1D
             integrand, exactvalue = exact_function(Val(1), order)
             qf = QuadratureRule{Float64, Edge1D}(order)
+            @show qf
             quadvalue = integrate(xgrid, ON_CELLS, integrand, length(exactvalue); force_quadrature_rule = qf)
             println("EG = Edge1D | order = $order ($(qf.name), $(length(qf.w)) points) | error = $(quadvalue - exactvalue)")
             @test isapprox(quadvalue, exactvalue)
@@ -30,6 +31,7 @@ function run_quadrature_tests()
             for order in 1:maxorder2D[j]
                 integrand, exactvalue = exact_function(Val(2), order)
                 qf = QuadratureRule{Float64, EG}(order)
+                @show qf
                 quadvalue = integrate(xgrid, ON_CELLS, integrand, length(exactvalue); force_quadrature_rule = qf)
                 println("EG = $EG | order = $order ($(qf.name), $(length(qf.w)) points) | error = $(quadvalue - exactvalue)")
                 @test isapprox(quadvalue, exactvalue)
@@ -44,6 +46,7 @@ function run_quadrature_tests()
             for order in 1:maxorder3D[j]
                 integrand, exactvalue = exact_function(Val(3), order)
                 qf = QuadratureRule{Float64, EG}(order)
+                @show qf
                 quadvalue = integrate(xgrid, ON_CELLS, integrand, length(exactvalue); force_quadrature_rule = qf)
                 println("EG = $EG | order = $order ($(qf.name), $(length(qf.w)) points) | error = $(quadvalue - exactvalue)")
                 @test isapprox(quadvalue, exactvalue)

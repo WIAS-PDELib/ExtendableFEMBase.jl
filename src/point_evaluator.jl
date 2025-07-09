@@ -13,6 +13,16 @@ mutable struct PointEvaluator{Tv <: Real, UT, KFT <: Function}
     parameters::Dict{Symbol, Any}
 end
 
+function Base.show(io::IO, PE::PointEvaluator)
+    println(io, "PointEvaluator")
+    println(io, "--------------")
+    println(io, "Unknowns: ", PE.u_args)
+    println(io, "Operators: ", PE.ops_args)
+    println(io, "Kernel function: ", typeof(PE.kernel))
+    println(io, "Parameters: ", PE.parameters)
+    return
+end
+
 default_peval_kwargs() = Dict{Symbol, Tuple{Any, String}}(
     :name => ("PointEvaluator", "name for operator used in printouts"),
     :resultdim => (0, "dimension of result field (default = length of operators)"),

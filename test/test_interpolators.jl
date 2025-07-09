@@ -73,6 +73,7 @@ function run_interpolator_tests()
             QP = QPInfos(xgrid)
             qf = VertexRule(EG, order)
             FEB = FEEvaluator(FES, Identity, qf)
+            @show FEB
             for cell::Int in cells
                 update_trafo!(L2G, cell)
                 update_basis!(FEB, cell)
@@ -101,15 +102,15 @@ function run_interpolator_tests()
         # choose FE and generate FESpace
         FES = FESpace{FEType}(xgrid; broken = broken)
         AT = ON_CELLS
-        print("FEType = $FEType $(broken ? "broken" : "") $AT | ndofs = $(FES.ndofs) | order = $order")
 
         # interpolate
         Solution = FEVector(FES)
         interpolate!(Solution[1], u; bonus_quadorder = order)
+        @show Solution
 
         # compute error
         error = compute_error(Solution[1], u, order)
-        println(" | error = $(norm(error, Inf))")
+        println("FEType = $FEType $(broken ? "broken" : "") $AT | ndofs = $(FES.ndofs) | order = $order | error = $(norm(error, Inf))")
         return @test norm(error) < tolerance
     end
 

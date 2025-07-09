@@ -2,21 +2,24 @@ function run_fematrix_tests()
 
     @testset "FEMatrixVector" begin
         println("\n")
-        println("=======================")
-        println("Testing FEMatrix&VEctor")
-        println("=======================")
+        println("===========================")
+        println("Testing FEMatrix & FEVector")
+        println("===========================")
         xgrid = simplexgrid(0:0.1:1, 0:0.1:1)
         FES1 = FESpace{H1Pk{1, 1, 1}}(xgrid)
+        @show FES1
         FES2 = FESpace{H1Pk{1, 1, 2}}(xgrid)
+        @show FES2
         A = FEMatrix(FES1, FES2)
         @test size(A.entries) == (FES1.ndofs, FES2.ndofs)
         @test size(A[1, 1]) == (FES1.ndofs, FES2.ndofs)
+        @show A
 
         B = FEMatrix([FES1, FES2])
         @test length(B) == 4
         @test size(B.entries) == (FES1.ndofs + FES2.ndofs, FES1.ndofs + FES2.ndofs)
         @test size(B[1, 2]) == (FES1.ndofs, FES2.ndofs)
-
+        @show B
 
         C = FEMatrix([FES2, FES2], [FES1, FES1])
         @test length(C) == 4

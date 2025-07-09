@@ -25,6 +25,17 @@ struct SingleFEEvaluator{T <: Real, TvG <: Real, TiG <: Integer, operator, FETyp
     compressiontargets::Array{Int, 1}            # some operators allow for compressed storage (e.g. SymmetricGradient)
 end
 
+function Base.show(io::IO, FEB::SingleFEEvaluator)
+    println(io, "SingleFEEvaluator")
+    println(io, "-----------------")
+    println(io, "Operator:   ", typeof(FEB).parameters[4])
+    println(io, "FESpace:    ", typeof(FEB.FE))
+    println(io, "Element:    ", typeof(FEB.FE).parameters[3])
+    println(io, "Geometry:   ", typeof(FEB.L2G).parameters[3])
+    println(io, "Quadrature: ", length(FEB.xref), " points")
+    return
+end
+
 
 Base.getindex(FEB::FEEvaluator, c, dof, qp) = FEB.cvals[c, dof, qp]
 
