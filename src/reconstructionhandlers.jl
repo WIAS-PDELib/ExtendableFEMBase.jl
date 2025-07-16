@@ -474,7 +474,7 @@ boundary_coefficients!(coefficients, RH::ReconstructionHandler, cell)
 
 generates the coefficients for the facial dofs of the reconstruction operator on the cell
 """
-function boundary_coefficients!(coefficients, RH::ReconstructionHandler{Tv, Ti, <:H1CR{ncomponents}, <:HDIVRT0{ncomponents}, <:ON_CELLS, EG}, cell) where {Tv, Ti, ncomponents, EG}
+function boundary_coefficients!(coefficients, RH::ReconstructionHandler{Tv, Ti, <: Reconstruct, <:H1CR{ncomponents}, <:HDIVRT0{ncomponents}, <:ON_CELLS, EG}, cell) where {Tv, Ti, ncomponents, EG}
     xFaceVolumes = RH.xFaceVolumes
     xFaceNormals = RH.xFaceNormals
     xCellFaces = RH.xCellFaces

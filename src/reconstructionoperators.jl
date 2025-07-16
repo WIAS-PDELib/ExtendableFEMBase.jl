@@ -53,10 +53,13 @@ function FEEvaluator(
     FEB = FEEvaluator(FE2, stdop, qrule, xgrid; L2G = L2G, T = T, AT = AT)
 
     ## reconstruction coefficient handler
-    if operator <: WeightedReconstruct
+    if operator <: WeightedReconstruct && FEType in [H1BR{2}]
         tf = weight_type(operator)
         reconst_handler = ReconstructionHandler(FE, FE2, AT, EG, operator, tf.instance)
     else
+        if operator <: WeightedReconstruct
+            @warn "weighted reconstruction not available for $FEType, ignoring the weight function"
+        end
         reconst_handler = ReconstructionHandler(FE, FE2, AT, EG, operator)
     end
 
