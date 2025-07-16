@@ -6,13 +6,13 @@ Length4Operator(::Type{<:ReconstructionOperator{FETypeR, O}}, xdim, nc) where {F
 DefaultName4Operator(::Type{Reconstruct{FETypeR, O}}) where {FETypeR, O} = "R(" * DefaultName4Operator(O) * ")"
 DefaultName4Operator(::Type{WeightedReconstruct{FETypeR, O}}) where {FETypeR, O} = "R(r" * DefaultName4Operator(O) * ")"
 
-struct FEReconstEvaluator{T, TvG, TiG, FEType, FEType2, stdop, O <: ReconstructionOperator} <: FEEvaluator{T, TvG, TiG}
+struct FEReconstEvaluator{T, TvG, TiG, FEType, FEType2, stdop, RH} <: FEEvaluator{T, TvG, TiG}
     citem::Base.RefValue{Int}                       # current item
     FE::FESpace{TvG, TiG, FEType}                     # link to full FE (e.g. for coefficients)
     FEB::SingleFEEvaluator{T, TvG, TiG, stdop, FEType2}                # FEBasisEvaluator for stdop in reconstruction space
     cvals::Array{T, 3}                               # current operator vals on item (reconstruction)
     coefficients::Array{TvG, 2}                      # additional coefficients for reconstruction
-    reconst_handler::ReconstructionHandler{T, TiG, O}  # handler for reconstruction coefficients
+    reconst_handler::RH                             # handler for reconstruction coefficients
 end
 
 # constructor for reconstruction operators
@@ -53,9 +53,14 @@ function FEEvaluator(
     FEB = FEEvaluator(FE2, stdop, qrule, xgrid; L2G = L2G, T = T, AT = AT)
 
     ## reconstruction coefficient handler
-    reconst_handler = ReconstructionHandler(FE, FE2, AT, EG, operator)
+    if operator <: WeightedReconstruct
+        tf = weight_type(operator)
+        reconst_handler = ReconstructionHandler(FE, FE2, AT, EG, operator, tf.instance)
+    else
+        reconst_handler = ReconstructionHandler(FE, FE2, AT, EG, operator)
+    end
 
-    return FEReconstEvaluator{T, TvG, TiG, FEType, FETypeReconst, stdop, operator}(FEB.citem, FE, FEB, cvals, coefficients2, reconst_handler)
+    return FEReconstEvaluator{T, TvG, TiG, FEType, FETypeReconst, stdop, typeof(reconst_handler)}(FEB.citem, FE, FEB, cvals, coefficients2, reconst_handler)
 end
 
 function update_basis!(FEBE::FEReconstEvaluator)
