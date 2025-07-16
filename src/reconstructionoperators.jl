@@ -79,3 +79,13 @@ function update_basis!(FEBE::FEReconstEvaluator)
     end
     return nothing
 end
+
+function Base.show(io::IO, FEB::FEReconstEvaluator)
+    println(io, "FEReconstEvaluator (reconstruction operator)")
+    println(io, "-------------------------------------------")
+    println(io, "Reconstruction FE space: ", typeof(FEB.FEB.FE))
+    println(io, "Reconstruction operator: ", typeof(FEB.FEB).parameters[4])
+    println(io, "Underlying SingleFEEvaluator:")
+    show(io, FEB.FEB)
+    return
+end

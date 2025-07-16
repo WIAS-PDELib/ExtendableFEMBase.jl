@@ -1,29 +1,60 @@
 """
 ````
 function lazy_interpolate!(
-	target::FEVectorBlock{T1,Tv,Ti},
-	source::FEVectorBlock{T2,Tv,Ti};
-	operator = Identity,
-	postprocess = nothing,
-	xtrafo = nothing,
-	items = [],
-	not_in_domain_value = 1e30,
-	eps = 1e-13,
-	use_cellparents::Bool = false) where {T1,T2,Tv,Ti}
+        target::FEVectorBlock{T1, Tv, Ti},
+        source,
+        operators = [(1, Identity)];
+        postprocess! = standard_kernel,
+        xtrafo! = nothing,
+        items = [],
+        resultdim = get_ncomponents(eltype(target.FES)),
+        not_in_domain_value = 1.0e30,
+        start_cell = 1,
+        only_localsearch = false,
+        use_cellparents::Bool = false,
+        eps = 1.0e-13,
+        kwargs...) where {T1, Tv, Ti}
 ````
 
-Interpolates (operator-evaluations of) the given finite element function into the finite element space assigned to the target FEVectorBlock. 
-(Currently not the most efficient way as it is based on the PointEvaluation pattern and cell search. If CellParents
-are available in the grid components of the target grid, these parent cell information can be used to improve the
-search. To activate this put 'use_cellparents' = true). By some given kernel function that is conforming to the interface
+Interpolates (operator-evaluations of) the given FEVector source (or an array of FEVectorBlocks)
+into the finite element space assigned to the `target` FEVectorBlock.
 
-	kernel!(result, input, qpinfo)
+The interpolation is performed using a point evaluation pattern and cell search. If `CellParents` information
+is available in the target grid, enabling `use_cellparents=true` can improve the efficiency of the search.
 
-the operator evaluation (=input) can be further postprocessed. The qpinfo argument
-allows to access information at the current quadrature point.
+A custom postprocessing function can be provided via the `postprocess!` argument, which should have the interface:
+    postprocess!(result, input, qpinfo)
+where `result` is the output buffer, `input` is the operator evaluation, and `qpinfo` provides quadrature point information.
 
-Note: discontinuous quantities at vertices of the target grid will be evaluated in the first found cell of the
-source grid. No averaging is performed. With eps the tolerances of the cell search via ExtendableGrids.CellFinder can be steered.
+If the source and target grids have different coordinate dimensions, a coordinate transformation function
+`xtrafo!` must be provided, with the interface:
+    xtrafo!(x_source, x)
+which maps coordinates `x` from the target grid to coordinates in the source grid.
+
+If a point cannot be found in the source grid, the value `not_in_domain_value` is used as the function value.
+The `items` argument can be used to restrict the interpolation to specific target cells.
+
+# Arguments
+- `target::FEVectorBlock`: The target finite element vector block.
+- `source`: The source array of FEVectorBlocks.
+- `operators`: Array of operator argument tuples (source block tag, operator type)  (default: `[(1, Identity)]`).
+
+# Keyword Arguments
+- `postprocess!`: Function to postprocess operator evaluations (default: `standard_kernel`).
+- `xtrafo!`: Optional coordinate transformation function (default: `nothing`).
+- `items`: List of target cells to interpolate (default: `[]`).
+- `resultdim`: Result dimension (default: `get_ncomponents(eltype(target.FES))`).
+- `not_in_domain_value`: Value assigned if a point is not found in the source domain (default: `1.0e30`).
+- `start_cell`: Starting cell index for cell search (default: `1`).
+- `only_localsearch`: Restrict cell search to local neighborhood (default: `false`).
+- `use_cellparents`: Use parent cell information for search (default: `false`).
+- `eps`: Tolerance for cell search (default: `1.0e-13`).
+- `kwargs...`: Additional keyword arguments passed to `interpolate!`.
+
+# Notes
+- Discontinuous quantities at target grid vertices are evaluated in the first found cell of the source grid; no averaging is performed.
+- The function is not the most efficient for large-scale problems due to its reliance on pointwise cell search.
+
 """
 function lazy_interpolate!(
         target::FEVectorBlock{T1, Tv, Ti},

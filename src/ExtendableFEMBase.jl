@@ -188,9 +188,36 @@ function unicode_gridplot(
 	kwargs...
 ````
 
-(via extension that requires UnicodePlots)
 
-Plots the grid on a UnicodePlots canvas (default: BrailleCanvas) by drawing all edges in the triangulation.
+Render a quick terminal plot of a 2D grid using UnicodePlots, suitable for quick visualization in the terminal.
+
+This function draws the edges and boundary faces of the given `ExtendableGrid` using Unicode characters, with customizable resolution, colors, and plotting style. The plot can be based on cells, faces, or edges, and boundary faces are highlighted with a separate color.
+
+# Arguments
+- `xgrid`: The `ExtendableGrid` to visualize.
+
+# Keyword Arguments
+- `title`: Title of the plot (default: `"gridplot"`).
+- `resolution`: Tuple specifying the number of columns and rows (characters) in the plot (default: `(40, 20)`).
+- `autoscale`: Whether to automatically adjust the aspect ratio for the grid (default: `true`).
+- `color`: RGB tuple for the main grid lines (default: `(200, 200, 200)`).
+- `bface_color`: RGB tuple for boundary face lines (default: `(255, 0, 0)`).
+- `CanvasType`: UnicodePlots canvas type to use (default: `BrailleCanvas`).
+- `plot_based`: Plot based on `ON_CELLS`, `ON_FACES`, or `ON_EDGES` (default: `ON_CELLS`).
+- `kwargs...`: Additional keyword arguments passed to the canvas or plot.
+
+# Returns
+- A `UnicodePlots.Plot` object displaying the grid in the terminal.
+
+# Notes
+- Requires the UnicodePlots extension to be loaded.
+
+# Example
+```julia
+using ExtendableFEMBase, ExtendableGrids, UnicodePlots
+grid = simplexgrid(LinRange(0, 1, 5), LinRange(0, 1, 5))
+unicode_gridplot(grid; title = "My Grid", resolution = (60, 30))
+```
 """
 function unicode_gridplot end
 
@@ -206,16 +233,27 @@ function unicode_scalarplot(
 	kwargs...)
 ````
 
-(via extension that requires UnicodePlots)
+Render a quick terminal plot of one or more components of a finite element function using UnicodePlots.
 
-Plots components of the finite element function in the FEVectorBlock u by
-using a lazy_interpolate! onto a coarse uniform mesh and UnicodePlots.jl
-lineplot or heatmap for 1D or 2D, respectively.
+This function visualizes the nodal values of the FE function stored in `u` by interpolating onto a coarse uniform mesh and plotting the result using UnicodePlots.jl. In 1D, all selected components are shown in a single line plot; in 2D, each component is shown as a separate heatmap. If `abs = true`, the Euclidean norm over all components is plotted instead.
 
-In 1D all components all plotted in the same lineplot, while
-in 2D all components are plotted in a separate heatmap.
+# Arguments
+- `u`: The `FEVectorBlock` containing the finite element function to plot.
 
-If abs = true, only the absolute value over the components is plotted.
+# Keyword Arguments
+- `components`: Indices of the components to plot (default: all components).
+- `abs`: If `true`, plot the Euclidean norm over all components (default: `false`).
+- `nrows`: Number of rows in the grid layout for 2D plots (default: `1`).
+- `resolution`: Tuple specifying the plot resolution (characters) in each direction (default: `(30, 30)`).
+- `colormap`: Colormap symbol for 2D heatmaps (default: `:viridis`).
+- `title`: Title of the plot (default: `u.name`).
+- `kwargs...`: Additional keyword arguments passed to the plotting routines.
+
+# Returns
+- A `UnicodePlots.Plot` object (or a vector of plots for multiple components in 2D).
+
+# Notes
+- Requires the UnicodePlots extension to be loaded.
 """
 function unicode_scalarplot end
 export unicode_gridplot, unicode_scalarplot

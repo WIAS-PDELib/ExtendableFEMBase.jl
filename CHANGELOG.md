@@ -1,5 +1,21 @@
 # CHANGES
 
+## v1.3.0 July 09, 2025
+  - some bugfixes related to new template parameter from 1.2.0
+  - @show of FEVectorBlock does not crash anymore
+  - added show functions for FEBasisEvaluator, PointEvaluator, SegmentEvaluator
+
+## v1.2.0 July 07, 2025
+  - major documentation and docstring overhaul
+  - improved show functions and constructors for FEMatrix, FEVector
+  - added range check in getindex functions for FEVector
+  - added slice views for FEVectorBlocks
+  - added Array conversions for FEVector and FEVectorBlock
+  - type of `entries` of `FEVectorBlock` and `FEVector` is now a template parameter
+    
+## v1.1.1 June 16, 2025
+  - docstring improvements
+    
 ## v1.1.0 May 15, 2025
   - overhaul of interpolators: each finite element
     interpolation is composed of the three new

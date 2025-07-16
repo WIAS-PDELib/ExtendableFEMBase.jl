@@ -1,4 +1,3 @@
-
 # Finite Element Interpolations
 
 ## Source functions and QPInfo
@@ -14,21 +13,25 @@ The qpinfo argument communicates vast information of the current quadrature poin
 | qpinfo.x           | Vector{Real}       | space coordinates of quadrature point |
 | qpinfo.time        | Real               | current time |
 | qpinfo.item        | Integer            | current item that contains qpinfo.x |
+| qpinfo.cell        | Integer            | cell number (when reasonable) |
 | qpinfo.region      | Integer            | region number of item |
 | qpinfo.xref        | Vector{Real}       | reference coordinates within item of qpinfo.x |
 | qpinfo.volume      | Real               | volume of item |
+| qpinfo.normal      | Vector{Real}       | normal vector (when reasonable) |
 | qpinfo.params      | Vector{Any}        | parameters that can be transferred via keyword arguments |
+| qpinfo.grid        | ExtendableGrid     | full access to grid |
 
 
 ## Standard Interpolations
 
-Each finite element has its standard interpolator that can be applied to some user-defined source Function. Instead of interpolating on the full cells, the interpolation can be restricted to faces or edges via an AssemblyType.
+Each finite element type provides a standard interpolation routine that can be applied to user-defined source functions. By default, interpolation is performed over all cells, but it can also be restricted to faces or edges using an appropriate `AssemblyType`.
 
 ```@docs
 interpolate!
 ```
 
-It is also possible to interpolate finite element functions on one grid onto a finite element function on another grid via the lazy_interpolate routine.
+Additionally, you can transfer finite element functions from one grid to another using the `lazy_interpolate!` routine, which interpolates between different meshes.
+
 
 ```@docs
 lazy_interpolate!
@@ -43,7 +46,7 @@ continuify
 
 ## Nodal Evaluations
 
-Usually, Plotters need nodal values, so there is a generic function that evaluates any finite element function at the nodes of the grids (possibly by averaging if discontinuous). In case of Identity evaluations of an H1-conforming finite element, the function nodevalues_view can generate a view into the coefficient field that avoids further allocations.
+Plotting routines require nodal values, i.e., the values of a finite element function at the mesh nodes. The generic `nodevalues!` function evaluates any finite element function at the grid nodes, averaging values if the function is discontinuous. For H1-conforming finite elements and identity evaluations, the `nodevalues_view` function can provide a direct view into the coefficient field, avoiding unnecessary memory allocations.
 
 
 ```@docs

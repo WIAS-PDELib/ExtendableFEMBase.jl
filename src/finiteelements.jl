@@ -57,18 +57,36 @@ abstract type AbstractInterpolationOperator end
 """
 ````
 struct FESpace{Tv, Ti, FEType<:AbstractFiniteElement,AT<:AssemblyType}
-	name::String                          # full name of finite element space (used in messages)
-	broken::Bool                          # if true, broken dofmaps are generated
-	ndofs::Int                            # total number of dofs
-	coffset::Int                          # offset for component dofs
-	xgrid::ExtendableGrid[Tv,Ti}          # link to xgrid 
-	dofgrid::ExtendableGrid{Tv,Ti}	      # link to (sub) grid used for dof numbering (expected to be equal to or child grid of xgrid)
-	dofmaps::Dict{Type{<:AbstractGridComponent},Any} # backpack with dofmaps
-    interpolators::Dict{Type{<:AssemblyType}, Any} # backpack with interpolators
+	name::String                          
+	broken::Bool                         
+	ndofs::Int                            
+	coffset::Int                          
+	xgrid::ExtendableGrid[Tv,Ti}           
+	dofgrid::ExtendableGrid{Tv,Ti}	      
+	dofmaps::Dict{Type{<:AbstractGridComponent},Any} 
+    interpolators::Dict{Type{<:AssemblyType}, Any} 
 end
 ````
+A finite element space representing the global collection of degrees of freedom (DOFs) for a given finite element type and assembly type on a computational grid.
 
-A struct that has a finite element type as parameter and carries dofmaps (CellDofs, FaceDofs, BFaceDofs) plus additional grid information and access to arrays holding coefficients if needed.
+`FESpace` encapsulates the mapping between mesh entities (cells, faces, edges, etc.) and DOFs, as well as metadata and auxiliary structures needed for assembly, interpolation, and evaluation of finite element functions.
+
+# Type Parameters
+- `Tv`: Value type for grid coordinates (e.g., `Float64`).
+- `Ti`: Integer type for grid indices (e.g., `Int64`).
+- `FEType`: The finite element type (e.g., `H1P1`).
+- `AT`: The assembly type (e.g., `ON_CELLS`).
+
+# Fields
+- `name::String`: Name of the finite element space.
+- `broken::Bool`: Whether the space is "broken" (discontinuous across elements).
+- `ndofs::Int64`: Total number of global degrees of freedom.
+- `coffset::Int`: Offset for component DOFs (for vector-valued or mixed spaces).
+- `xgrid::ExtendableGrid{Tv, Ti}`: Reference to the computational grid.
+- `dofgrid::ExtendableGrid{Tv, Ti}`: Grid used for DOF numbering (may be a subgrid of `xgrid`).
+- `dofmaps::Dict{Type{<:AbstractGridComponent}, Any}`: Dictionary of DOF maps for different grid components (cells, faces, edges, etc.).
+- `interpolators::Dict{Type{<:AssemblyType}, Any}`: Dictionary of interpolation operators for different assembly types.
+
 """
 struct FESpace{Tv, Ti, FEType <: AbstractFiniteElement, AT <: AssemblyType}
     name::String                          # full name of finite element space (used in messages)
@@ -84,6 +102,27 @@ end
 function Base.copy(FES::FESpace{Tv, Ti, FEType, AT}) where {Tv, Ti, FEType, AT}
     return FESpace{Tv, Ti, FEType, AT}(deepcopy(FES.name), FES.broken, FES.ndofs, FES.coffset, FES.xgrid, FES.dofgrid, FES.dofmaps, FES.interpolators)
 end
+
+"""
+$(TYPEDSIGNATURES)
+
+returns the name of the finite element space.
+"""
+name(FES::FESpace) = FES.name
+
+"""
+$(TYPEDSIGNATURES)
+
+returns the computational grid of the finite element space.
+"""
+xgrid(FES::FESpace) = FES.xgrid
+
+"""
+$(TYPEDSIGNATURES)
+
+returns the dofgrid of the finite element space.
+"""
+dofgrid(FES::FESpace) = FES.dofgrid
 
 """
 $(TYPEDSIGNATURES)
@@ -132,15 +171,24 @@ Base.setindex!(FES::FESpace, v, DM::Type{<:DofMap}) = FES.dofmaps[DM] = v
 
 """
 ````
-function FESpace{FEType<:AbstractFiniteElement,AT<:AssemblyType}(
-	xgrid::ExtendableGrid{Tv,Ti};
-	name = "",
-	broken::Bool = false)
+FESpace{FEType, AT}(xgrid::ExtendableGrid{Tv, Ti}; name = "", regions = nothing, broken::Bool = false)
 ````
 
-Constructor for FESpace of the given FEType, AT = ON_CELLS/ON_FACES/ON_EDGES generates a finite elements space on the cells/faces/edges of the provided xgrid (if omitted ON_CELLS is used as default).
-The broken switch allows to generate a broken finite element space (that is piecewise H1/Hdiv/HCurl). If no name is provided it is generated automatically from FEType.
-If no AT is provided, the space is generated ON_CELLS.
+Constructs a finite element space (`FESpace`) of the given finite element type (`FEType`) and assembly type (`AT`) on the provided computational grid.
+
+- The `FESpace` represents the global collection of degrees of freedom (DOFs) for the specified finite element type and assembly type, and manages the mapping between mesh entities (cells, faces, edges, etc.) and DOFs.
+- The `broken` switch allows the creation of a "broken" (discontinuous) finite element space, where basis functions are not required to be continuous across element boundaries.
+- The `regions` argument can be used to restrict the space to a subset of the grid.
+- If no `AT` is provided, the space is generated on cells (`ON_CELLS`).
+
+# Arguments
+- `xgrid::ExtendableGrid{Tv, Ti}`: The computational grid on which the finite element space is defined.
+
+# Keyword Arguments
+- `name::String: Name for the finite element space (for identification and debugging) (default: "", triggers automatic generation from FEType and broken).
+- `regions`: Optional subset of the grid to restrict the space (default: all regions).
+- `broken`: Whether to create a broken (discontinuous) space (default: false).
+
 """
 function FESpace{FEType, AT}(
         xgrid::ExtendableGrid{Tv, Ti};
@@ -226,14 +274,20 @@ function Base.show(io::IO, FES::FESpace{Tv, Ti, FEType, APT}) where {Tv, Ti, FET
     println(io, "     name = $(FES.name)")
     println(io, "   FEType = $FEType ($(FES.broken ? "$APT, broken" : "$APT"))")
     println(io, "  FEClass = $(supertype(FEType))")
-    println(io, "    ndofs = $(FES.ndofs) $(FES.coffset !== FES.ndofs ? "(coffset = $(FES.coffset))" : "")\n")
+    println(io, "    ndofs = $(FES.ndofs) $(FES.coffset !== FES.ndofs ? "(coffset = $(FES.coffset))" : "")")
     println(io, "    xgrid = $(FES.xgrid)")
     println(io, "  dofgrid = $(FES.dofgrid !== FES.xgrid ? FES.dofgrid : "xgrid")")
-    println(io, "")
-    println(io, "DofMaps")
-    println(io, "=======")
-    for tuple in FES.dofmaps
-        println(io, "> $(tuple[1])")
+    if !isempty(FES.dofmaps)
+        println(io, "\nDofMaps:")
+        for (k, v) in FES.dofmaps
+            println(io, "  > $(k): $(typeof(v))")
+        end
+    end
+    if !isempty(FES.interpolators)
+        println(io, "\nInterpolators:")
+        for (k, v) in FES.interpolators
+            println(io, "  > $(k): $(typeof(v))")
+        end
     end
     return
 end

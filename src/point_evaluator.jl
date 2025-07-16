@@ -13,6 +13,16 @@ mutable struct PointEvaluator{Tv <: Real, UT, KFT <: Function}
     parameters::Dict{Symbol, Any}
 end
 
+function Base.show(io::IO, PE::PointEvaluator)
+    println(io, "PointEvaluator")
+    println(io, "--------------")
+    println(io, "Unknowns: ", PE.u_args)
+    println(io, "Operators: ", PE.ops_args)
+    println(io, "Kernel function: ", typeof(PE.kernel))
+    println(io, "Parameters: ", PE.parameters)
+    return
+end
+
 default_peval_kwargs() = Dict{Symbol, Tuple{Any, String}}(
     :name => ("PointEvaluator", "name for operator used in printouts"),
     :resultdim => (0, "dimension of result field (default = length of operators)"),
@@ -22,30 +32,34 @@ default_peval_kwargs() = Dict{Symbol, Tuple{Any, String}}(
 
 
 """
-````
-function Pointevaluator(
-	[kernel!::Function],
-	oa_args::Array{<:Tuple{<:Any, DataType},1};
-	kwargs...)
-````
+$(TYPEDSIGNATURES)
 
-Generates a PointEvaluator that can evaluate the specified operator evaluations
-at arbitrary points. If no kernel function is given, the arguments
-are given directly. If a kernel is provided, the arguments are postprocessed
-accordingly and the kernel has to be conform to the interface
+Construct a `PointEvaluator` object for evaluating operator expressions at arbitrary points in a finite element space.
 
-	kernel!(result, eval_args, qpinfo)
+A `PointEvaluator` can be used to evaluate one or more operator evaluations (e.g., function values, gradients) at arbitrary points, optionally postprocessed by a user-supplied kernel function. The evaluation is performed with respect to a given solution and its finite element basis.
 
-where qpinfo allows to access information at the current evaluation point.
-Additionally the length of the result needs to be specified via the kwargs.
+After construction, the `PointEvaluator` must be initialized with a solution using `initialize!`. Evaluation at a point is then performed using `evaluate!` or `evaluate_bary!`.
 
-Evaluation can be triggered via the evaluate function after an initialize! call.
+# Arguments
+- `kernel!` (optional): Postprocessing function for operator evaluations. Should have the form `kernel!(result, eval_args, qpinfo)`.
+- `oa_args`: Array of operator argument tuples `(source block tag, operator type)`.
+- `sol` (optional): Solution object for immediate initialization.
 
-Operator evaluations are tuples that pair a tag (to identify an unknown or the position in the vector)
-with a FunctionOperator.
-
-Keyword arguments:
+# Keyword arguments:
 $(_myprint(default_peval_kwargs()))
+
+# Kernel Function Interface
+
+    kernel!(result, eval_args, qpinfo)
+
+- `result`: Preallocated array to store the kernel output.
+- `eval_args`: Array of operator evaluations at the current evaluation point.
+- `qpinfo`: `QPInfos` struct with information about the current evaluation point.
+
+# Usage
+
+After construction, call `initialize!` to prepare the evaluator for a given solution, then use `evaluate!` or `evaluate_bary!` to perform point evaluations.
+
 """
 function PointEvaluator(kernel, u_args, ops_args, sol = nothing; Tv = Float64, kwargs...)
     parameters = Dict{Symbol, Any}(k => v[1] for (k, v) in default_peval_kwargs())
@@ -78,7 +92,34 @@ function initialize!(
 	kwargs...)
 ````
 
-Initializes the PointEvaluator for the specified solution.
+Initializes the given `PointEvaluator` for a specified solution (FEVector or vector of FEVectorBlocks).
+
+This function prepares the `PointEvaluator` for evaluation by associating it with the provided solution vector. It sets up the necessary finite element basis evaluators, local-to-global transformations, and cell finder structures for the underlying grid.
+
+# Arguments
+- `O::PointEvaluator`: The `PointEvaluator` instance to initialize.
+- `sol`: The solution object (e.g., array of FEVectorBlocks) to be used for evaluations.
+
+# Keyword Arguments
+- `time`: (default: `0`) Time value to be passed to the quadrature point info structure.
+$(_myprint(default_peval_kwargs()))
+
+# Notes
+- This function must be called before using `evaluate!` or `evaluate_bary!` with the `PointEvaluator`.
+Initializes the given `PointEvaluator` for a specified solution (FEVector or vector of FEVectorBlocks).
+
+This function prepares the `PointEvaluator` for evaluation by associating it with the provided solution vector. It sets up the necessary finite element basis evaluators, local-to-global transformations, and cell finder structures for the underlying grid.
+
+# Arguments
+- `O::PointEvaluator`: The `PointEvaluator` instance to initialize.
+- `sol`: The solution object (e.g., array of FEVectorBlocks) to be used for evaluations.
+
+# Keyword Arguments
+- `time`: (default: `0`) Time value to be passed to the quadrature point info structure.
+$(_myprint(default_peval_kwargs()))
+
+# Notes
+- This function must be called before using `evaluate!` or `evaluate_bary!` with the `PointEvaluator`.
 """
 function initialize!(O::PointEvaluator{T, UT}, sol; time = 0, kwargs...) where {T, UT}
     _update_params!(O.parameters, kwargs)

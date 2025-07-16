@@ -1,10 +1,10 @@
-
 # Meshing
 
-Meshes are stored as an ExtendableGrid, see [ExtendableGrids.jl](https://github.com/j-fu/ExtendableGrids.jl) for details and constructors.
-Grid generators for simplex grids can be found e.g. in the external module [SimplexGridFactory.jl](https://github.com/j-fu/SimplexGridFactory.jl)
+Meshes in ExtendableFEMBase are represented using the `ExtendableGrid` type. For detailed information on grid structures and constructors, refer to the [ExtendableGrids.jl documentation](https://github.com/j-fu/ExtendableGrids.jl).
 
-Cells, faces and edges of the mesh are associated to AbstractElementGeometries (defined by [ExtendableGrids.jl](https://github.com/j-fu/ExtendableGrids.jl)) that are used to dispatch functionality (local/global transformation, enumeration rules, set of basis functions, volume calculation, refinements etc.). See further below for a list of recognized element geometries.
+To generate simplex grids, you can use external tools such as [SimplexGridFactory.jl](https://github.com/j-fu/SimplexGridFactory.jl).
+
+Each cell, face, and edge in a mesh is associated with an `AbstractElementGeometry` (as defined in [ExtendableGrids.jl](https://github.com/j-fu/ExtendableGrids.jl)). These geometries are used to dispatch key functionality, including local-to-global transformations, enumeration rules, basis function definitions, volume calculations, and mesh refinements. See below for a list of supported element geometries.
 
 
 ## Recognized Geometries and Reference Domains

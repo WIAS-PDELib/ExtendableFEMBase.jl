@@ -32,6 +32,7 @@ function test_derivatives2D()
     ## define P2-Courant finite element space
     FEType = H1P2{2, 2}
     FES = FESpace{FEType}(xgrid)
+    show(devnull, FES)
 
     ## get midpoint quadrature rule for constants
     qf = QuadratureRule{Float64, Triangle2D}(0)
@@ -113,6 +114,7 @@ function test_derivatives3D()
     ## define P2-Courant finite element space
     FEType = H1P2{3, 3}
     FES = FESpace{FEType}(xgrid)
+    show(devnull, FES)
 
     ## get midpoint quadrature rule for constants
     qf = QuadratureRule{Float64, Tetrahedron3D}(0)
