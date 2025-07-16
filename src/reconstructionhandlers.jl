@@ -513,8 +513,13 @@ function boundary_coefficients!(coefficients, RH::ReconstructionHandler{Tv, Ti, 
         x1 = view(xCoordinates, :, xFaceNodes[1, face])
         x2 = view(xCoordinates, :, xFaceNodes[2, face])
         xmid .= 0.5 * (x1 .+ x2)
-        w[1] = weight(x1)
-        w[2] = weight(x2)
+        if xCellFaceSigns[f, cell] == -1
+            w[1] = weight(x2)
+            w[2] = weight(x1)
+        else
+            w[1] = weight(x1)
+            w[2] = weight(x2)
+        end
         wmid = weight(xmid)
         for n in 1:nnodes
             node = face_rule[n, f]
@@ -522,7 +527,7 @@ function boundary_coefficients!(coefficients, RH::ReconstructionHandler{Tv, Ti, 
                 # RT0 reconstruction coefficients for P1 functions on reference element
                 coefficients[nfaces * (k - 1) + node, 2 * (f - 1) + 1] = xFaceVolumes[face] * (1 // 6 * w[n] + 1 // 3 * wmid) * xFaceNormals[k, face]
                 # BDM1 reconstruction coefficients for P1 functions on reference element
-                coefficients[nfaces * (k - 1) + node, 2 * (f - 1) + 2] = xFaceVolumes[face] * xFaceNormals[k, face] * xCellFaceSigns[f, cell] * (BDM1_coeffs[n] * w[n] + 1 // 3 * wmid)
+                coefficients[nfaces * (k - 1) + node, 2 * (f - 1) + 2] = xFaceVolumes[face] * xFaceNormals[k, face] * xCellFaceSigns[f, cell] * (BDM1_coeffs[n] * w[n])
             end
         end
         # RT0 reconstruction coefficients for face bubbles on reference element
