@@ -8,7 +8,56 @@ function run_operator_tests()
         @test error < 1.0e-14
         error = test_derivatives3D()
         @test error < 1.0e-14
+        test_reconstructions()
     end
+end
+
+function test_reconstructions()
+    ## divergence-free axisymmetric velocity field u(r,z) = (r,-2z) in cylindrical coordinates
+    function u!(result, qpinfo)
+        x = qpinfo.x
+        result[1] = x[1]
+        return result[2] = -2 * x[2]
+    end
+
+    ## vector field times r, should have zero divergence div(ru) = (d/dr, d/dz) \cdot (ru) = 0
+    function ru!(result, qpinfo)
+        x = qpinfo.x
+        result[1] = x[1]^2
+        return result[2] = -2 * x[1] * x[2]
+    end
+
+    xgrid = testgrid(Triangle2D)
+
+    ## interpolate u into H1BR{2} (inf-sup stable Stokes element)
+    FES = FESpace{H1BR{2}}(xgrid)
+    uh = FEVector(FES)
+    interpolate!(uh[1], u!; bonus_quadorder = 2)
+
+    for FETypeR in [HDIVRT0{2}, HDIVBDM1{2}]
+        ## interpolate ru into HDIVRTO{2} or HDIVBDM1{2}
+        FES2 = FESpace{FETypeR}(xgrid)
+        Πur = FEVector(FES2)
+        interpolate!(Πur[1], ru!; bonus_quadorder = 2)
+
+        ## test if interpolate of ru is divergence-free by interpolating into P0 function and checking its coefficients
+        FES3 = FESpace{L2P0{1}}(xgrid)
+        divΠur = FEVector(FES3)
+        lazy_interpolate!(divΠur[1], Πur, [(1, Divergence)])
+        @test sqrt(sum((divΠur.entries .^ 2))) < 1.0e-14
+
+        ## test if r-weighted reconstruction of uh is divergence-free by interpolating into P0 function and checking its coefficients
+        weight = (x) -> (x[1])
+        lazy_interpolate!(divΠur[1], uh, [(1, WeightedReconstruct{FETypeR, Divergence, typeof(weight)})])
+        @test sqrt(sum((divΠur.entries .^ 2))) < 1.0e-14
+
+        ## test if weighted reconstruction of uh and interpolation of ru are identical
+        FES4 = FESpace{L2P1{1}}(xgrid)
+        diff = FEVector(FES4)
+        lazy_interpolate!(diff[1], [uh[1], Πur[1]], [(1, WeightedReconstruct{FETypeR, Identity, typeof(weight)}), (2, Identity)]; postprocess = (result, args, qpinfo) -> (result[1] = (args[1] - args[3])^2 + (args[2] - args[4])^2))
+        @test sqrt(sum((diff.entries))) < 1.0e-14
+    end
+    return
 end
 
 function test_derivatives2D()

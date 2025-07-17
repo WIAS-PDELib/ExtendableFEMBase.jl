@@ -4,7 +4,7 @@ ReconstructionSpace(::Type{<:ReconstructionOperator{FETypeR, O}}) where {FETypeR
 NeededDerivative4Operator(::Type{<:ReconstructionOperator{FETypeR, O}}) where {FETypeR, O} = NeededDerivative4Operator(O)
 Length4Operator(::Type{<:ReconstructionOperator{FETypeR, O}}, xdim, nc) where {FETypeR, O} = Length4Operator(O, xdim, nc)
 DefaultName4Operator(::Type{Reconstruct{FETypeR, O}}) where {FETypeR, O} = "R(" * DefaultName4Operator(O) * ")"
-DefaultName4Operator(::Type{WeightedReconstruct{FETypeR, O}}) where {FETypeR, O} = "R(r" * DefaultName4Operator(O) * ")"
+DefaultName4Operator(::Type{WeightedReconstruct{FETypeR, O, w}}) where {FETypeR, O, w} = "wR(r" * DefaultName4Operator(O) * ")"
 
 struct FEReconstEvaluator{T, TvG, TiG, FEType, FEType2, stdop, RH} <: FEEvaluator{T, TvG, TiG}
     citem::Base.RefValue{Int}                       # current item
@@ -64,6 +64,10 @@ function FEEvaluator(
     end
 
     return FEReconstEvaluator{T, TvG, TiG, FEType, FETypeReconst, stdop, typeof(reconst_handler)}(FEB.citem, FE, FEB, cvals, coefficients2, reconst_handler)
+end
+
+function relocate_xref!(FEB::FEReconstEvaluator, new_xref)
+    return relocate_xref!(FEB.FEB, new_xref)
 end
 
 function update_basis!(FEBE::FEReconstEvaluator)

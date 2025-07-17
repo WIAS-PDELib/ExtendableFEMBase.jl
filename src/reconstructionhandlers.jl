@@ -19,11 +19,11 @@ Weighted reconstruction operator: evaluates a reconstructed version of a finite 
 # Parameters
 - `FETypeR`: The reconstruction finite element space type (target space for reconstruction).
 - `O`: The standard function operator to be evaluated (e.g., identity, gradient, etc.).
-- `F`: The type of the weight function (should be callable, e.g., a function or functor).
+- `w`: The type of the weight function (should be callable, e.g., a function or functor of type w(x)).
 """
-abstract type WeightedReconstruct{FETypeR, O, F} <: Reconstruct{FETypeR, O} end
+abstract type WeightedReconstruct{FETypeR, O, w} <: Reconstruct{FETypeR, O} end
 
-weight_type(::Type{<:WeightedReconstruct{FETypeR, O, F}}) where {FETypeR, O, F} = F
+weight_type(::Type{<:WeightedReconstruct{FETypeR, O, w}}) where {FETypeR, O, w} = w
 
 
 ################## SPECIAL INTERPOLATORS ####################
@@ -474,7 +474,7 @@ boundary_coefficients!(coefficients, RH::ReconstructionHandler, cell)
 
 generates the coefficients for the facial dofs of the reconstruction operator on the cell
 """
-function boundary_coefficients!(coefficients, RH::ReconstructionHandler{Tv, Ti, <: Reconstruct, <:H1CR{ncomponents}, <:HDIVRT0{ncomponents}, <:ON_CELLS, EG}, cell) where {Tv, Ti, ncomponents, EG}
+function boundary_coefficients!(coefficients, RH::ReconstructionHandler{Tv, Ti, <:Reconstruct, <:H1CR{ncomponents}, <:HDIVRT0{ncomponents}, <:ON_CELLS, EG}, cell) where {Tv, Ti, ncomponents, EG}
     xFaceVolumes = RH.xFaceVolumes
     xFaceNormals = RH.xFaceNormals
     xCellFaces = RH.xCellFaces
@@ -709,4 +709,3 @@ function boundary_coefficients!(coefficients, RH::ReconstructionHandler{Tv, Ti, 
     end
     return nothing
 end
-
