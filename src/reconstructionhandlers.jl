@@ -12,9 +12,11 @@ abstract type Reconstruct{FETypeR, O} <: ReconstructionOperator{FETypeR, O} end
 
 
 """
-$(TYPEDEF)
+WeightedReconstruct{FETypeR, O, w} <: Reconstruct{FETypeR, O}
 
-Weighted reconstruction operator: evaluates a reconstructed version of a finite element function, multiplied by a weight function.
+Weighted reconstruction operator:
+evaluates a reconstructed version of a finite element function, multiplied by a weight function.
+**Warning**: This is a prototype and currently only works for the HDIVRT0{2} and HDIVBDM1{2} reconstruction of H1BR{2}.
 
 # Parameters
 - `FETypeR`: The reconstruction finite element space type (target space for reconstruction).
