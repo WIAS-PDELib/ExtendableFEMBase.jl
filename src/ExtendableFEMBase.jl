@@ -127,12 +127,12 @@ export displace_mesh, displace_mesh!
 
 include("reconstructionhandlers.jl")
 export ReconstructionHandler, get_rcoefficients!
+export Reconstruct, WeightedReconstruct
 
 include("feevaluator.jl")
 export FEEvaluator, update_basis!, eval_febe!
 
 include("reconstructionoperators.jl")
-export Reconstruct
 
 include("accumvector.jl")
 export AccumulatingVector

@@ -1,3 +1,33 @@
+abstract type ReconstructionOperator{FETypeR, O} <: AbstractFunctionOperator end
+
+"""
+$(TYPEDEF)
+
+reconstruction operator: evaluates a reconstructed version of the finite element function.
+
+FETypeR specifies the reconstruction space (needs to be defined for the finite element that it is applied to).
+O specifies the StandardFunctionOperator that shall be evaluated.
+"""
+abstract type Reconstruct{FETypeR, O} <: ReconstructionOperator{FETypeR, O} end
+
+
+"""
+WeightedReconstruct{FETypeR, O, w} <: Reconstruct{FETypeR, O}
+
+Weighted reconstruction operator:
+evaluates a reconstructed version of a finite element function, multiplied by a weight function.
+**Warning**: This is a prototype and currently only works for the HDIVRT0{2} and HDIVBDM1{2} reconstruction of H1BR{2}.
+
+# Parameters
+- `FETypeR`: The reconstruction finite element space type (target space for reconstruction).
+- `O`: The standard function operator to be evaluated (e.g., identity, gradient, etc.).
+- `w`: The type of the weight function (should be callable, e.g., a function or functor of type w(x)).
+"""
+abstract type WeightedReconstruct{FETypeR, O, w} <: Reconstruct{FETypeR, O} end
+
+weight_type(::Type{<:WeightedReconstruct{FETypeR, O, w}}) where {FETypeR, O, w} = w
+
+
 ################## SPECIAL INTERPOLATORS ####################
 
 """
@@ -69,11 +99,21 @@ abstract type ReconstructionDofs{FE1, FE2, AT} <: AbstractGridIntegerArray2D end
 """
 $(TYPEDEF)
 
+abstract grid component type that can be used to funnel reconstruction weights into the operator
+(default is 1)
+"""
+abstract type ReconstructionWeights{AT} <: AbstractGridFloatArray2D end
+
+"""
+$(TYPEDEF)
+
 struct for storing information needed to evaluate a reconstruction operator
 """
-struct ReconstructionHandler{Tv, Ti, FE1, FE2, AT, EG}
+struct ReconstructionHandler{Tv, Ti, RT, FE1, FE2, AT, EG, F}
     FES::FESpace{Tv, Ti, FE1, ON_CELLS}
     FER::FESpace{Tv, Ti, FE2, ON_CELLS}
+    xCoordinates::Array{Tv, 2}
+    xFaceNodes::Adjacency{Ti}
     xFaceVolumes::Array{Tv, 1}
     xFaceNormals::Array{Tv, 2}
     xCellFaceOrientations::Adjacency{Ti}
@@ -81,6 +121,11 @@ struct ReconstructionHandler{Tv, Ti, FE1, FE2, AT, EG}
     interior_offset::Int
     interior_ndofs::Int
     interior_coefficients::Matrix{Tv} # coefficients for interior basis functions are precomputed
+    weight::F
+end
+
+function default_weight_function(x)
+    return 1
 end
 
 """
@@ -90,7 +135,7 @@ generates a reconstruction handler
 returns the local coefficients need to evaluate a reconstruction operator
 of one finite element space into another
 """
-function ReconstructionHandler(FES::FESpace{Tv, Ti, FE1, APT}, FES_Reconst::FESpace{Tv, Ti, FE2, APT}, AT, EG) where {Tv, Ti, FE1, FE2, APT}
+function ReconstructionHandler(FES::FESpace{Tv, Ti, FE1, APT}, FES_Reconst::FESpace{Tv, Ti, FE2, APT}, AT, EG, RT, weight = default_weight_function) where {Tv, Ti, FE1, FE2, APT}
     xgrid = FES.xgrid
     interior_offset = interior_dofs_offset(AT, FE2, EG)
     interior_ndofs = get_ndofs(AT, FE2, EG) - interior_offset
@@ -100,11 +145,14 @@ function ReconstructionHandler(FES::FESpace{Tv, Ti, FE1, APT}, FES_Reconst::FESp
         interior_ndofs = 0
         coeffs = zeros(Tv, 0, 0)
     end
+
     xFaceVolumes = xgrid[FaceVolumes]
     xFaceNormals = xgrid[FaceNormals]
+    xCoordinates = xgrid[Coordinates]
+    xFaceNodes = xgrid[FaceNodes]
     xCellFaceOrientations = dim_element(EG) == 2 ? xgrid[CellFaceSigns] : xgrid[CellFaceOrientations]
     xCellFaces = xgrid[CellFaces]
-    return ReconstructionHandler{Tv, Ti, FE1, FE2, AT, EG}(FES, FES_Reconst, xFaceVolumes, xFaceNormals, xCellFaceOrientations, xCellFaces, interior_offset, interior_ndofs, coeffs)
+    return ReconstructionHandler{Tv, Ti, RT, FE1, FE2, AT, EG, typeof(weight)}(FES, FES_Reconst, xCoordinates, xFaceNodes, xFaceVolumes, xFaceNormals, xCellFaceOrientations, xCellFaces, interior_offset, interior_ndofs, coeffs, weight)
 end
 
 """
@@ -113,7 +161,7 @@ $(TYPEDSIGNATURES)
 caller function to extract the coefficients of the reconstruction
 on an item
 """
-function get_rcoefficients!(coefficients, RH::ReconstructionHandler{Tv, Ti, FE1, FE2, AT, EG}, item) where {Tv, Ti, FE1, FE2, AT, EG}
+function get_rcoefficients!(coefficients, RH::ReconstructionHandler, item)
     boundary_coefficients!(coefficients, RH, item)
     for dof in 1:size(coefficients, 1), k in 1:RH.interior_ndofs
         coefficients[dof, RH.interior_offset + k] = RH.interior_coefficients[(dof - 1) * RH.interior_ndofs + k, item]
@@ -428,7 +476,7 @@ boundary_coefficients!(coefficients, RH::ReconstructionHandler, cell)
 
 generates the coefficients for the facial dofs of the reconstruction operator on the cell
 """
-function boundary_coefficients!(coefficients, RH::ReconstructionHandler{Tv, Ti, <:H1CR{ncomponents}, <:HDIVRT0{ncomponents}, <:ON_CELLS, EG}, cell) where {Tv, Ti, ncomponents, EG}
+function boundary_coefficients!(coefficients, RH::ReconstructionHandler{Tv, Ti, <:Reconstruct, <:H1CR{ncomponents}, <:HDIVRT0{ncomponents}, <:ON_CELLS, EG}, cell) where {Tv, Ti, ncomponents, EG}
     xFaceVolumes = RH.xFaceVolumes
     xFaceNormals = RH.xFaceNormals
     xCellFaces = RH.xCellFaces
@@ -446,59 +494,93 @@ end
 
 const _P1_INTO_BDM1_COEFFS = [-1 // 12, 1 // 12]
 
-function boundary_coefficients!(coefficients, RH::ReconstructionHandler{Tv, Ti, FE1, FE2, AT, EG}, cell) where {Tv, Ti, FE1 <: H1BR{2}, FE2 <: HDIVBDM1{2}, AT <: ON_CELLS, EG <: Union{Triangle2D, Quadrilateral2D}}
+function boundary_coefficients!(coefficients, RH::ReconstructionHandler{Tv, Ti, RT, FE1, FE2, AT, EG}, cell) where {Tv, Ti, RT <: Reconstruct, FE1 <: H1BR{2}, FE2 <: HDIVBDM1{2}, AT <: ON_CELLS, EG <: Union{Triangle2D, Quadrilateral2D}}
     xFaceVolumes = RH.xFaceVolumes
     xFaceNormals = RH.xFaceNormals
     xCellFaceSigns = RH.xCellFaceOrientations
     xCellFaces = RH.xCellFaces
+    xFaceNodes = RH.xFaceNodes
+    xCoordinates = RH.xCoordinates
     face_rule = local_cellfacenodes(EG)
     nnodes = size(face_rule, 1)
     nfaces = size(face_rule, 2)
     node = 0
     face = 0
     BDM1_coeffs = _P1_INTO_BDM1_COEFFS
+    weight = RH.weight
+    xmid = zeros(Tv, 2)
+    w = ones(Tv, 2)
     for f in 1:nfaces
         face = xCellFaces[f, cell]
+        x1 = view(xCoordinates, :, xFaceNodes[1, face])
+        x2 = view(xCoordinates, :, xFaceNodes[2, face])
+        xmid .= 0.5 * (x1 .+ x2)
+        if xCellFaceSigns[f, cell] == -1
+            w[1] = weight(x2)
+            w[2] = weight(x1)
+        else
+            w[1] = weight(x1)
+            w[2] = weight(x2)
+        end
+        wmid = weight(xmid)
         for n in 1:nnodes
             node = face_rule[n, f]
             for k in 1:2
                 # RT0 reconstruction coefficients for P1 functions on reference element
-                coefficients[nfaces * (k - 1) + node, 2 * (f - 1) + 1] = 1 // 2 * xFaceVolumes[face] * xFaceNormals[k, face]
+                coefficients[nfaces * (k - 1) + node, 2 * (f - 1) + 1] = xFaceVolumes[face] * (1 // 6 * w[n] + 1 // 3 * wmid) * xFaceNormals[k, face]
                 # BDM1 reconstruction coefficients for P1 functions on reference element
-                coefficients[nfaces * (k - 1) + node, 2 * (f - 1) + 2] = BDM1_coeffs[n] * xFaceVolumes[face] * xFaceNormals[k, face] * xCellFaceSigns[f, cell]
+                coefficients[nfaces * (k - 1) + node, 2 * (f - 1) + 2] = xFaceVolumes[face] * xFaceNormals[k, face] * xCellFaceSigns[f, cell] * (BDM1_coeffs[n] * w[n])
             end
         end
         # RT0 reconstruction coefficients for face bubbles on reference element
-        coefficients[nfaces * 2 + f, 2 * (f - 1) + 1] = xFaceVolumes[face]
+        coefficients[nfaces * 2 + f, 2 * (f - 1) + 1] = xFaceVolumes[face] * wmid
     end
+
     return nothing
 end
 
-function boundary_coefficients!(coefficients, RH::ReconstructionHandler{Tv, Ti, FE1, FE2, AT, EG}, cell) where {Tv, Ti, FE1 <: H1BR{2}, FE2 <: HDIVRT0{2}, AT <: ON_CELLS, EG <: Union{Triangle2D, Quadrilateral2D}}
+function boundary_coefficients!(coefficients, RH::ReconstructionHandler{Tv, Ti, RT, FE1, FE2, AT, EG}, cell) where {Tv, Ti, RT <: Reconstruct, FE1 <: H1BR{2}, FE2 <: HDIVRT0{2}, AT <: ON_CELLS, EG <: Union{Triangle2D, Quadrilateral2D}}
     xFaceVolumes = RH.xFaceVolumes
     xFaceNormals = RH.xFaceNormals
     xCellFaces = RH.xCellFaces
+    xCellFaceSigns = RH.xCellFaceOrientations
+    xFaceNodes = RH.xFaceNodes
+    xCoordinates = RH.xCoordinates
     face_rule = local_cellfacenodes(EG)
     nnodes = size(face_rule, 1)
     nfaces = size(face_rule, 2)
     node = 0
     face = 0
+    weight = RH.weight
+    xmid = zeros(Tv, 2)
+    w = ones(Tv, 2)
     for f in 1:nfaces
         face = xCellFaces[f, cell]
+        x1 = view(xCoordinates, :, xFaceNodes[1, face])
+        x2 = view(xCoordinates, :, xFaceNodes[2, face])
+        xmid .= 0.5 * (x1 .+ x2)
+        if xCellFaceSigns[f, cell] == -1
+            w[1] = weight(x2)
+            w[2] = weight(x1)
+        else
+            w[1] = weight(x1)
+            w[2] = weight(x2)
+        end
+        wmid = weight(xmid)
         # reconstruction coefficients for P1 functions on reference element
         for n in 1:nnodes
             node = face_rule[n, f]
             for k in 1:2
-                coefficients[nfaces * (k - 1) + node, f] = 1 // 2 * xFaceVolumes[face] * xFaceNormals[k, face]
+                coefficients[nfaces * (k - 1) + node, f] = xFaceVolumes[face] * (1 // 6 * w[n] + 1 // 3 * wmid) * xFaceNormals[k, face]
             end
         end
         # reconstruction coefficients for face bubbles on reference element
-        coefficients[2 * nfaces + f, f] = xFaceVolumes[face]
+        coefficients[2 * nfaces + f, f] = xFaceVolumes[face] * wmid
     end
     return nothing
 end
 
-function boundary_coefficients!(coefficients, RH::ReconstructionHandler{Tv, Ti, FE1, FE2, AT, EG}, cell) where {Tv, Ti, FE1 <: H1P2B{2, 2}, FE2 <: HDIVRT1{2}, AT <: ON_CELLS, EG <: Triangle2D}
+function boundary_coefficients!(coefficients, RH::ReconstructionHandler{Tv, Ti, RT, FE1, FE2, AT, EG}, cell) where {Tv, Ti, RT <: Reconstruct, FE1 <: H1P2B{2, 2}, FE2 <: HDIVRT1{2}, AT <: ON_CELLS, EG <: Triangle2D}
     xFaceVolumes = RH.xFaceVolumes
     xFaceNormals = RH.xFaceNormals
     xCellFaceSigns = RH.xCellFaceOrientations
@@ -529,7 +611,7 @@ function boundary_coefficients!(coefficients, RH::ReconstructionHandler{Tv, Ti, 
     return nothing
 end
 
-function boundary_coefficients!(coefficients, RH::ReconstructionHandler{Tv, Ti, FE1, FE2, AT, EG}, cell) where {Tv, Ti, FE1 <: H1P2B{2, 2}, FE2 <: HDIVBDM2{2}, AT <: ON_CELLS, EG <: Triangle2D}
+function boundary_coefficients!(coefficients, RH::ReconstructionHandler{Tv, Ti, RT, FE1, FE2, AT, EG}, cell) where {Tv, Ti, RT <: Reconstruct, FE1 <: H1P2B{2, 2}, FE2 <: HDIVBDM2{2}, AT <: ON_CELLS, EG <: Triangle2D}
     xFaceVolumes = RH.xFaceVolumes
     xFaceNormals = RH.xFaceNormals
     xCellFaceSigns = RH.xCellFaceOrientations
@@ -567,7 +649,7 @@ function boundary_coefficients!(coefficients, RH::ReconstructionHandler{Tv, Ti, 
 end
 
 
-function boundary_coefficients!(coefficients, RH::ReconstructionHandler{Tv, Ti, FE1, FE2, AT, EG}, cell) where {Tv, Ti, FE1 <: H1BR{3}, FE2 <: HDIVRT0{3}, AT <: ON_CELLS, EG <: Tetrahedron3D}
+function boundary_coefficients!(coefficients, RH::ReconstructionHandler{Tv, Ti, RT, FE1, FE2, AT, EG}, cell) where {Tv, Ti, RT <: Reconstruct, FE1 <: H1BR{3}, FE2 <: HDIVRT0{3}, AT <: ON_CELLS, EG <: Tetrahedron3D}
     xFaceVolumes = RH.xFaceVolumes
     xFaceNormals = RH.xFaceNormals
     xCellFaces = RH.xCellFaces
@@ -592,7 +674,7 @@ end
 
 const _P1_INTO_BDM1_COEFFS_3D = [-1 // 36 -1 // 36 1 // 18; -1 // 36 1 // 18 -1 // 36; 1 // 18 -1 // 36 -1 // 36]
 
-function boundary_coefficients!(coefficients, RH::ReconstructionHandler{Tv, Ti, FE1, FE2, AT, EG}, cell) where {Tv, Ti, FE1 <: H1BR{3}, FE2 <: HDIVBDM1{3}, AT <: ON_CELLS, EG <: Tetrahedron3D}
+function boundary_coefficients!(coefficients, RH::ReconstructionHandler{Tv, Ti, RT, FE1, FE2, AT, EG}, cell) where {Tv, Ti, RT <: Reconstruct, FE1 <: H1BR{3}, FE2 <: HDIVBDM1{3}, AT <: ON_CELLS, EG <: Tetrahedron3D}
     xFaceVolumes = RH.xFaceVolumes
     xFaceNormals = RH.xFaceNormals
     xCellFaces = RH.xCellFaces

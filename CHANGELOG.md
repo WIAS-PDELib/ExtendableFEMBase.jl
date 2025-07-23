@@ -1,5 +1,9 @@
 # CHANGES
 
+## v1.4.0 July 17, 2025
+  - added new weighted reconstruction operator `WeightedReconstruct` (so far only for H1BR{2})
+  - fixed H1CR{2} reconstruction
+
 ## v1.3.0 July 09, 2025
   - some bugfixes related to new template parameter from 1.2.0
   - @show of FEVectorBlock does not crash anymore
