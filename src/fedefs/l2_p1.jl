@@ -43,7 +43,7 @@ end
 function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_EDGES}, exact_function!; items = [], kwargs...) where {Tv, Ti, FEType <: L2P1, APT}
     # delegate edge nodes to node interpolation
     subitems = slice(FE.dofgrid[EdgeNodes], items)
-    return interpolaste!(Target, FE, AT_NODES, exact_function!; items = subitems, kwargs...)
+    return interpolate!(Target, FE, AT_NODES, exact_function!; items = subitems, kwargs...)
 end
 
 function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}, exact_function!; items = [], kwargs...) where {Tv, Ti, FEType <: L2P1, APT}
