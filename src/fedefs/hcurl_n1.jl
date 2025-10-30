@@ -34,6 +34,7 @@ function N1_tangentflux_eval_2d!(result, f, qpinfo)
     return nothing
 end
 init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_FACES}) where {Tv, Ti, FEType <: HCURLN1{2}, APT} = FunctionalInterpolator(N1_tangentflux_eval_2d!, FES, ON_FACES; bonus_quadorder = 1)
+init_interpolator!(FES::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}) where {Tv, Ti, FEType <: HCURLN1{2}, APT} = MomentInterpolator(FES, ON_CELLS)
 
 
 function ExtendableGrids.interpolate!(Target::AbstractArray{T, 1}, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_EDGES}, exact_function!; items = [], kwargs...) where {T, Tv, Ti, FEType <: HCURLN1, APT}
@@ -65,6 +66,10 @@ function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, 
         subitems = slice(FE.dofgrid[CellEdges], items)
         interpolate!(Target, FE, ON_EDGES, data; items = subitems, kwargs...)
     end
+
+    # set values of interior N1 functions such that P0 moments are preserved
+    get_interpolator(FE, ON_CELLS).evaluate!(Target, data, items; kwargs...)
+
 end
 
 # on faces dofs are only tangential fluxes
