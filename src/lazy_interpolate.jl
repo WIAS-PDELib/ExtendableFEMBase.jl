@@ -79,7 +79,7 @@ function lazy_interpolate!(
     if xdim_source != xdim_target
         @assert xtrafo !== nothing "grids have different coordinate dimensions, need xtrafo!"
     end
-    PE = PointEvaluator(postprocess, operators, source)
+    PE = PointEvaluator(postprocess, operators, source; TCoeff = T1)
     xref = zeros(Tv, xdim_source)
     x_source = zeros(Tv, xdim_source)
     cell::Int = start_cell

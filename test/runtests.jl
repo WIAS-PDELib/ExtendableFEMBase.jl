@@ -1,6 +1,7 @@
 using Test
 using ExtendableGrids
 using ExtendableFEMBase
+using ExtendableSparse
 using ExplicitImports
 using ExampleJuggler
 using SparseArrays
@@ -28,6 +29,7 @@ end
 
 include("test_quadrature.jl")
 include("test_interpolators.jl")
+include("test_interpolation_matrix.jl")
 include("test_operators.jl")
 include("test_febasis.jl")
 include("test_segmentintegrator.jl")
@@ -150,6 +152,8 @@ function run_all_tests()
         run_operator_tests()
         run_quadrature_tests()
         run_interpolator_tests()
+        run_grid_interpolation_matrix_tests()
+        run_space_interpolation_matrix_tests()
         run_segmentintegrator_tests()
         run_pointevaluator_tests()
     end

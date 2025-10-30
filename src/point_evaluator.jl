@@ -1,4 +1,4 @@
-mutable struct PointEvaluator{Tv <: Real, UT, KFT <: Function}
+mutable struct PointEvaluator{Tv <: Real, TCoeff <: Real, UT, KFT <: Function}
     u_args::Array{UT, 1}
     ops_args::Array{DataType, 1}
     kernel::KFT
@@ -61,11 +61,11 @@ $(_myprint(default_peval_kwargs()))
 After construction, call `initialize!` to prepare the evaluator for a given solution, then use `evaluate!` or `evaluate_bary!` to perform point evaluations.
 
 """
-function PointEvaluator(kernel, u_args, ops_args, sol = nothing; Tv = Float64, kwargs...)
+function PointEvaluator(kernel, u_args, ops_args, sol = nothing; Tv = Float64, TCoeff = Float64, kwargs...)
     parameters = Dict{Symbol, Any}(k => v[1] for (k, v) in default_peval_kwargs())
     _update_params!(parameters, kwargs)
     @assert length(u_args) == length(ops_args)
-    PE = PointEvaluator{Tv, typeof(u_args[1]), typeof(kernel)}(u_args, ops_args, kernel, nothing, nothing, nothing, 1, nothing, nothing, nothing, zeros(Tv, 2), parameters)
+    PE = PointEvaluator{Tv, TCoeff, typeof(u_args[1]), typeof(kernel)}(u_args, ops_args, kernel, nothing, nothing, nothing, 1, nothing, nothing, nothing, zeros(Tv, 2), parameters)
     if sol !== nothing
         initialize!(PE, sol)
     end
@@ -121,7 +121,7 @@ $(_myprint(default_peval_kwargs()))
 # Notes
 - This function must be called before using `evaluate!` or `evaluate_bary!` with the `PointEvaluator`.
 """
-function initialize!(O::PointEvaluator{T, UT}, sol; time = 0, kwargs...) where {T, UT}
+function initialize!(O::PointEvaluator{T, TCoeff, UT}, sol; time = 0, kwargs...) where {T, TCoeff, UT}
     _update_params!(O.parameters, kwargs)
     if UT <: Integer
         ind_args = O.u_args
@@ -159,7 +159,7 @@ function initialize!(O::PointEvaluator{T, UT}, sol; time = 0, kwargs...) where {
     op_lengths_args = [size(O.BE_args[1][j].cvals, 1) for j in 1:nargs]
     op_offsets_args = [0]
     append!(op_offsets_args, cumsum(op_lengths_args))
-    input_args = zeros(T, op_offsets_args[end])
+    input_args = zeros(TCoeff, op_offsets_args[end])
 
     FEATs_args = [EffAT4AssemblyType(get_AT(FES_args[j]), AT) for j in 1:nargs]
     itemdofs_args::Array{Union{Adjacency{Ti}, SerialVariableTargetAdjacency{Ti}}, 1} = [FES_args[j][Dofmap4AssemblyType(FEATs_args[j])] for j in 1:nargs]

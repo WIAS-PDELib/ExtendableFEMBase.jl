@@ -46,6 +46,7 @@ using ExtendableGrids: ExtendableGrids, AT_NODES, AbstractElementGeometry,
 using ExtendableSparse: ExtendableSparse, ExtendableSparseMatrix, flush!,
     AbstractExtendableSparseMatrixCSC, ExtendableSparseMatrixCSC, MTExtendableSparseMatrixCSC,
     rawupdateindex!
+using DifferentiationInterface: AutoForwardDiff, AutoSparse, jacobian
 using ForwardDiff: ForwardDiff, DiffResults
 using LinearAlgebra: LinearAlgebra, convert, det, diagm, dot, eigen, ldiv!, lu,
     mul!, norm, transpose
@@ -53,6 +54,8 @@ using Polynomials: Polynomials, Polynomial, coeffs
 using Printf: Printf, @printf
 using SparseArrays: SparseArrays, AbstractSparseArray, AbstractSparseMatrix,
     SparseMatrixCSC, nzrange, rowvals
+using SparseConnectivityTracer: TracerSparsityDetector
+using SparseMatrixColorings: GreedyColoringAlgorithm
 using SpecialPolynomials: SpecialPolynomials, ShiftedLegendre, basis
 
 include("functionoperators.jl")
@@ -114,6 +117,7 @@ export interpolate! # must be defined separately by each FEdefinition
 export nodevalues, continuify
 export nodevalues!, nodevalues_subset!
 export nodevalues_view
+export compute_interpolation_jacobian
 
 export interpolator_matrix
 

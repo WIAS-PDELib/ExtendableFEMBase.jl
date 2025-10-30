@@ -65,6 +65,9 @@ function NodalInterpolator(
         xCellDofs = FES[CellDofs]
         ncells = num_cells(grid)
         function evaluate_broken!(target, exact_function!, items; time = 0, params = [], kwargs...)
+            if !(eltype(target) <: T)
+                result = zeros(eltype(target), ncomponents)
+            end
             QP.time = time
             QP.params = params === nothing ? [] : params
             if isempty(items)
@@ -96,6 +99,9 @@ function NodalInterpolator(
         nnodes = num_nodes(grid)
         xNodeCells = atranspose(grid[CellNodes])
         function evaluate!(target, exact_function!, items; time = 0, params = [], kwargs...)
+            if !(eltype(target) <: T)
+                result = zeros(eltype(target), ncomponents)
+            end
             QP.time = time
             QP.params = params === nothing ? [] : params
             if isempty(items)
@@ -370,6 +376,10 @@ function MomentInterpolator(
     interiordofs = zeros(Int, length(idofs))
 
     function assembly_loop!(target, f_moments, items, exact_function!, QF, L2G, FEB, FEB_moments)
+        if !(eltype(target) <: Tv)
+            result_f = zeros(eltype(target), ncomponents)
+            f_moments = zeros(eltype(target), nmoments)
+        end
         weights, xref = QF.w, QF.xref
         nweights = length(weights)
         for item::Int in items
@@ -582,6 +592,10 @@ function FunctionalInterpolator(
     FEB = FEEvaluator(FE, operator, QF; AT = AT, T = Tv, L2G = L2G)
 
     function assembly_loop!(target, f_fluxes, items, exact_function!, QF, L2G, FEB)
+        if !(eltype(target) <: Tv)
+            result_f = zeros(eltype(target), ncomponents)
+            f_fluxes = zeros(eltype(target), nfluxes)
+        end
         weights, xref = QF.w, QF.xref
         nweights = length(weights)
         for item::Int in items
