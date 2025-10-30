@@ -1,5 +1,9 @@
 # CHANGES
 
+## v1.5.0 October 30, 2025
+  - added type parameter to `PointEvaluator` so `lazy_interpolate!` is now accessible for automatic differentiation
+  - added new `compute_interpolation_jacobian` function for computing Jacobians of interpolations between finite element spaces
+
 ## v1.4.0 July 17, 2025
   - added new weighted reconstruction operator `WeightedReconstruct` (so far only for H1BR{2})
   - fixed H1CR{2} reconstruction

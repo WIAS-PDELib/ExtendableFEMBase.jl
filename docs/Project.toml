@@ -1,17 +1,17 @@
 [deps]
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+DiffResults = "163ba53b-c6d8-5494-b064-1a9d43ac40c5"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+ExampleJuggler = "3bbe58f8-ed81-4c4e-a134-03e85fcf4a1a"
 ExtendableGrids = "cfc395e8-590f-11e8-1f13-43a2532b2fa8"
 ExtendableSparse = "95c220a8-a1cf-11e9-0c77-dbfce5f500b3"
-CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
-ExampleJuggler = "3bbe58f8-ed81-4c4e-a134-03e85fcf4a1a"
-Literate = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
-LinearSolve = "7ed4a6bd-45f5-4d41-b270-4a48e9bafcae"
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 GridVisualize = "5eed8a63-0fb0-45eb-886d-8d5a387d12b8"
+LinearSolve = "7ed4a6bd-45f5-4d41-b270-4a48e9bafcae"
+Literate = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
 PlutoStaticHTML = "359b1769-a58e-495b-9770-312e911026ad"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
-DiffResults = "163ba53b-c6d8-5494-b064-1a9d43ac40c5"
-ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 
 [compat]
 Literate = ">=0.2.7"
