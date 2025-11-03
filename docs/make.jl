@@ -50,6 +50,7 @@ function make_all(; with_examples::Bool = true)
         doctest = true,
         pages = [
             "Home" => "index.md",
+            "Changelog" => "changelog.md",
             "Index" => "package_index.md",
             "List of Finite Elements" => "fems.md",
             "Base Structures" => Any[

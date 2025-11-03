@@ -38,7 +38,11 @@ lazy_interpolate!
 ```
 
 ```@docs
-compute_interpolation_jacobian
+compute_lazy_interpolation_jacobian
+```
+
+```@docs
+H1Pk_to_HDIVRT0_interpolator
 ```
 
 The following function continuously interpolates finite element function into a H1Pk space by
