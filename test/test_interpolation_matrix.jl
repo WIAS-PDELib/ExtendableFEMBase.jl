@@ -10,13 +10,6 @@ function run_grid_interpolation_matrix_tests()
         H1Pk{1, 1, 5} => 5,
     ]
 
-    PairTestCatalog1D = [
-        (L2P0{1}, H1P1{1}) => 0,
-        (H1P1{1}, H1P2{1, 1}) => 1,
-        (H1P2{1, 1}, H1P3{1, 1}) => 2,
-        (H1Pk{1, 1, 3}, H1Pk{1, 1, 5}) => 3,
-    ]
-
     TestCatalog2D = [
         HCURLN0{2} => 0,
         HCURLN1{2} => 1,
@@ -46,16 +39,6 @@ function run_grid_interpolation_matrix_tests()
         H1Pk{2, 2, 5} => 5,
     ]
 
-    PairTestCatalog2D = [
-        (H1P1{2}, HDIVRT0{2}) => 0,
-        (H1P2{2, 2}, HDIVRT0{2}) => 0,
-        (H1P2{2, 2}, HDIVRT1{2}) => 1,
-        (H1P2{2, 2}, HDIVRTk{2, 2}) => 2,
-        (HDIVRT1{2}, HDIVBDM1{2}) => 1,
-        (L2P0{2}, L2P1{2}) => 0,
-        (H1P2B{2, 2}, H1BR{2}) => 1,
-    ]
-
     TestCatalog3D = [
         HCURLN0{3} => 0,
         HDIVRT0{3} => 0,
@@ -72,15 +55,6 @@ function run_grid_interpolation_matrix_tests()
         H1P3{3, 3} => 3,
     ]
 
-    PairTestCatalog3D = [
-        (H1P1{3}, HDIVRT0{3}) => 0,
-        (H1P2{3, 3}, HDIVRT0{3}) => 0,
-        (H1P2{3, 3}, HDIVRT1{3}) => 1,
-        (HDIVRT1{3}, HDIVBDM1{3}) => 1,
-        (L2P0{3}, L2P1{3}) => 0,
-        (H1P2B{3, 3}, H1BR{3}) => 1,
-    ]
-
     # test interpolation of same space between refined grids
     function test_grid_matrix_computation(xgrid, FEType, order; broken::Bool = false, use_cellparents::Bool = false)
         u, ~ = exact_function(Val(dim_grid(xgrid)), order)
@@ -94,7 +68,7 @@ function run_grid_interpolation_matrix_tests()
         target_vector = FEVector(target_FES)
         interpolate!(target_vector[1], u; bonus_quadorder = order)
 
-        interpolation_matrix = compute_interpolation_jacobian(target_FES, source_FES; use_cellparents)
+        interpolation_matrix = compute_lazy_interpolation_jacobian(target_FES, source_FES; use_cellparents)
         matrix_interpolated_entries = interpolation_matrix * source_vector.entries
 
         return @test norm(target_vector.entries - matrix_interpolated_entries) < tolerance
@@ -177,34 +151,6 @@ function run_space_interpolation_matrix_tests()
         (H1P2B{3, 3}, H1BR{3}) => 1,
     ]
 
-
-    # V1: H1-conforming space, computes matrix into RT0 space
-    function RT0_interpolator(V1::FESpace, VRT0::FESpace)
-        FEType = get_FEType(V1)
-        facedofs_V1::VariableTargetAdjacency{Int32} = V1[FaceDofs]
-        dim = get_ncomponents(V1)
-        EGF = dim == 2 ? Edge1D : Triangle2D
-        ndofs = get_ndofs(ON_FACES, FEType, EGF)
-        order = get_polynomialorder(FEType, EGF)
-        face_basis = get_basis(ON_FACES, FEType, EGF)
-        result = zeros(ndofs, dim)
-        ref_integrate!(result, EGF, order, face_basis)
-
-        F0 = FEMatrix(V1, VRT0)
-        FE::ExtendableSparseMatrix{Float64, Int64} = F0.entries
-        xgrid = V1.xgrid
-        xFaceVolumes = xgrid[FaceVolumes]
-        xFaceNormals = xgrid[FaceNormals]
-        nfaces = num_sources(xFaceNormals)
-        for face in 1:nfaces
-            for dof1 in 1:ndofs
-                FE[facedofs_V1[dof1, face], face] = dot(view(result, dof1, :), view(xFaceNormals, :, face)) * xFaceVolumes[face]
-            end
-        end
-        flush!(FE)
-        return F0
-    end
-
     # test interpolation for different elements on same grid
     function test_space_matrix_computation(xgrid, source_FEType, target_FEType, order; broken::Bool = false, use_cellparents::Bool = false)
         u, ~ = exact_function(Val(dim_grid(xgrid)), order)
@@ -218,7 +164,7 @@ function run_space_interpolation_matrix_tests()
         target_vector = FEVector(target_FES)
         interpolate!(target_vector[1], u; bonus_quadorder = order)
 
-        interpolation_matrix = compute_interpolation_jacobian(target_FES, source_FES; use_cellparents)
+        interpolation_matrix = compute_lazy_interpolation_jacobian(target_FES, source_FES; use_cellparents)
         matrix_interpolated_entries = interpolation_matrix * source_vector.entries
 
         return @test norm(target_vector.entries - matrix_interpolated_entries) < tolerance
@@ -250,8 +196,8 @@ function run_space_interpolation_matrix_tests()
                     if (source_element, target_element) == (H1P1{2}, HDIVRT0{2}) && !broken
                         source_FES = FESpace{source_element}(xgrid; broken)
                         target_FES = FESpace{target_element}(xgrid; broken)
-                        autodiff_matrix = compute_interpolation_jacobian(target_FES, source_FES; use_cellparents = false)
-                        RT0_matrix = RT0_interpolator(source_FES, target_FES)
+                        autodiff_matrix = compute_lazy_interpolation_jacobian(target_FES, source_FES; use_cellparents = false)
+                        RT0_matrix = H1Pk_to_HDIVRT0_interpolator(target_FES, source_FES)
 
                         @test norm(autodiff_matrix' - RT0_matrix[1]) < tolerance
                     end

@@ -117,7 +117,6 @@ export interpolate! # must be defined separately by each FEdefinition
 export nodevalues, continuify
 export nodevalues!, nodevalues_subset!
 export nodevalues_view
-export compute_interpolation_jacobian
 
 export interpolator_matrix
 
@@ -175,6 +174,9 @@ export PointEvaluator, evaluate!, evaluate_bary!, eval_func, eval_func_bary
 include("lazy_interpolate.jl")
 export lazy_interpolate!
 
+include("interpolation_matrix_representations.jl")
+export compute_lazy_interpolation_jacobian
+export H1Pk_to_HDIVRT0_interpolator
 
 # ExtendableFEMBaseUnicodePlotsExt extension
 

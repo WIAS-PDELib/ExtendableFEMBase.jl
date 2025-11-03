@@ -27,6 +27,8 @@ get_dofmap_pattern(FEType::Type{<:HCURLN1{2}}, ::Union{Type{FaceDofs}, Type{BFac
 
 isdefined(FEType::Type{<:HCURLN1}, ::Type{<:Triangle2D}) = true
 
+interior_dofs_offset(::Type{<:ON_CELLS}, ::Type{<:HCURLN1{2}}, ::Type{<:Triangle2D}) = 6
+
 function N1_tangentflux_eval_2d!(result, f, qpinfo)
     result[1] = -f[1] * qpinfo.normal[2] # rotated normal = tangent
     result[1] += f[2] * qpinfo.normal[1]
@@ -57,7 +59,7 @@ end
 
 function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, ::Type{ON_CELLS}, data; items = [], kwargs...) where {Tv, Ti, FEType <: HCURLN1, APT}
     edim = get_ncomponents(FEType)
-    return if edim == 2
+    if edim == 2
         # delegate cell faces to face interpolation
         subitems = slice(FE.dofgrid[CellFaces], items)
         interpolate!(Target, FE, ON_FACES, data; items = subitems, kwargs...)
@@ -68,8 +70,7 @@ function ExtendableGrids.interpolate!(Target, FE::FESpace{Tv, Ti, FEType, APT}, 
     end
 
     # set values of interior N1 functions such that P0 moments are preserved
-    get_interpolator(FE, ON_CELLS).evaluate!(Target, data, items; kwargs...)
-
+    return get_interpolator(FE, ON_CELLS).evaluate!(Target, data, items; kwargs...)
 end
 
 # on faces dofs are only tangential fluxes

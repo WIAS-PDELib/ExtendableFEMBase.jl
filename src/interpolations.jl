@@ -93,63 +93,6 @@ end
 
 """
 ````
-function compute_interpolation_jacobian(
-    target_space::FESpace, 
-    source_space::FESpace; 
-    use_cellparents::Bool = false,
-    kwargs...
-)
-````
-
-Compute the Jacobian of the [`lazy_interpolate!`](@ref) call with respect to the
-`source_space` degrees of freedom, i.e. for functions ``v = \\sum_j \\alpha_j \\, \\varphi_j`` of the
-`source_space` and the interpolation operator ``I(v) = \\sum_k L_k(v)\\,\\phi_k = \\sum_k L_k\\left(\\sum_j \\alpha_j \\varphi_j\\right) \\, \\phi_k``
-into the `target_space`, this function computes the jacobian ``\\left[\\frac{\\partial L_k}{\\partial \\alpha_j}\\right]_{k,\\,j}``
-and returns its sparse matrix representation.
-
-# Arguments
-- `target_space::FESpace`: Finite element space into which the interpolation ``I(v)`` is directed.
-- `source_space::FESpace`: Finite element space from which ``v`` is taken.
-
-# Keyword Arguments
-- `use_cellparents`: Use parent cell information if available (can speed up the calculation if the `target_space` is defined on a subgrid of `source_space`).
-- `kwargs...`: Additional keyword arguments passed to lower-level `lazy_interpolate!` call.
-
-# Notes
-- This function can be used for computing prolongation or restriction operators if the `FESpace`s are defined on coarser/finer grids, respectively.
-
-"""
-function compute_interpolation_jacobian(target_space::FESpace, source_space::FESpace; use_cellparents::Bool = false, kwargs...)
-    # DifferentiationInterface.jacobian needs a function of signature
-    # AbstractVector -> AbstractVector
-    function do_interpolation(source_vector::AbstractVector; use_cellparents = use_cellparents)
-        T = valtype(source_vector)
-        target_vector = FEVector{T}(target_space)[1]
-        source_FE_Vector = FEVector{T}(source_space)
-        source_FE_Vector.entries .= source_vector
-
-        lazy_interpolate!(target_vector, source_FE_Vector, [(1, Identity)]; use_cellparents, kwargs...)
-
-        return target_vector.entries
-    end
-
-    n = ndofs(source_space)
-
-    dense_forward_backend = AutoForwardDiff()
-    sparse_forward_backend = AutoSparse(
-        dense_forward_backend;
-        sparsity_detector = TracerSparsityDetector(),
-        coloring_algorithm = GreedyColoringAlgorithm(),
-    )
-
-    M = jacobian(x -> do_interpolation(x; use_cellparents), sparse_forward_backend, ones(n))
-
-    return M
-end
-
-
-"""
-````
 function nodevalues_subset!(
 	target::AbstractArray{<:Real,2},
 	source::AbstractArray{T,1},
