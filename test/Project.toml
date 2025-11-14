@@ -1,13 +1,12 @@
 [deps]
-ExtendableFEMBase = "12fb9182-3d4c-4424-8fd1-727a0899810c"
-ExtendableSparse = "95c220a8-a1cf-11e9-0c77-dbfce5f500b3"
-ExtendableGrids = "cfc395e8-590f-11e8-1f13-43a2532b2fa8"
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 ExampleJuggler = "3bbe58f8-ed81-4c4e-a134-03e85fcf4a1a"
 ExplicitImports = "7d51a73a-1435-4ff3-83d9-f097790105c7"
-SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+ExtendableGrids = "cfc395e8-590f-11e8-1f13-43a2532b2fa8"
+ExtendableSparse = "95c220a8-a1cf-11e9-0c77-dbfce5f500b3"
 GridVisualize = "5eed8a63-0fb0-45eb-886d-8d5a387d12b8"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
 
 [compat]

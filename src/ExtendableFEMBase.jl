@@ -46,6 +46,7 @@ using ExtendableGrids: ExtendableGrids, AT_NODES, AbstractElementGeometry,
 using ExtendableSparse: ExtendableSparse, ExtendableSparseMatrix, flush!,
     AbstractExtendableSparseMatrixCSC, ExtendableSparseMatrixCSC, MTExtendableSparseMatrixCSC,
     rawupdateindex!
+using DifferentiationInterface: AutoForwardDiff, AutoSparse, jacobian
 using ForwardDiff: ForwardDiff, DiffResults
 using LinearAlgebra: LinearAlgebra, convert, det, diagm, dot, eigen, ldiv!, lu,
     mul!, norm, transpose
@@ -53,6 +54,8 @@ using Polynomials: Polynomials, Polynomial, coeffs
 using Printf: Printf, @printf
 using SparseArrays: SparseArrays, AbstractSparseArray, AbstractSparseMatrix,
     SparseMatrixCSC, nzrange, rowvals
+using SparseConnectivityTracer: TracerSparsityDetector
+using SparseMatrixColorings: GreedyColoringAlgorithm
 using SpecialPolynomials: SpecialPolynomials, ShiftedLegendre, basis
 
 include("functionoperators.jl")
@@ -171,6 +174,9 @@ export PointEvaluator, evaluate!, evaluate_bary!, eval_func, eval_func_bary
 include("lazy_interpolate.jl")
 export lazy_interpolate!
 
+include("interpolation_matrix_representations.jl")
+export compute_lazy_interpolation_jacobian
+export H1Pk_to_HDIVRT0_interpolator
 
 # ExtendableFEMBaseUnicodePlotsExt extension
 

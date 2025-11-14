@@ -109,7 +109,7 @@ function run_interpolator_tests()
         show(devnull, Solution)
 
         # compute error
-        error = compute_error(Solution[1], u, order)
+        error = compute_error(Solution[1], u, order + 1)
         println("FEType = $FEType $(broken ? "broken" : "") $AT | ndofs = $(FES.ndofs) | order = $order | error = $(norm(error, Inf))")
         return @test norm(error) < tolerance
     end

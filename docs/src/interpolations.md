@@ -37,6 +37,14 @@ Additionally, you can transfer finite element functions from one grid to another
 lazy_interpolate!
 ```
 
+```@docs
+compute_lazy_interpolation_jacobian
+```
+
+```@docs
+H1Pk_to_HDIVRT0_interpolator
+```
+
 The following function continuously interpolates finite element function into a H1Pk space by
 point evaluations at the Lagrange nodes of the H1Pk element (averaged over all neighbours).
 
