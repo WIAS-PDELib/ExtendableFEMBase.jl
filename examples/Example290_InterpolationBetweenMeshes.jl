@@ -15,7 +15,7 @@ module Example290_InterpolationBetweenMeshes
 
 using ExtendableFEMBase
 using ExtendableGrids
-using GridVisualize
+#using GridVisualize
 
 ## function to interpolate
 function u!(result, qpinfo)
@@ -25,10 +25,13 @@ function u!(result, qpinfo)
 end
 
 ## everything is wrapped in a main function
-function main(; ν = 1.0e-3, nrefs = 4, Plotter = nothing)
+## crashes with nrefs=0
+#xgrid = ringsector(0.5:0.1:1., linspace(0.,2π,10);eltype = Triangle2D); xgrid = uniform_refine(xgrid, 0); @show xgrid[CellNodes];source_space = FESpace{H1Pk{2,2,1}}(xgrid); @show source_space.dofgrid[CellFaces] ; target_space = FESpace{H1Pk{2,2,1}}(uniform_refine(xgrid,1; store_parents = true)); source_fevector = FEVector(source_space); interpolate!(source_fevector[1], (result,qpinfo) -> (result .= qpinfo.x)); target_fevector = FEVector(target_space);
+function main(; ν = 1.0e-3, nrefs = 0, Plotter = nothing)
 
     ## generate two grids
-    xgrid1 = uniform_refine(grid_unitsquare(Triangle2D), nrefs)
+    xgrid1 = uniform_refine(ringsector(0.5:0.1:1., linspace(0.,2π,10); eltype = Triangle2D), nrefs)
+    #xgrid1 = uniform_refine(grid_unitsquare(Triangle2D), nrefs)
     xgrid2 = uniform_refine(xgrid1, 3; store_parents = true)
 
     @show xgrid1 xgrid2
@@ -44,19 +47,22 @@ function main(; ν = 1.0e-3, nrefs = 4, Plotter = nothing)
     FEFunction2 = FEVector(FES2)
 
     ## interpolate function onto first grid
+    # breaks for ringsector at nrefs = 0, but not at nrefs ≥ 1
     @time interpolate!(FEFunction1[1], u!)
     @time interpolate!(FEFunction2[1], u!)
 
     ## interpolate onto other grid
-    @time lazy_interpolate!(FEFunction2[1], FEFunction1)
-    @time lazy_interpolate!(FEFunction2[1], FEFunction1; use_cellparents = true)
+    #@time lazy_interpolate!(FEFunction2[1], FEFunction1)
+
+    # freezes up with ringsector
+    #@time lazy_interpolate!(FEFunction2[1], FEFunction1; use_cellparents = true)
 
     ## plot
-    p = GridVisualizer(; Plotter = Plotter, layout = (1, 2), clear = true, resolution = (800, 400))
-    scalarplot!(p[1, 1], xgrid1, view(nodevalues(FEFunction1[1]), 1, :), levels = 11, title = "u_h ($FEType1, coarse grid)")
-    scalarplot!(p[1, 2], xgrid2, view(nodevalues(FEFunction2[1]), 1, :), levels = 11, title = "u_h ($FEType2, fine grid)")
+    # p = GridVisualizer(; Plotter = Plotter, layout = (1, 2), clear = true, resolution = (800, 400))
+    # scalarplot!(p[1, 1], xgrid1, view(nodevalues(FEFunction1[1]), 1, :), levels = 11, title = "u_h ($FEType1, coarse grid)")
+    # scalarplot!(p[1, 2], xgrid2, view(nodevalues(FEFunction2[1]), 1, :), levels = 11, title = "u_h ($FEType2, fine grid)")
 
-    return p
+    #return p
 end
 
 function generateplots(dir = pwd(); Plotter = nothing, kwargs...)
