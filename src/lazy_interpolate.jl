@@ -87,43 +87,30 @@ function lazy_interpolate!(
     same_cells::Bool = xgrid == target.FES.xgrid
     CF::CellFinder{Tv, Ti} = CellFinder(xgrid)
 
-    if same_cells || use_cellparents == true
-        if same_cells
-            xCellParents = 1:num_cells(target.FES.xgrid)
-        else
-            xCellParents::Array{Ti, 1} = target.FES.xgrid[CellParents]
-        end
+    if same_cells || use_cellparents
+        xCellParents::Array{Ti, 1} = same_cells ? (1:num_cells(target.FES.xgrid)) : target.FES.xgrid[CellParents]
+        #@show xCellParents
         function point_evaluation_parentgrid!(result, qpinfo)
-            x = qpinfo.x
-            cell = xCellParents[qpinfo.cell]
-            if xtrafo !== nothing
-                xtrafo(x_source, x)
-                cell = gFindLocal!(xref, CF, x_source; icellstart = cell, eps = eps, trybrute = !only_localsearch)
-            else
-                cell = gFindLocal!(xref, CF, x; icellstart = cell, eps = eps, trybrute = !only_localsearch)
-            end
-            evaluate_bary!(result, PE, xref, cell)
-            return nothing
+            x = xtrafo !== nothing ? xtrafo(x_source, qpinfo.x) : qpinfo.x
+            #@show qpinfo.x qpinfo.cell
+            cell = gFindLocal!(xref, CF, x; icellstart = xCellParents[qpinfo.cell], eps = eps, trybrute = !only_localsearch)
+            return evaluate_bary!(result, PE, xref, cell)
         end
         fe_function = point_evaluation_parentgrid!
     else
         function point_evaluation_arbitrarygrids!(result, qpinfo)
-            x = qpinfo.x
-            if xtrafo !== nothing
-                xtrafo(x_source, x)
-                cell = gFindLocal!(xref, CF, x_source; icellstart = lastnonzerocell, eps = eps, trybrute = !only_localsearch)
-            else
-                cell = gFindLocal!(xref, CF, x; icellstart = lastnonzerocell, eps = eps, trybrute = !only_localsearch)
-            end
+            x = xtrafo !== nothing ? xtrafo(x_source, qpinfo.x) : qpinfo.x
+            cell = gFindLocal!(xref, CF, x; icellstart = lastnonzerocell, eps = eps, trybrute = !only_localsearch)
             if cell == 0
-                fill!(result, not_in_domain_value)
+                return fill!(result, not_in_domain_value)
             else
                 evaluate_bary!(result, PE, xref, cell)
                 lastnonzerocell = cell
+                return cell
             end
-            return nothing
         end
         fe_function = point_evaluation_arbitrarygrids!
     end
+
     return interpolate!(target, ON_CELLS, fe_function; resultdim = resultdim, items = items, kwargs...)
 end

@@ -214,7 +214,7 @@ function run_space_interpolation_matrix_tests()
         for EG in [Tetrahedron3D, Parallelepiped3D]
             xgrid = uniform_refine(reference_domain(EG), 1)
             for ((source_element, target_element), order) in PairTestCatalog3D, broken in (false, true)
-                @info "Element pair: ($(EG), $(source_element), $(target_element)), order: $(order), broken =$(broken) \n"
+                @info "Element pair: ($(EG), $(source_element), $(target_element)), order: $(order), broken = $(broken) \n"
                 if ExtendableFEMBase.isdefined(target_element, EG, broken) && ExtendableFEMBase.isdefined(source_element, EG, broken)
                     test_space_matrix_computation(xgrid, source_element, target_element, order; broken)
                 else
