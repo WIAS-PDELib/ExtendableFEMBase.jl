@@ -112,7 +112,6 @@ function NodalInterpolator(
                     continue
                 end
                 cell = xNodeCells[1, j]
-                #@show cell
                 QP.item = cell
                 QP.cell = cell
                 QP.region = xCellRegions[cell]
@@ -186,8 +185,6 @@ function MomentInterpolator(
         componentwise = true,
         kwargs...
     ) where {Tv, Ti, FEType <: AbstractFiniteElement, APT}
-
-    #@info "MomentInterpolator $(AT)"
 
     itemvolumes = xgrid[GridComponentVolumes4AssemblyType(AT)]
     itemnodes = xgrid[GridComponentNodes4AssemblyType(AT)]
@@ -418,7 +415,6 @@ function MomentInterpolator(
                 eval_trafo!(QP.x, L2G, xref[qp])
 
                 QP.cell = itemcells[item]
-                #@show QP.item QP.cell
 
                 exact_function!(result_f, QP)
                 if (bestapprox)

@@ -89,10 +89,8 @@ function lazy_interpolate!(
 
     if same_cells || use_cellparents
         xCellParents::Array{Ti, 1} = same_cells ? (1:num_cells(target.FES.xgrid)) : target.FES.xgrid[CellParents]
-        #@show xCellParents
         function point_evaluation_parentgrid!(result, qpinfo)
             x = xtrafo !== nothing ? xtrafo(x_source, qpinfo.x) : qpinfo.x
-            #@show qpinfo.x qpinfo.cell
             cell = gFindLocal!(xref, CF, x; icellstart = xCellParents[qpinfo.cell], eps = eps, trybrute = !only_localsearch)
             return evaluate_bary!(result, PE, xref, cell)
         end
