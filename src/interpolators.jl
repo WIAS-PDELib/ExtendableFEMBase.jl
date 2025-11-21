@@ -501,7 +501,7 @@ function MomentInterpolator(
         QP.params = params === nothing ? [] : params
         QP.time = time
         isempty(items) && (items = 1:nitems)
-        isempty(itemcells) && (itemcells = items)
+        isempty(itemcells) && (itemcells = 1:nitems)
         assembly_loop!(target, f_moments, items, exact_function!, QF, L2G, FEB, FEB_moments)
         return nothing
     end
