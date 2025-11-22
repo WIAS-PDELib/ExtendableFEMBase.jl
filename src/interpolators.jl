@@ -202,11 +202,10 @@ function MomentInterpolator(
         has_normals = false
         if AT <: ON_EDGES # e.g. H1P2 delegation for tetrahedron to edges
             ec = xgrid[EdgeCells]
-            itemcells = []
-            for item in 1:nitems
-                push!(itemcells, ec[1, item])
-            end
+            # extract first cell to which a given edge belongs for every edge
+            itemcells = view(ec.colentries, view(ec.colstart, 1:nitems))
         else
+            # leave empty for delegations to cell dofs, fill up with items at call site
             itemcells = []
         end
     end
