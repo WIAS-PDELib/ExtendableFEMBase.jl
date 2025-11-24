@@ -26,8 +26,7 @@ requirejs.config({
       "highlight"
     ]
   }
-}
-});
+}});
 ////////////////////////////////////////////////////////////////////////////////
 require([], function() {
 window.MathJax = {
@@ -54,8 +53,7 @@ window.MathJax = {
     "ignoreHtmlClass": "tex2jax_ignore",
     "processHtmlClass": "tex2jax_process"
   }
-}
-;
+};
 
 (function () {
     var script = document.createElement('script');
@@ -97,13 +95,13 @@ window.addEventListener("load", openTarget);
 
 function accordion() {
   document.body
-    .querySelectorAll("details")
+    .querySelectorAll("details.docstring")
     .forEach((e) => e.setAttribute("open", "true"));
 }
 
 function noccordion() {
   document.body
-    .querySelectorAll("details")
+    .querySelectorAll("details.docstring")
     .forEach((e) => e.removeAttribute("open"));
 }
 
