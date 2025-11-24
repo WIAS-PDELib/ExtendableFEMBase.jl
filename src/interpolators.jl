@@ -191,19 +191,29 @@ function MomentInterpolator(
     itemregions = xgrid[GridComponentRegions4AssemblyType(AT)]
     itemdofs = Dofmap4AssemblyType(FE, AT)
     has_normals = true
+    nitems::Int = num_sources(itemnodes)
     if AT <: ON_FACES
         itemnormals = xgrid[FaceNormals]
+        @views itemcells = xgrid[FaceCells][1, :]
     elseif AT <: ON_BFACES
         itemnormals = xgrid[FaceNormals][:, xgrid[BFaceFaces]]
+        itemcells = xgrid[BFaceCells]
     else
         has_normals = false
+        if AT <: ON_EDGES # e.g. H1P2 delegation for tetrahedron to edges
+            ec = xgrid[EdgeCells]
+            # extract first cell to which a given edge belongs for every edge
+            itemcells = view(ec.colentries, view(ec.colstart, 1:nitems))
+        else
+            # leave empty for delegations to cell dofs, fill up with items at call site
+            itemcells = []
+        end
     end
     EGs = xgrid[GridComponentUniqueGeometries4AssemblyType(AT)]
 
     @assert length(EGs) == 1 "MomentInterpolator currently only works with grids with a single element geometry"
     EG = EGs[1]
 
-    nitems::Int = num_sources(itemnodes)
     ncomponents::Int = get_ncomponents(FEType)
     edim::Int = dim_element(EG)
     order_FE = get_polynomialorder(FEType, EG)
@@ -403,6 +413,8 @@ function MomentInterpolator(
                 QP.xref = xref[qp]
                 eval_trafo!(QP.x, L2G, xref[qp])
 
+                QP.cell = itemcells[item]
+
                 exact_function!(result_f, QP)
                 if (bestapprox)
                     for m in 1:nmoments, k in 1:ncomponents
@@ -483,9 +495,8 @@ function MomentInterpolator(
         end
         QP.params = params === nothing ? [] : params
         QP.time = time
-        if isempty(items)
-            items = 1:nitems
-        end
+        isempty(items) && (items = 1:nitems)
+        isempty(itemcells) && (itemcells = 1:nitems)
         assembly_loop!(target, f_moments, items, exact_function!, QF, L2G, FEB, FEB_moments)
         return nothing
     end
