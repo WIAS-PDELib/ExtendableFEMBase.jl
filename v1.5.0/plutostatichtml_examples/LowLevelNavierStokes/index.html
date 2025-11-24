@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Low level Navier-Stokes · ExtendableFEMBase.jl</title><meta name="title" content="Low level Navier-Stokes · ExtendableFEMBase.jl"/><meta property="og:title" content="Low level Navier-Stokes · ExtendableFEMBase.jl"/><meta property="twitter:title" content="Low level Navier-Stokes · ExtendableFEMBase.jl"/><meta name="description" content="Documentation for ExtendableFEMBase.jl."/><meta property="og:description" content="Documentation for ExtendableFEMBase.jl."/><meta property="twitter:description" content="Documentation for ExtendableFEMBase.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ExtendableFEMBase.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../changelog/">Changelog</a></li><li><a class="tocitem" href="../../package_index/">Index</a></li><li><a class="tocitem" href="../../fems/">List of Finite Elements</a></li><li><span class="tocitem">Base Structures</span><ul><li><a class="tocitem" href="../../fespace/">FESpace</a></li><li><a class="tocitem" href="../../fevector/">FEVector</a></li><li><a class="tocitem" href="../../fematrix/">FEMatrix</a></li><li><a class="tocitem" href="../../functionoperators/">Function Operators</a></li><li><a class="tocitem" href="../../feevaluator/">FEEvaluator</a></li><li><a class="tocitem" href="../../interpolations/">Finite Element Interpolations</a></li><li><a class="tocitem" href="../../quadrature/">Quadrature</a></li></ul></li><li><span class="tocitem">Advanced Stuff</span><ul><li><a class="tocitem" href="../../pointevaluators/">PointEvaluator</a></li><li><a class="tocitem" href="../../segmentintegrators/">SegmentIntegrator</a></li><li><a class="tocitem" href="../../plots/">Plots</a></li></ul></li><li><span class="tocitem">Tutorial Notebooks</span><ul><li><a class="tocitem" href="../LowLevelPoisson/">Low level Poisson</a></li><li class="is-active"><a class="tocitem" href>Low level Navier-Stokes</a></li></ul></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../../examples_intro/">Introduction</a></li><li><a class="tocitem" href="../../module_examples/Example200_LowLevelPoisson/">Example200_LowLevelPoisson</a></li><li><a class="tocitem" href="../../module_examples/Example205_LowLevelSpaceTimePoisson/">Example205_LowLevelSpaceTimePoisson</a></li><li><a class="tocitem" href="../../module_examples/Example210_LowLevelNavierStokes/">Example210_LowLevelNavierStokes</a></li><li><a class="tocitem" href="../../module_examples/Example280_BasisPlotter/">Example280_BasisPlotter</a></li><li><a class="tocitem" href="../../module_examples/Example281_DiscontinuousPlot/">Example281_DiscontinuousPlot</a></li><li><a class="tocitem" href="../../module_examples/Example290_InterpolationBetweenMeshes/">Example290_InterpolationBetweenMeshes</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorial Notebooks</a></li><li class="is-active"><a href>Low level Navier-Stokes</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Low level Navier-Stokes</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/WIAS-PDELib/ExtendableFEMBase.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/WIAS-PDELib/ExtendableFEMBase.jl/blob/main/nothing" title="View source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><style>
+    #documenter-page table {
+        display: table !important;
+        margin: 2rem auto !important;
+        border-top: 2pt solid rgba(0,0,0,0.2);
+        border-bottom: 2pt solid rgba(0,0,0,0.2);
+    }
+
+    #documenter-page pre, #documenter-page div {
+        margin-top: 1.4rem !important;
+        margin-bottom: 1.4rem !important;
+    }
+
+    .code-output {
+        padding: 0.7rem 0.5rem !important;
+    }
+
+    .admonition-body {
+        padding: 0em 1.25em !important;
+    }
+</style>
+
+<!-- PlutoStaticHTML.Begin -->
+<!--
+    # This information is used for caching.
+    [PlutoStaticHTML.State]
+    input_sha = "a0c36f13b2f5defa9c787d838cf791d680ffe6338dd21e676efe6d6c8705dbc7"
+    julia_version = "1.12.2"
+-->
+
+
+
+
+<div class="markdown"><h1 id="Tutorial-notebook:-Navier–Stokes-problem">Tutorial notebook: Navier–Stokes problem</h1><p>Consider the Navier-Stokes problem that seeks <span class="tex">\(u\)</span> and <span class="tex">\(p\)</span> such that</p><p class="tex">$$\begin{aligned}
+	- \mu \Delta u + (u \cdot \nabla) u + \nabla p &amp;= f\\
+			\mathrm{div}(u) &amp; = 0.
+\end{aligned}$$</p><p>The weak formulation seeks <span class="tex">\(u \in V := H^1_0(\Omega)\)</span> and <span class="tex">\(p \in Q := L^2_0(\Omega)\)</span> such that</p><p class="tex">$$\begin{aligned}
+	\mu (\nabla u, \nabla v) + ((u \cdot \nabla) u, v) - (p, \mathrm{div}(v)) &amp; = (f, v)
+	&amp; \text{for all } v \in V\\
+	(q, \mathrm{div}(u)) &amp; = 0
+	&amp; \text{for all } q \in Q\\
+\end{aligned}$$</p><p>This tutorial notebook compute a planar lattice flow with inhomogeneous Dirichlet boundary conditions (which requires some modification above). Newton's method with automatic differentation is used to handle the nonlinear convection term.</p></div>
+
+
+<div class="markdown"><p>This is a plot of the computed velocity and pressure:</p></div>
+
+
+<pre class="code-output documenter-example-output" id="var-hash399166">2-element Vector{PlutoVTKPlot}:
+ PlutoVTKPlot(Dict{String, Any}("2axisfontsize" =&gt; 10, "1" =&gt; "tricontour", "2ylabel" =&gt; "y", "2" =&gt; "axis", "cbar_levels" =&gt; [6.123233995736766e-17, 0.16667347690578882, 0.3333469538115776, 0.5000204307173663, 0.6666939076231551, 0.833367384528944, 1.0000408614347327], "cbar" =&gt; 1, "2xlabel" =&gt; "x", "2zlabel" =&gt; "z", "cbar_stops" =&gt; [0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09  …  0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1.0], "2zoom" =&gt; 1.0…), 300.0, 300.0, false, (title = "", titlefontsize = 12, axisfontsize = 10, tickfontsize = 10, xlabel = "x", ylabel = "y", zlabel = "z", aspect = 1.0, zoom = 1.0, legendfontsize = 10, colorbarticks = :default, clear = false, levels = 5), "323c6d40-c91c-11f0-ae30-efee1bc900ff")
+ PlutoVTKPlot(Dict{String, Any}("2axisfontsize" =&gt; 10, "1" =&gt; "tricontour", "2ylabel" =&gt; "y", "2" =&gt; "axis", "cbar_levels" =&gt; [-0.5064542228750328, -0.33763730567358835, -0.1688203884721439, -3.4712706993289544e-6, 0.16881344593074513, 0.3376303631321897, 0.5064472803336342], "cbar" =&gt; 1, "2xlabel" =&gt; "x", "2zlabel" =&gt; "z", "cbar_stops" =&gt; [0.0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09  …  0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1.0], "2zoom" =&gt; 1.0…), 300.0, 300.0, false, (title = "", titlefontsize = 12, axisfontsize = 10, tickfontsize = 10, xlabel = "x", ylabel = "y", zlabel = "z", aspect = 1.0, zoom = 1.0, legendfontsize = 10, colorbarticks = :default, clear = false, levels = 5), "32ef9f7a-c91c-11f0-93c1-b7a56012b2be")</pre>
+
+<pre class='language-julia'><code class='language-julia'>begin
+    ## PDE data
+    const μ = 1.0e-2
+    function f!(fval, x, t) # right-hand side
+        fval[1] = 8.0 * π * π * μ * exp(-8.0 * π * π * μ * t) * sin(2.0 * π * x[1]) * sin(2.0 * π * x[2])
+        fval[2] = 8.0 * π * π * μ * exp(-8.0 * π * π * μ * t) * cos(2.0 * π * x[1]) * cos(2.0 * π * x[2])
+        return nothing
+    end
+
+    # exact velocity (for boundary data and error calculation)
+    function u!(uval, qpinfo)
+        x = qpinfo.x
+        t = qpinfo.time
+        uval[1] = exp(-8.0 * π * π * μ * t) * sin(2.0 * π * x[1]) * sin(2.0 * π * x[2])
+        uval[2] = exp(-8.0 * π * π * μ * t) * cos(2.0 * π * x[1]) * cos(2.0 * π * x[2])
+        return nothing
+    end
+
+    ## discretization parameters
+    const nref = 5
+    const teval = 0
+    const order = 2
+
+    ## prepare error calculation
+    function p!(pval, x, t) # exact pressure (for error calculation)
+        pval[1] = exp(-16 * pi * pi * μ * t) * (cos(4 * pi * x[1]) - cos(4 * pi * x[2])) / 4
+        return nothing
+    end
+end</code></pre>
+<pre class="code-output documenter-example-output" id="var-μ">p! (generic function with 1 method)</pre>
+
+<pre class='language-julia'><code class='language-julia'>begin
+    ## create grid
+    X = LinRange(0, 1, 2^nref + 1)
+    Y = LinRange(0, 1, 2^nref + 1)
+    println("Creating grid...")
+    @time xgrid = simplexgrid(X, Y)
+    println("Preparing FaceNodes...")
+    @time xgrid[FaceNodes]
+    println("Preparing CellVolumes...")
+    @time xgrid[CellVolumes]
+    xgrid
+end</code></pre>
+<pre class="code-output documenter-example-output" id="var-xgrid">ExtendableGrids.ExtendableGrid{Float64, Int32};
+dim: 2 nodes: 1089 cells: 2048 bfaces: 128
+
+</pre>
+
+<pre class='language-julia'><code class='language-julia'>begin
+    ## create finite element space (Taylor--Hood)
+    FETypes = [H1Pk{2, 2, order}, H1Pk{1, 2, order - 1}]
+
+    ## prepare finite element space and dofmaps
+    println("Creating FESpace...")
+    @time FES = [FESpace{FETypes[1]}(xgrid; name = "velocity space"), FESpace{FETypes[2]}(xgrid; name = "pressure space")]
+    FES
+end</code></pre>
+<pre class="code-output documenter-example-output" id="var-FES">2-element Vector{FESpace{Float64, Int32, FEType, ON_CELLS} where FEType&lt;:AbstractFiniteElement}:
+ 
+FESpace information
+===================
+     name = velocity space
+   FEType = H1Pk{2,2,2}
+  FEClass = ExtendableFEMBase.AbstractH1FiniteElement
+    ndofs = 8450
+
+
+DofMaps
+==========
+
+ 
+FESpace information
+===================
+     name = pressure space
+   FEType = H1Pk{1,2,1}
+  FEClass = ExtendableFEMBase.AbstractH1FiniteElement
+    ndofs = 1089
+
+
+DofMaps
+==========
+</pre>
+
+<pre class='language-julia'><code class='language-julia'>begin
+    ## call low level solver
+    sol, u_init = solve_stokes_lowlevel(FES, μ, f!)
+    sol
+end</code></pre>
+<pre class="code-output documenter-example-output" id="var-u_init">FEVector information
+====================
+   block  |  ndofs 	|     min  /  max    	| FEType 		 (name/tag)
+ [    1]  |    8450	| -1.00e+00/1.00e+00  	| velocity space  	 (#1)
+ [    2]  |    1089	| -5.06e-01/5.06e-01  	| pressure space  	 (#2)</pre>
+
+<pre class='language-julia'><code class='language-julia'>function solve_stokes_lowlevel(FES, μ, f!)
+
+    println("Initializing system...")
+    Solution = FEVector(FES)
+    A = FEMatrix(FES)
+    b = FEVector(FES)
+    @time update_system! = prepare_assembly!(A, b, FES[1], FES[2], Solution, f!, μ)
+    @time update_system!(true, false)
+    Alin = deepcopy(A) # = keep linear part of system matrix
+    blin = deepcopy(b) # = keep linear part of right-hand side
+
+    println("Prepare boundary conditions...")
+    @time begin
+        u_init = FEVector(FES)
+        interpolate!(u_init[1], u!; time = teval)
+
+        fixed_dofs = [size(A.entries, 1)] # fix one pressure dof = last dof
+        BFaceDofs::Adjacency{Int32} = FES[1][ExtendableFEMBase.BFaceDofs]
+        nbfaces::Int = num_sources(BFaceDofs)
+        AM::ExtendableSparseMatrix{Float64, Int64} = A.entries
+        dof_j::Int = 0
+        for bface in 1:nbfaces
+            for j in 1:num_targets(BFaceDofs, 1)
+                dof_j = BFaceDofs[j, bface]
+                push!(fixed_dofs, dof_j)
+            end
+        end
+    end
+
+
+    for it in 1:20
+        ## solve
+        println("\nITERATION $it\n=============")
+        println("Solving linear system...")
+        @time copyto!(Solution.entries, A.entries \ b.entries)
+        res = A.entries.cscmatrix * Solution.entries .- b.entries
+        for dof in fixed_dofs
+            res[dof] = 0
+        end
+        linres = norm(res)
+        println("linear residual = $linres")
+
+        fill!(A.entries.cscmatrix.nzval, 0)
+        fill!(b.entries, 0)
+        println("Updating linear system...")
+        @time begin
+            update_system!(false, true)
+            A.entries.cscmatrix += Alin.entries.cscmatrix
+            b.entries .+= blin.entries
+        end
+
+        ## fix boundary dofs
+        for dof in fixed_dofs
+            AM[dof, dof] = 1.0e60
+            b.entries[dof] = 1.0e60 * u_init.entries[dof]
+        end
+        ExtendableSparse.flush!(A.entries)
+
+        ## calculate nonlinear residual
+        res = A.entries.cscmatrix * Solution.entries .- b.entries
+        for dof in fixed_dofs
+            res[dof] = 0
+        end
+        nlres = norm(res)
+        println("nonlinear residual = $nlres")
+        if nlres &lt; max(1.0e-12, 20 * linres)
+            break
+        end
+    end
+
+    return Solution, u_init
+end</code></pre>
+<pre class="code-output documenter-example-output" id="var-solve_stokes_lowlevel">solve_stokes_lowlevel (generic function with 1 method)</pre>
+
+<pre class='language-julia'><code class='language-julia'>function prepare_assembly!(A, b, FESu, FESp, Solution, f, μ = 1)
+
+    A = A.entries
+    b = b.entries
+    Solution = Solution.entries
+    xgrid = FESu.xgrid
+    EG = xgrid[UniqueCellGeometries][1]
+    FEType_u = eltype(FESu)
+    FEType_p = eltype(FESp)
+    L2G = L2GTransformer(EG, xgrid, ON_CELLS)
+    cellvolumes = xgrid[CellVolumes]
+    ncells::Int = num_cells(xgrid)
+
+    ## dofmap
+    CellDofs_u = FESu[ExtendableFEMBase.CellDofs]
+    CellDofs_p = FESp[ExtendableFEMBase.CellDofs]
+    offset_p = FESu.ndofs
+
+    ## quadrature formula
+    qf = QuadratureRule{Float64, EG}(3 * get_polynomialorder(FEType_u, EG) - 1)
+    weights::Vector{Float64} = qf.w
+    xref::Vector{Vector{Float64}} = qf.xref
+    nweights::Int = length(weights)
+
+    ## FE basis evaluator
+    FEBasis_∇u = FEEvaluator(FESu, Gradient, qf)
+    ∇uvals = FEBasis_∇u.cvals
+    FEBasis_idu = FEEvaluator(FESu, Identity, qf)
+    iduvals = FEBasis_idu.cvals
+    FEBasis_idp = FEEvaluator(FESp, Identity, qf)
+    idpvals = FEBasis_idp.cvals
+
+    ## prepare automatic differentation of convection operator
+    function operator!(result, input)
+        # result = (u ⋅ ∇)u
+        result[1] = input[1] * input[3] + input[2] * input[4]
+        return result[2] = input[1] * input[5] + input[2] * input[6]
+    end
+    result = Vector{Float64}(undef, 2)
+    input = Vector{Float64}(undef, 6)
+    tempV = zeros(Float64, 2)
+    Dresult = DiffResults.JacobianResult(result, input)
+    cfg = ForwardDiff.JacobianConfig(operator!, result, input, ForwardDiff.Chunk{6}())
+    jac = DiffResults.jacobian(Dresult)
+    value = DiffResults.value(Dresult)
+
+
+    ## ASSEMBLY LOOP
+    function barrier(EG, L2G::L2GTransformer, linear::Bool, nonlinear::Bool)
+        ## barrier function to avoid allocations caused by L2G
+
+        ndofs4cell_u::Int = get_ndofs(ON_CELLS, FEType_u, EG)
+        ndofs4cell_p::Int = get_ndofs(ON_CELLS, FEType_p, EG)
+        Aloc = zeros(Float64, ndofs4cell_u, ndofs4cell_u)
+        Bloc = zeros(Float64, ndofs4cell_u, ndofs4cell_p)
+        dof_j::Int, dof_k::Int = 0, 0
+        fval::Vector{Float64} = zeros(Float64, 2)
+        x::Vector{Float64} = zeros(Float64, 2)
+
+        for cell in 1:ncells
+            ## update FE basis evaluators
+            update_basis!(FEBasis_∇u, cell)
+            update_basis!(FEBasis_idu, cell)
+            update_basis!(FEBasis_idp, cell)
+
+            ## assemble local stiffness matrix (symmetric)
+            if (linear)
+                for j in 1:ndofs4cell_u, k in 1:ndofs4cell_u
+                    temp = 0
+                    for qp in 1:nweights
+                        temp += weights[qp] * dot(view(∇uvals, :, j, qp), view(∇uvals, :, k, qp))
+                    end
+                    Aloc[k, j] = μ * temp
+                end
+
+                ## assemble div-pressure coupling
+                for j in 1:ndofs4cell_u, k in 1:ndofs4cell_p
+                    temp = 0
+                    for qp in 1:nweights
+                        temp -= weights[qp] * (∇uvals[1, j, qp] + ∇uvals[4, j, qp]) *
+                            idpvals[1, k, qp]
+                    end
+                    Bloc[j, k] = temp
+                end
+                Bloc .*= cellvolumes[cell]
+
+                ## assemble right-hand side
+                update_trafo!(L2G, cell)
+                for j in 1:ndofs4cell_u
+                    ## right-hand side
+                    temp = 0
+                    for qp in 1:nweights
+                        ## get global x for quadrature point
+                        eval_trafo!(x, L2G, xref[qp])
+                        ## evaluate (f(x), v_j(x))
+                        f!(fval, x, teval)
+                        temp += weights[qp] * dot(view(iduvals, :, j, qp), fval)
+                    end
+                    ## write into global vector
+                    dof_j = CellDofs_u[j, cell]
+                    b[dof_j] += temp * cellvolumes[cell]
+                end
+            end
+
+            ## assemble nonlinear term
+            if (nonlinear)
+                for qp in 1:nweights
+                    fill!(input, 0)
+                    for j in 1:ndofs4cell_u
+                        dof_j = CellDofs_u[j, cell]
+                        for d in 1:2
+                            input[d] += Solution[dof_j] * iduvals[d, j, qp]
+                        end
+                        for d in 1:4
+                            input[2 + d] += Solution[dof_j] * ∇uvals[d, j, qp]
+                        end
+                    end
+
+                    ## evaluate jacobian
+                    ForwardDiff.chunk_mode_jacobian!(Dresult, operator!, result, input, cfg)
+
+                    # update matrix
+                    for j in 1:ndofs4cell_u
+                        # multiply ansatz function with local jacobian
+                        fill!(tempV, 0)
+                        for d in 1:2
+                            tempV[1] += jac[1, d] * iduvals[d, j, qp]
+                            tempV[2] += jac[2, d] * iduvals[d, j, qp]
+                        end
+                        for d in 1:4
+                            tempV[1] += jac[1, 2 + d] * ∇uvals[d, j, qp]
+                            tempV[2] += jac[2, 2 + d] * ∇uvals[d, j, qp]
+                        end
+
+                        # multiply test function operator evaluation
+                        for k in 1:ndofs4cell_u
+                            Aloc[k, j] += dot(tempV, view(iduvals, :, k, qp)) * weights[qp]
+                        end
+                    end
+
+                    # update rhs
+                    mul!(tempV, jac, input)
+                    tempV .-= value
+                    for j in 1:ndofs4cell_u
+                        dof_j = CellDofs_u[j, cell]
+                        b[dof_j] += dot(tempV, view(iduvals, :, j, qp)) * weights[qp] * cellvolumes[cell]
+                    end
+                end
+            end
+
+            ## add local matrices to global matrix
+            Aloc .*= cellvolumes[cell]
+            for j in 1:ndofs4cell_u
+                dof_j = CellDofs_u[j, cell]
+                for k in 1:ndofs4cell_u
+                    dof_k = CellDofs_u[k, cell]
+                    rawupdateindex!(A, +, Aloc[j, k], dof_j, dof_k)
+                end
+                if (linear)
+                    for k in 1:ndofs4cell_p
+                        dof_k = CellDofs_p[k, cell] + offset_p
+                        rawupdateindex!(A, +, Bloc[j, k], dof_j, dof_k)
+                        rawupdateindex!(A, +, Bloc[j, k], dof_k, dof_j)
+                    end
+                end
+            end
+            fill!(Aloc, 0)
+            fill!(Bloc, 0)
+        end
+        return
+    end
+
+    function update_system!(linear::Bool, nonlinear::Bool)
+        barrier(EG, L2G, linear, nonlinear)
+        return flush!(A)
+    end
+    return update_system!
+end</code></pre>
+<pre class="code-output documenter-example-output" id="var-prepare_assembly!">prepare_assembly! (generic function with 2 methods)</pre>
+<div class='manifest-versions'>
+<p>Built with Julia 1.12.2 and</p>
+DiffResults 1.1.0<br>
+ExtendableFEMBase 0.2.0<br>
+ExtendableGrids 1.2.3<br>
+ExtendableSparse 1.2.1<br>
+ForwardDiff 0.10.39<br>
+GridVisualize 1.5.1<br>
+LinearAlgebra 1.12.0<br>
+PlutoVista 1.0.1
+</div>
+
+<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../LowLevelPoisson/">« Low level Poisson</a><a class="docs-footer-nextpage" href="../../examples_intro/">Introduction »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Monday 24 November 2025 09:59">Monday 24 November 2025</span>. Using Julia version 1.12.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

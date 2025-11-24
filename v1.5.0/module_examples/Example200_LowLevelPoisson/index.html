@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Example200_LowLevelPoisson · ExtendableFEMBase.jl</title><meta name="title" content="Example200_LowLevelPoisson · ExtendableFEMBase.jl"/><meta property="og:title" content="Example200_LowLevelPoisson · ExtendableFEMBase.jl"/><meta property="twitter:title" content="Example200_LowLevelPoisson · ExtendableFEMBase.jl"/><meta name="description" content="Documentation for ExtendableFEMBase.jl."/><meta property="og:description" content="Documentation for ExtendableFEMBase.jl."/><meta property="twitter:description" content="Documentation for ExtendableFEMBase.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ExtendableFEMBase.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../changelog/">Changelog</a></li><li><a class="tocitem" href="../../package_index/">Index</a></li><li><a class="tocitem" href="../../fems/">List of Finite Elements</a></li><li><span class="tocitem">Base Structures</span><ul><li><a class="tocitem" href="../../fespace/">FESpace</a></li><li><a class="tocitem" href="../../fevector/">FEVector</a></li><li><a class="tocitem" href="../../fematrix/">FEMatrix</a></li><li><a class="tocitem" href="../../functionoperators/">Function Operators</a></li><li><a class="tocitem" href="../../feevaluator/">FEEvaluator</a></li><li><a class="tocitem" href="../../interpolations/">Finite Element Interpolations</a></li><li><a class="tocitem" href="../../quadrature/">Quadrature</a></li></ul></li><li><span class="tocitem">Advanced Stuff</span><ul><li><a class="tocitem" href="../../pointevaluators/">PointEvaluator</a></li><li><a class="tocitem" href="../../segmentintegrators/">SegmentIntegrator</a></li><li><a class="tocitem" href="../../plots/">Plots</a></li></ul></li><li><span class="tocitem">Tutorial Notebooks</span><ul><li><a class="tocitem" href="../../plutostatichtml_examples/LowLevelPoisson/">Low level Poisson</a></li><li><a class="tocitem" href="../../plutostatichtml_examples/LowLevelNavierStokes/">Low level Navier-Stokes</a></li></ul></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../../examples_intro/">Introduction</a></li><li class="is-active"><a class="tocitem" href>Example200_LowLevelPoisson</a></li><li><a class="tocitem" href="../Example205_LowLevelSpaceTimePoisson/">Example205_LowLevelSpaceTimePoisson</a></li><li><a class="tocitem" href="../Example210_LowLevelNavierStokes/">Example210_LowLevelNavierStokes</a></li><li><a class="tocitem" href="../Example280_BasisPlotter/">Example280_BasisPlotter</a></li><li><a class="tocitem" href="../Example281_DiscontinuousPlot/">Example281_DiscontinuousPlot</a></li><li><a class="tocitem" href="../Example290_InterpolationBetweenMeshes/">Example290_InterpolationBetweenMeshes</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Example200_LowLevelPoisson</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Example200_LowLevelPoisson</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/WIAS-PDELib/ExtendableFEMBase.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/WIAS-PDELib/ExtendableFEMBase.jl/blob/master/docs/src/module_examples/Example200_LowLevelPoisson.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="200-:-Poisson-Problem"><a class="docs-heading-anchor" href="#200-:-Poisson-Problem">200 : Poisson Problem</a><a id="200-:-Poisson-Problem-1"></a><a class="docs-heading-anchor-permalink" href="#200-:-Poisson-Problem" title="Permalink"></a></h1><p>(<a href="../Example200_LowLevelPoisson.jl">source code</a>)</p><p>This example computes the solution <span>$u$</span> of the two-dimensional Poisson problem</p><p class="math-container">\[\begin{aligned}
+-\Delta u &amp; = f \quad \text{in } \Omega
+\end{aligned}\]</p><p>with right-hand side <span>$f(x,y) \equiv xy$</span> and homogeneous Dirichlet boundary conditions on the unit square domain <span>$\Omega$</span> on a given grid.</p><p>When run, this script also measures runtimes for grid generation, assembly and solving (direct/UMFPACK) for different refinement levels.</p><p>The computed solution for the default parameters looks like this:</p><p><img src="../example200.png" alt/></p><pre><code class="language-julia hljs">module Example200_LowLevelPoisson
+
+using ExtendableFEMBase
+using ExtendableGrids
+using ExtendableSparse
+using GridVisualize
+using UnicodePlots
+using Test #
+
+function main(;
+        maxnref = 8,
+        order = 2,
+        Plotter = nothing,
+        mu = 1.0,
+        rhs = x -&gt; x[1] - x[2]
+    )
+    # Finite element type
+    FEType = H1Pk{1, 2, order}
+
+    # run once on a tiny mesh for compiling
+    X = LinRange(0, 1, 4)
+    xgrid = simplexgrid(X, X)
+    fe_space = FESpace{FEType}(xgrid)
+    solution, time_assembly, time_solve = solve_poisson_lowlevel(fe_space, mu, rhs)
+
+    # loop over uniform refinements + timings
+    plt = GridVisualizer(; Plotter = Plotter, layout = (1, 1), clear = true, resolution = (500, 500))
+    loop_allocations = 0
+    for level in 1:maxnref
+        X = LinRange(0, 1, 2^level + 1)
+        time_grid = @elapsed xgrid = simplexgrid(X, X)
+        time_facenodes = @elapsed xgrid[FaceNodes]
+        fe_space = FESpace{FEType}(xgrid)
+        println(&quot;\nLEVEL = $level, ndofs = $(fe_space.ndofs)\n&quot;)
+        if level &lt; 4
+            println(stdout, unicode_gridplot(xgrid))
+        end
+        time_dofmap = @elapsed fe_space[CellDofs]
+        solution, time_assembly, time_solve = solve_poisson_lowlevel(fe_space, mu, rhs)
+
+        # plot statistics
+        println(stdout, barplot([&quot;Grid&quot;, &quot;FaceNodes&quot;, &quot;celldofs&quot;, &quot;Assembly&quot;, &quot;Solve&quot;], [time_grid, time_facenodes, time_dofmap, time_assembly, time_solve], title = &quot;Runtimes&quot;))
+
+        # plot
+        if Plotter !== nothing
+            scalarplot!(plt[1, 1], xgrid, view(solution.entries, 1:num_nodes(xgrid)), limits = (-0.0125, 0.0125))
+        else
+            solution_grad = continuify(solution[1], Gradient)
+            println(stdout, unicode_scalarplot(solution[1]))
+        end
+    end
+
+    return solution, plt
+end
+
+
+function solve_poisson_lowlevel(fe_space, mu, rhs)
+    solution = FEVector(fe_space)
+    stiffness_matrix = FEMatrix(fe_space, fe_space)
+    rhs_vector = FEVector(fe_space)
+    println(&quot;Assembling...&quot;)
+    time_assembly = @elapsed @time begin
+        loop_allocations = assemble!(stiffness_matrix.entries, rhs_vector.entries, fe_space, rhs, mu)
+
+        # fix boundary dofs
+        begin
+            bdofs = boundarydofs(fe_space)
+            for dof in bdofs
+                stiffness_matrix.entries[dof, dof] = 1.0e60
+                rhs_vector.entries[dof] = 0
+            end
+        end
+        ExtendableSparse.flush!(stiffness_matrix.entries)
+    end
+
+    # solve
+    println(&quot;Solving linear system...&quot;)
+    time_solve = @elapsed @time copyto!(solution.entries, stiffness_matrix.entries \ rhs_vector.entries)
+
+    return solution, time_assembly, time_solve
+end
+
+function assemble!(A::ExtendableSparseMatrix, b::Vector, fe_space, rhs, mu = 1)
+    xgrid = fe_space.xgrid
+    EG = xgrid[UniqueCellGeometries][1]
+    FEType = eltype(fe_space)
+    L2G = L2GTransformer(EG, xgrid, ON_CELLS)
+
+    # quadrature formula
+    qf = QuadratureRule{Float64, EG}(2 * (get_polynomialorder(FEType, EG) - 1))
+    weights::Vector{Float64} = qf.w
+    xref::Vector{Vector{Float64}} = qf.xref
+    nweights::Int = length(weights)
+    cellvolumes = xgrid[CellVolumes]
+
+    # FE basis evaluator and dofmap
+    FEBasis_∇ = FEEvaluator(fe_space, Gradient, qf)
+    ∇vals = FEBasis_∇.cvals
+    FEBasis_id = FEEvaluator(fe_space, Identity, qf)
+    idvals = FEBasis_id.cvals
+    celldofs = fe_space[CellDofs]
+
+    # ASSEMBLY LOOP
+    loop_allocations = 0
+    function barrier(EG, L2G::L2GTransformer)
+        # barrier function to avoid allocations by type dispatch
+        ndofs4cell::Int = get_ndofs(ON_CELLS, FEType, EG)
+        Aloc = zeros(Float64, ndofs4cell, ndofs4cell)
+        ncells::Int = num_cells(xgrid)
+        dof_j::Int, dof_k::Int = 0, 0
+        x::Vector{Float64} = zeros(Float64, 2)
+
+        return loop_allocations += @allocated for cell in 1:ncells
+            # update FE basis evaluators
+            FEBasis_∇.citem[] = cell
+            update_basis!(FEBasis_∇)
+
+            # assemble local stiffness matrix
+            for j in 1:ndofs4cell, k in j:ndofs4cell
+                temp = 0
+                for qp in 1:nweights
+                    temp += weights[qp] * dot(view(∇vals, :, j, qp), view(∇vals, :, k, qp))
+                end
+                Aloc[j, k] = temp
+            end
+            Aloc .*= mu * cellvolumes[cell]
+
+            # add local matrix to global matrix
+            for j in 1:ndofs4cell
+                dof_j = celldofs[j, cell]
+                for k in j:ndofs4cell
+                    dof_k = celldofs[k, cell]
+                    if abs(Aloc[j, k]) &gt; 1.0e-15
+                        # write into sparse matrix, only lines with allocations
+                        rawupdateindex!(A, +, Aloc[j, k], dof_j, dof_k)
+                        if k &gt; j
+                            rawupdateindex!(A, +, Aloc[j, k], dof_k, dof_j)
+                        end
+                    end
+                end
+            end
+            fill!(Aloc, 0)
+
+            # assemble right-hand side
+            update_trafo!(L2G, cell)
+            for j in 1:ndofs4cell
+                # right-hand side
+                temp = 0
+                for qp in 1:nweights
+                    # get global x for quadrature point
+                    eval_trafo!(x, L2G, xref[qp])
+                    # evaluate (f(x), v_j(x))
+                    temp += weights[qp] * idvals[1, j, qp] * rhs(x)
+                end
+                # write into global vector
+                dof_j = celldofs[j, cell]
+                b[dof_j] += temp * cellvolumes[cell]
+            end
+        end
+    end
+    barrier(EG, L2G)
+    flush!(A)
+    return loop_allocations
+end
+
+function generateplots(dir = pwd(); Plotter = nothing, kwargs...)
+    ~, plt = main(; Plotter = Plotter, kwargs...)
+    scene = GridVisualize.reveal(plt)
+    return GridVisualize.save(joinpath(dir, &quot;example200.png&quot;), scene; Plotter = Plotter)
+end
+
+function runtests(;
+        order = 2,
+        mu = 1.0,
+        rhs = x -&gt; x[1] - x[2],
+        kwargs...
+    )
+    FEType = H1Pk{1, 2, order}
+    X = LinRange(0, 1, 64)
+    xgrid = simplexgrid(X, X)
+    fe_space = FESpace{FEType}(xgrid)
+    stiffness_matrix = FEMatrix(fe_space, fe_space)
+    rhs_vector = FEVector(fe_space)
+    @info &quot;ndofs = $(fe_space.ndofs)&quot;
+    # first assembly causes allocations when filling sparse matrix
+    loop_allocations = assemble!(stiffness_matrix.entries, rhs_vector.entries, fe_space, rhs, mu)
+    @info &quot;allocations in 1st assembly: $loop_allocations&quot;
+    # second assembly in same matrix should have allocation-free inner loop
+    loop_allocations = assemble!(stiffness_matrix.entries, rhs_vector.entries, fe_space, rhs, mu)
+    @info &quot;allocations in 2nd assembly: $loop_allocations&quot;
+    return @test loop_allocations == 0
+end #module</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../examples_intro/">« Introduction</a><a class="docs-footer-nextpage" href="../Example205_LowLevelSpaceTimePoisson/">Example205_LowLevelSpaceTimePoisson »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Monday 24 November 2025 09:59">Monday 24 November 2025</span>. Using Julia version 1.12.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
