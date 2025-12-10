@@ -20,7 +20,7 @@ jobs:
       - name: run autoupdate
         run: pre-commit autoupdate
       - name: create PR
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with: 
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: update/pre-commit-autoupdate
