@@ -104,7 +104,7 @@ export HDIVRT0, HDIVBDM1, HDIVRT1, HDIVBDM2, HDIVRTk
 export HDIVRTkENRICH
 
 export AbstractHcurlFiniteElement
-export HCURLN0, HCURLN1
+export HCURLN0, HCURLN1, HCURLNk
 
 export get_AT
 export get_polynomialorder, get_ndofs, get_ndofs_all

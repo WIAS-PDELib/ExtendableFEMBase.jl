@@ -14,6 +14,9 @@ function run_interpolator_tests()
     TestCatalog2D = [
         HCURLN0{2} => 0,
         HCURLN1{2} => 1,
+        HCURLNk{2, 1} => 1,
+        HCURLNk{2, 2} => 2,
+        HCURLNk{2, 3} => 3,
         HDIVRT0{2} => 0,
         HDIVRTk{2, 0} => 0,
         HDIVBDM1{2} => 1,
