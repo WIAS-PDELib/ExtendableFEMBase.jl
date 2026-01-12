@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Low level Poisson · ExtendableFEMBase.jl</title><meta name="title" content="Low level Poisson · ExtendableFEMBase.jl"/><meta property="og:title" content="Low level Poisson · ExtendableFEMBase.jl"/><meta property="twitter:title" content="Low level Poisson · ExtendableFEMBase.jl"/><meta name="description" content="Documentation for ExtendableFEMBase.jl."/><meta property="og:description" content="Documentation for ExtendableFEMBase.jl."/><meta property="twitter:description" content="Documentation for ExtendableFEMBase.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ExtendableFEMBase.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../changelog/">Changelog</a></li><li><a class="tocitem" href="../../package_index/">Index</a></li><li><a class="tocitem" href="../../fems/">List of Finite Elements</a></li><li><span class="tocitem">Base Structures</span><ul><li><a class="tocitem" href="../../fespace/">FESpace</a></li><li><a class="tocitem" href="../../fevector/">FEVector</a></li><li><a class="tocitem" href="../../fematrix/">FEMatrix</a></li><li><a class="tocitem" href="../../functionoperators/">Function Operators</a></li><li><a class="tocitem" href="../../feevaluator/">FEEvaluator</a></li><li><a class="tocitem" href="../../interpolations/">Finite Element Interpolations</a></li><li><a class="tocitem" href="../../quadrature/">Quadrature</a></li></ul></li><li><span class="tocitem">Advanced Stuff</span><ul><li><a class="tocitem" href="../../pointevaluators/">PointEvaluator</a></li><li><a class="tocitem" href="../../segmentintegrators/">SegmentIntegrator</a></li><li><a class="tocitem" href="../../plots/">Plots</a></li></ul></li><li><span class="tocitem">Tutorial Notebooks</span><ul><li class="is-active"><a class="tocitem" href>Low level Poisson</a></li><li><a class="tocitem" href="../LowLevelNavierStokes/">Low level Navier-Stokes</a></li></ul></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../../examples_intro/">Introduction</a></li><li><a class="tocitem" href="../../module_examples/Example200_LowLevelPoisson/">Example200_LowLevelPoisson</a></li><li><a class="tocitem" href="../../module_examples/Example205_LowLevelSpaceTimePoisson/">Example205_LowLevelSpaceTimePoisson</a></li><li><a class="tocitem" href="../../module_examples/Example210_LowLevelNavierStokes/">Example210_LowLevelNavierStokes</a></li><li><a class="tocitem" href="../../module_examples/Example280_BasisPlotter/">Example280_BasisPlotter</a></li><li><a class="tocitem" href="../../module_examples/Example281_DiscontinuousPlot/">Example281_DiscontinuousPlot</a></li><li><a class="tocitem" href="../../module_examples/Example290_InterpolationBetweenMeshes/">Example290_InterpolationBetweenMeshes</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorial Notebooks</a></li><li class="is-active"><a href>Low level Poisson</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Low level Poisson</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/WIAS-PDELib/ExtendableFEMBase.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/WIAS-PDELib/ExtendableFEMBase.jl/blob/main/nothing" title="View source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><style>
+    #documenter-page table {
+        display: table !important;
+        margin: 2rem auto !important;
+        border-top: 2pt solid rgba(0,0,0,0.2);
+        border-bottom: 2pt solid rgba(0,0,0,0.2);
+    }
+
+    #documenter-page pre, #documenter-page div {
+        margin-top: 1.4rem !important;
+        margin-bottom: 1.4rem !important;
+    }
+
+    .code-output {
+        padding: 0.7rem 0.5rem !important;
+    }
+
+    .admonition-body {
+        padding: 0em 1.25em !important;
+    }
+</style>
+
+<!-- PlutoStaticHTML.Begin -->
+<!--
+    # This information is used for caching.
+    [PlutoStaticHTML.State]
+    input_sha = "94ce8bde3a99bdac13d0be8499a12c2c7703b86eae5c3a6f4d49d727d1e2809f"
+    julia_version = "1.12.4"
+-->
+<pre class='language-julia'><code class='language-julia'>begin
+    using ExtendableFEMBase
+    using ExtendableGrids
+    using ExtendableSparse
+    using GridVisualize
+    using PlutoVista
+    GridVisualize.default_plotter!(PlutoVista)
+end</code></pre>
+<pre class="code-output documenter-example-output" id="var-PlutoVista">PlutoVista</pre>
+
+
+<div class="markdown"><h1 id="Tutorial-notebook:-Poisson-problem">Tutorial notebook: Poisson problem</h1><p>This notebook demonstrates how to implement the Poisson problem with the low level structures provided by ExtendableFEMBase. The Poisson problem with homogeneous Dirichlet boundary data seeks <span class="tex">\(u\)</span> such that</p><p class="tex">$$\begin{aligned}
+	- \mu \Delta u = f.
+\end{aligned}$$</p><p>The weak formulation seeks <span class="tex">\(u \in V := H^1_0(\Omega)\)</span> such that</p><p class="tex">$$\begin{aligned}
+	\mu (\nabla u, \nabla v) = (f, v)
+	\quad \text{for all } v \in V
+\end{aligned}$$</p></div>
+
+<pre class='language-julia'><code class='language-julia'>begin
+    ## PDE data
+    μ = 1.0
+    f = x -&gt; x[1] - x[2]
+
+    ## discretization parameters
+    nref = 9
+    order = 1
+end</code></pre>
+<pre class="code-output documenter-example-output" id="var-f">1</pre>
+
+<pre class='language-julia'><code class='language-julia'>tricontour(xgrid[Coordinates], xgrid[CellNodes], sol.entries[1:num_nodes(xgrid)]; levels = 5, resolution = (500, 500))</code></pre>
+<div style="white-space:nowrap;"><div id="b618d508-efce-11f0-8ef4-4fb8d21c647c" style="width: 440.0px; height: 440.0px; display: inline-block; "></div><canvas height="475.0" id="b618d508-efce-11f0-8ef4-4fb8d21c647ccbar" style="display: inline-block; " width="60,"></canvas></div>
+<script>
+   // overwrite handleKeyPress and others
+// kind of modeled after https://kitware.github.io/vtk-js/api/Rendering_Core_Follower.html 
+
+function vtkMyInteractorStyleTrackballCamera2D(publicAPI, model)
+{
+    model.classHierarchy.push('vtkMyInteractorStyleTrackballCamera2D');
+    publicAPI.handleKeyPress = (k) => {}
+    publicAPI.handleMouseRotate= (renderer, pos) => {}
+    publicAPI.handleMouseSpin= (renderer, pos) => {renderer.resetCamera()}
+}
+
+function vtkMyInteractorStyleTrackballCamera(publicAPI, model)
+{
+    model.classHierarchy.push('vtkMyInteractorStyleTrackballCamera');
+    publicAPI.handleKeyPress = (k) => {}
+    publicAPI.handleMouseSpin= (renderer, pos) => {renderer.resetCamera()}
+}
+
+function extend2d(publicAPI, model, initialValues = {})
+{
+    vtk.Interaction.Style.vtkInteractorStyleTrackballCamera.extend(publicAPI, model, initialValues);
+    vtkMyInteractorStyleTrackballCamera2D(publicAPI, model);
+}
+
+function extend3d(publicAPI, model, initialValues = {})
+{
+    vtk.Interaction.Style.vtkInteractorStyleTrackballCamera.extend(publicAPI, model, initialValues);
+    vtkMyInteractorStyleTrackballCamera(publicAPI, model);
+}
+
+
+function setinteractorstyle(interactor, camstyle)
+{
+    const mynewInstance2d = vtk.macro.newInstance(extend2d, 'vtkMyInteractorStyleTrackballCamera2D');
+    const mynewInstance3d = vtk.macro.newInstance(extend3d, 'vtkMyInteractorStyleTrackballCamera');
+    if (camstyle=="2D")
+        //        var style=vtk.Interaction.Style.vtkMyInteractorStyleImage.newInstance()
+        var style=mynewInstance2d()
+    else
+    //        var style=vtk.Interaction.Style.vtkInteractorStyleTrackballCamera.newInstance()
+        var style=mynewInstance3d()
+    
+    interactor.setInteractorStyle(style)
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+function add_outline_dataset(win,opoints,opolys,ocolors)
+{
+    var ocolorData = vtk.Common.Core.vtkDataArray.newInstance({
+        name: 'Colors',
+        values: ocolors,
+        numberOfComponents: 4,
+    });
+    
+    if (win.outline_dataset==undefined)
+    {
+        win.outline_dataset = vtk.Common.DataModel.vtkPolyData.newInstance();
+        var actor = vtk.Rendering.Core.vtkActor.newInstance();
+	var mapper = vtk.Rendering.Core.vtkMapper.newInstance();
+	mapper.setInputData(win.outline_dataset);
+        mapper.setColorModeToDirectScalars()
+        actor.setForceTranslucent(true) //  https://discourse.vtk.org/t/wireframe-not-visible-behind-transparent-surfaces/6671
+	actor.setMapper(mapper);
+        win.renderer.addActor(actor);
+    }
+    win.outline_dataset.getPoints().setData(opoints, 3);
+    win.outline_dataset.getPolys().setData(opolys,1);
+    win.outline_dataset.getCellData().setActiveScalars('Colors');
+    win.outline_dataset.getCellData().setScalars(ocolorData);        
+    win.outline_dataset.modified()
+}
+
+////////////////////////////////////////////////////////////////////////////////////////
+function add_cell_dataset(win,points,polys,colors,aspect)
+{            
+    { // colored cells
+        if (colors!="none")
+        {
+            if (win.cell_color_dataset == undefined)
+            {
+                win.cell_color_dataset = vtk.Common.DataModel.vtkPolyData.newInstance();
+                var actor = vtk.Rendering.Core.vtkActor.newInstance();
+                var mapper = vtk.Rendering.Core.vtkMapper.newInstance();
+                mapper.setInputData(win.cell_color_dataset);
+                mapper.setColorModeToDirectScalars()
+                actor.setScale([1,aspect,1])
+                actor.setMapper(mapper);
+                win.renderer.addActor(actor);
+            }
+            
+            var colorData = vtk.Common.Core.vtkDataArray.newInstance({
+                name: 'Colors',
+                values: colors,
+                numberOfComponents: 3,
+            });
+            
+            win.cell_color_dataset.getPoints().setData(points, 3);
+            win.cell_color_dataset.getPolys().setData(polys,1);
+            win.cell_color_dataset.getCellData().setActiveScalars('Colors');
+            win.cell_color_dataset.getCellData().setScalars(colorData);        
+            win.cell_color_dataset.modified()
+        }
+    }
+    { // edges of cells
+        if (win.cell_edge_dataset == undefined)
+        {
+            
+            win.cell_edge_dataset = vtk.Common.DataModel.vtkPolyData.newInstance();
+            var actor = vtk.Rendering.Core.vtkActor.newInstance();
+	    var mapper = vtk.Rendering.Core.vtkMapper.newInstance();
+            mapper.setColorModeToDefault()
+	    actor.getProperty().setRepresentation(1);
+	    actor.getProperty().setColor(0, 0, 0);
+	    actor.getProperty().setLineWidth(1);
+            actor.setScale([1,aspect,1])
+	    mapper.setInputData(win.cell_edge_dataset);
+	    actor.setMapper(mapper);
+	    win.renderer.addActor(actor);
+            win.axis_actor=actor
+        }
+        
+        win.cell_edge_dataset.getPoints().setData(points, 3);
+        win.cell_edge_dataset.getPolys().setData(polys,1);
+        win.cell_edge_dataset.modified()
+    }
+}
+
+
+
+function plutovtkplot(uuid,jsdict,invalidation)
+{
+    
+    if (window[uuid+"data"] == undefined)
+    {
+        window[uuid+"data"]={}
+
+        var win=window[uuid+"data"]
+        win.renderWindow = vtk.Rendering.Core.vtkRenderWindow.newInstance();
+        win.renderer = vtk.Rendering.Core.vtkRenderer.newInstance();
+        
+        // OpenGlRenderWindow
+        win.openGlRenderWindow = vtk.Rendering.OpenGL.vtkRenderWindow.newInstance();
+        win.renderWindow.addView(win.openGlRenderWindow);
+        win.renderer.setBackground(1,1,1)
+        
+        // Interactor
+        win.interactor = vtk.Rendering.Core.vtkRenderWindowInteractor.newInstance();
+        win.interactor.setView(win.openGlRenderWindow);
+        
+        //ensure to plot to the right place
+        var rootContainer = document.getElementById(uuid);
+        win.openGlRenderWindow.setContainer(rootContainer);
+        const dims = rootContainer.getBoundingClientRect();	
+        win.openGlRenderWindow.setSize(dims.width, dims.height);
+        win.interactor.bindEvents(rootContainer);
+        win.renderWindow.addRenderer(win.renderer)
+
+        // The invalidation promise is resolved when the cell starts rendering a newer output.
+        // We use it to release the WebGL context.
+        // (More info at https://plutocon2021-demos.netlify.app/fonsp%20%E2%80%94%20javascript%20inside%20pluto or https://observablehq.com/@observablehq/invalidation )
+        invalidation.then(() => {
+            win.renderWindow.delete();
+            win.openGlRenderWindow.delete();
+            win.interactor.delete();
+        });
+    }
+    
+
+    var win=window[uuid+"data"]
+    
+    // Loop over content of jsdict
+    for (var cmd = 1 ; cmd <= jsdict["cmdcount"] ; cmd++)
+    {
+        
+        /////////////////////////////////////////////////////////////////
+        if (jsdict[cmd]=="tricontour")
+        {
+    	    var points=jsdict[cmd+"points"]
+ 	    var polys=jsdict[cmd+"polys"]
+            var isopoints=jsdict[cmd+"isopoints"]
+ 	    var isolines=jsdict[cmd+"isolines"]
+            var colors=jsdict[cmd+"colors"]
+            var gridscale=jsdict[cmd+"gridscale"]
+            var aspect=jsdict[cmd+"aspect"]
+            
+            vtk.Common.Core.vtkMatrixBuilder
+                .buildFromRadian()
+                .scale(gridscale,gridscale,gridscale)
+                .apply(points);
+
+            vtk.Common.Core.vtkMatrixBuilder
+                .buildFromRadian()
+                .scale(gridscale,gridscale,gridscale)
+                .apply(isopoints);
+
+            
+            
+            { // Gouraud shaded triangles
+                if (win.color_triangle_dataset == undefined)
+                {
+                    win.color_triangle_dataset = vtk.Common.DataModel.vtkPolyData.newInstance();
+                    var actor = vtk.Rendering.Core.vtkActor.newInstance();
+                    var mapper = vtk.Rendering.Core.vtkMapper.newInstance();
+                    mapper.setInputData(win.color_triangle_dataset);
+                    mapper.setColorModeToDirectScalars()
+                    actor.setMapper(mapper);
+                    actor.setScale(1,aspect,1)
+                    win.renderer.addActor(actor);
+                    
+                    // the axis actor is later used to read axis bounds
+                    win.axis_actor=actor
+                }
+                
+                var colorData = vtk.Common.Core.vtkDataArray.newInstance({
+                    name: 'Colors',
+                    values: colors,
+                    numberOfComponents: 3,
+                });
+                
+                win.color_triangle_dataset.getPoints().setData(points, 3);
+                win.color_triangle_dataset.getPolys().setData(polys,1);
+                win.color_triangle_dataset.getPointData().setActiveScalars('Colors');
+                win.color_triangle_dataset.getPointData().setScalars(colorData);        
+                win.color_triangle_dataset.modified()
+            }
+
+            if (isolines != "none")
+            { // Optional isolines
+                
+                //https://discourse.vtk.org/t/manually-create-polydata-in-vtk-js/885/4
+                
+                if (win.isoline_dataset == undefined)
+                {
+                    win.isoline_dataset=vtk.Common.DataModel.vtkPolyData.newInstance();
+                    var mapper = vtk.Rendering.Core.vtkMapper.newInstance();
+                    var actor = vtk.Rendering.Core.vtkActor.newInstance();
+                    mapper.setInputData(win.isoline_dataset);
+                    actor.setMapper(mapper);
+                    actor.getProperty().setColor(0, 0, 0)
+                    actor.setScale(1,aspect,1)
+                    win.renderer.addActor(actor);
+                }
+                
+                win.isoline_dataset.getPoints().setData(isopoints, 3);
+                win.isoline_dataset.getLines().setData(isolines);
+                win.isoline_dataset.modified()
+            }
+        }
+        /////////////////////////////////////////////////////////////////
+        else if (jsdict[cmd]=="quiver")
+        { // 2D quiver
+            var qpoints=jsdict[cmd+"points"]
+ 	    var qlines=jsdict[cmd+"lines"]
+            
+            if (win.quiver_dataset == undefined)
+            {
+                win.quiver_dataset=vtk.Common.DataModel.vtkPolyData.newInstance();
+                var mapper = vtk.Rendering.Core.vtkMapper.newInstance();
+                var actor = vtk.Rendering.Core.vtkActor.newInstance();
+                mapper.setInputData(win.quiver_dataset);
+                actor.setMapper(mapper);
+                actor.getProperty().setColor(0, 0, 0)
+                win.renderer.addActor(actor);
+
+                if (win.axis_actor == undefined)
+                {
+                    win.axis_actor=actor
+                }
+            }
+            
+            win.quiver_dataset.getPoints().setData(qpoints, 3);
+	    win.quiver_dataset.getLines().setData(qlines);
+	    win.quiver_dataset.modified()
+        }
+        /////////////////////////////////////////////////////////////////
+        else if (jsdict[cmd]=="tetcontour")
+        {
+
+            var points=jsdict[cmd+"points"]
+ 	    var polys=jsdict[cmd+"polys"]
+            var colors=jsdict[cmd+"colors"]
+
+
+            var outline=jsdict[cmd+"outline"]
+    	    var opoints=jsdict[cmd+"opoints"]
+ 	    var opolys=jsdict[cmd+"opolys"]
+            var ocolors=jsdict[cmd+"ocolors"]
+            var transparent=jsdict[cmd+"transparent"]
+            var gridscale=jsdict[cmd+"gridscale"]
+
+
+            vtk.Common.Core.vtkMatrixBuilder
+                .buildFromRadian()
+                .scale(gridscale,gridscale,gridscale)
+                .apply(points);
+
+            vtk.Common.Core.vtkMatrixBuilder
+                .buildFromRadian()
+                .scale(gridscale,gridscale,gridscale)
+                .apply(opoints);
+
+
+            { // isosurfaces and plane sections
+                
+                if (win.iso_plane_dataset == undefined)
+                {
+                    win.iso_plane_dataset = vtk.Common.DataModel.vtkPolyData.newInstance();
+                    var actor = vtk.Rendering.Core.vtkActor.newInstance();
+                    var mapper = vtk.Rendering.Core.vtkMapper.newInstance();
+                    mapper.setInputData(win.iso_plane_dataset);
+                    mapper.setColorModeToDirectScalars()
+                    if (transparent==1)
+                    {
+                        actor.setForceTranslucent(true) //  https://discourse.vtk.org/t/wireframe-not-visible-behind-transparent-surfaces/6671
+                    }
+                    actor.setMapper(mapper);
+                    win.renderer.addActor(actor);
+                    win.axis_actor=actor
+                }
+                
+                if (transparent==1)
+                {
+                    var colorData = vtk.Common.Core.vtkDataArray.newInstance({
+                        name: 'Colors',
+                        values: colors,
+                        numberOfComponents: 4,
+                    });
+                }
+                else
+                {
+                    var colorData = vtk.Common.Core.vtkDataArray.newInstance({
+                        name: 'Colors',
+                        values: colors,
+                        numberOfComponents: 3,
+                    });
+                }
+                win.iso_plane_dataset.getPoints().setData(points, 3);
+                win.iso_plane_dataset.getPolys().setData(polys,1);
+                win.iso_plane_dataset.getPointData().setActiveScalars('Colors');
+                win.iso_plane_dataset.getPointData().setScalars(colorData);        
+                win.iso_plane_dataset.modified()
+            }
+
+            
+            if (outline==1)
+            {
+                add_outline_dataset(win,opoints,opolys,ocolors)
+            }
+        }
+        /////////////////////////////////////////////////////////////////
+        else if (jsdict[cmd]=="trimesh")
+        {
+
+    	    var points=jsdict[cmd+"points"]
+ 	    var polys=jsdict[cmd+"polys"]
+            var colors=jsdict[cmd+"colors"]
+            var lines=jsdict[cmd+"lines"]
+            var gridscale=jsdict[cmd+"gridscale"]
+            var linecolors=jsdict[cmd+"linecolors"]
+            var aspect=jsdict[cmd+"aspect"]
+            zshift=zshift*gridscale
+
+            var zshift=points[3]
+            vtk.Common.Core.vtkMatrixBuilder
+                .buildFromRadian()
+                .translate(0,0,-zshift)
+                .scale(gridscale,gridscale,gridscale)
+                .apply(points);
+
+
+            add_cell_dataset(win,points, polys, colors,aspect)
+
+
+            
+            if (lines != "none")
+            { // boundary edges
+
+                if (linecolors!="none")
+                {
+                    var linecolorData = vtk.Common.Core.vtkDataArray.newInstance({
+                        name: 'Colors',
+                        values: linecolors,
+                        numberOfComponents: 3,
+                    });
+                }
+                
+                if (win.boundary_edge_dataset == undefined)
+                {
+                    win.boundary_edge_dataset=vtk.Common.DataModel.vtkPolyData.newInstance();
+                    var mapper = vtk.Rendering.Core.vtkMapper.newInstance();
+                    var actor = vtk.Rendering.Core.vtkActor.newInstance();
+                    mapper.setInputData(win.boundary_edge_dataset);
+                    actor.setMapper(mapper);
+                    actor.setScale([1,aspect,1])
+                    actor.getProperty().setColor(0, 0, 0)
+		    actor.getProperty().setLineWidth(3);
+                    win.renderer.addActor(actor);
+                }
+
+                
+                win.boundary_edge_dataset.getPoints().setData(Array.from(points), 3);
+                win.boundary_edge_dataset.getLines().setData(lines);
+                var pts=win.boundary_edge_dataset.getPoints().getData();
+
+                vtk.Common.Core.vtkMatrixBuilder
+                    .buildFromRadian()
+                    .translate(0,0,zshift)
+                    .apply(pts);
+
+                if (linecolors!="none")
+                {
+                    win.boundary_edge_dataset.getCellData().setActiveScalars('Colors');
+                    win.boundary_edge_dataset.getCellData().setScalars(linecolorData);
+                }
+                win.boundary_edge_dataset.modified()
+            }
+
+        }
+        /////////////////////////////////////////////////////////////////
+        else if (jsdict[cmd]=="tetmesh")
+        {
+    	    var points=jsdict[cmd+"points"]
+ 	    var polys=jsdict[cmd+"polys"]
+            var colors=jsdict[cmd+"colors"]
+            var gridscale=jsdict[cmd+"gridscale"]
+
+            
+            var outline=jsdict[cmd+"outline"]
+    	    var opoints=jsdict[cmd+"opoints"]
+ 	    var opolys=jsdict[cmd+"opolys"]
+            var ocolors=jsdict[cmd+"ocolors"]
+
+            add_cell_dataset(win,points, polys, colors,1.0)
+
+            vtk.Common.Core.vtkMatrixBuilder
+                .buildFromRadian()
+                .scale(gridscale,gridscale,gridscale)
+                .apply(points);
+
+            vtk.Common.Core.vtkMatrixBuilder
+                .buildFromRadian()
+                .scale(gridscale,gridscale,gridscale)
+                .apply(opoints);
+
+            
+            if (outline==1)
+            {
+                add_outline_dataset(win,opoints,opolys,ocolors)
+            }
+
+        }
+        /////////////////////////////////////////////////////////////////
+        else if (jsdict[cmd]=="axis")
+        {
+            var axisfontsize= jsdict[cmd+"axisfontsize"] 
+            var tickfontsize= jsdict[cmd+"tickfontsize"]
+            if (win.cubeAxes == undefined)
+            {
+ 	        var camstyle=jsdict[cmd+"cam"]
+ 	        var zoom=jsdict[cmd+"zoom"]
+                var xlabel=jsdict[cmd+"xlabel"]
+                var ylabel=jsdict[cmd+"ylabel"]
+                var zlabel=jsdict[cmd+"zlabel"]
+                
+                win.cubeAxes = vtk.Rendering.Core.vtkCubeAxesActor.newInstance();
+  	        win.renderer.addActor(win.cubeAxes);
+
+                
+                win.interactor.initialize();
+                setinteractorstyle(win.interactor,camstyle)
+                
+
+                var camera=win.renderer.getActiveCamera()
+                if (camstyle=="3D")
+                {
+                    camera.roll(-30);
+                    camera.elevation(-60);
+                }
+                else
+                    camera.setParallelProjection(true)
+                    
+                win.cubeAxes.setCamera(camera);
+                
+                win.cubeAxes.setAxisLabels([xlabel,ylabel,zlabel])
+                if (camstyle=="2D")
+                    win.cubeAxes.setGridLines(false)
+
+                win.cubeAxes.setTickTextStyle({fontColor: "black"})
+                win.cubeAxes.setTickTextStyle({fontFamily: "Arial"})
+                win.cubeAxes.setTickTextStyle({fontSize: tickfontsize})
+                
+                win.cubeAxes.setAxisTextStyle({fontColor: "black"})
+                win.cubeAxes.setAxisTextStyle({fontFamily: "Arial"})
+                win.cubeAxes.setAxisTextStyle({fontSize: axisfontsize})
+                
+                win.cubeAxes.getProperty().setColor(0.75,0.75,0.75);
+                var databounds=win.axis_actor.getBounds()
+	        win.cubeAxes.setDataBounds(databounds);
+
+                win.renderer.resetCamera();
+                camera.zoom(zoom)
+            }
+        }
+        /////////////////////////////////////////////////////////////////
+        else if (jsdict[cmd]=="triplot")
+        {// Experimental
+
+            if (win.triplot_dataset == undefined)
+            {
+                win.triplot_dataset = vtk.Common.DataModel.vtkPolyData.newInstance();
+                var actor = vtk.Rendering.Core.vtkActor.newInstance();
+                var mapper = vtk.Rendering.Core.vtkMapper.newInstance();
+                mapper.setInputData(win.triplot_dataset);
+                actor.setMapper(mapper);
+                win.renderer.addActor(actor);
+                win.axis_actor=actor
+            }
+            
+    	    var points=jsdict[cmd+"points"]
+ 	    var polys=jsdict[cmd+"polys"]
+            win.triplot_dataset.getPoints().setData(points, 3);
+            win.triplot_dataset.getPolys().setData(polys,1);
+            win.triplot_dataset.modified()
+        }
+        /////////////////////////////////////////////////////////////////
+        else if (jsdict[cmd]=="plot")
+        {// Experimental
+    	    var points=jsdict[cmd+"points"]
+ 	    var lines=jsdict[cmd+"lines"]
+            
+            var actor = vtk.Rendering.Core.vtkActor.newInstance();
+            var mapper = vtk.Rendering.Core.vtkMapper.newInstance();
+
+            win.plotdataset=vtk.Common.DataModel.vtkPolyData.newInstance();
+            win.plotdataset.getPoints().setData(points, 3);
+            win.plotdataset.getLines().setData(lines);
+            mapper.setInputData(dataset);
+            actor.setMapper(mapper);
+            actor.getProperty().setColor(0, 0, 0)
+            win.renderer.addActor(actor);
+        }
+    }
+    win.renderWindow.render()
+}
+
+    
+
+   /* Canvas based color bar for vtk plots */
+function canvascolorbar(uuid,w,h,cbdict)
+{
+    var hpad=0.1*h
+    var h0=hpad
+    var h1=h-hpad
+    var dh=h1-h0
+    var canvas = document.getElementById(uuid);
+    var ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.textBaseline = "middle"
+    ctx.textAlign = "left"
+
+    if (cbdict["cbar"]==1) /*gradient colorbar for contour plots */
+    {
+        var cstops=cbdict["cbar_stops"]
+        var colors=cbdict["cbar_colors"]
+        var levels=cbdict["cbar_levels"]
+        var legendfontsize=cbdict["cbar_fontsize"]
+        ctx.font = `${legendfontsize}px Arial`
+
+        var grad = ctx.createLinearGradient(0,h1, 0, h0);
+        var icol=0
+        for (var i=0;i<cstops.length;i++)
+        {
+            var color=`rgba(${colors[icol]},${colors[icol+1]},${colors[icol+2]})`;
+            grad.addColorStop(cstops[i],color);
+            icol+=3
+        }
+        ctx.fillStyle = grad;
+        ctx.fillRect(0,h0,0.5*w,dh);
+
+
+        ctx.strokeStyle = "rgb(0,0,0)"
+        ctx.fillStyle = "rgb(0,0,0)"
+        var lmin=levels[0]
+        var lmax=levels[levels.length-1]
+        for (var i=0;i<levels.length;i++)
+        {
+            var hlev=h1-dh*(levels[i]-lmin)/(lmax-lmin)
+    	    ctx.beginPath();
+            ctx.moveTo(0, hlev);
+            ctx.lineTo(0.6*w,hlev);
+     	    ctx.stroke();
+            ctx.fillText(levels[i].toPrecision(3),0.7*w,hlev)
+        }
+        
+    }
+    /* discontinuous colorbars for cell and boundary region numbers*/
+    else if (cbdict["cbar"]==2) 
+    {
+        var cstops=cbdict["cbar_stops"]
+        var colors=cbdict["cbar_colors"]
+        var levels=cbdict["cbar_levels"]
+        var legendfontsize=cbdict["cbar_fontsize"]
+        ctx.font = `${legendfontsize}px Arial`
+
+        // Region markers
+        if (cstops!=undefined)
+        {
+            var lmin=levels[0]
+            var lmax=levels[levels.length-1]+1
+            
+            var icol=0
+            var hl=dh*(levels[2]-levels[1])/(lmax-lmin)
+            for (var i=0;i<levels.length;i++)
+            {
+                var hlev=h1-dh*(levels[i]-lmin)/(lmax-lmin)
+                var color=`rgba(${colors[icol]},${colors[icol+1]},${colors[icol+2]})`;
+                ctx.strokeStyle = color
+                ctx.fillStyle = color
+                ctx.fillRect(0,hlev,0.4*w,-hl)
+                icol+=3
+            }
+            
+            ctx.strokeStyle = "rgb(0,0,0)"
+            ctx.fillStyle = "rgb(0,0,0)"
+            for (var i=0;i<levels.length;i++)
+            {
+                var hlev=h1-dh*(levels[i]-lmin)/(lmax-lmin)-0.5*hl
+                ctx.fillText(`${levels[i]}`,0.5*w,hlev)
+            }
+        }
+        
+        // edge markers
+        var cstops=cbdict["ecbar_stops"]
+        var colors=cbdict["ecbar_colors"]
+        var levels=cbdict["ecbar_levels"]
+        if (cstops!=undefined)
+        {
+            var lmin=levels[0]
+            var lmax=levels[levels.length-1]+1
+            
+            var icol=0
+            var hl=dh*(levels[2]-levels[1])/(lmax-lmin)
+            for (var i=0;i<levels.length;i++)
+            {
+                var hlev=h1-dh*(levels[i]-lmin)/(lmax-lmin)
+                var color=`rgba(${colors[icol]},${colors[icol+1]},${colors[icol+2]})`;
+                ctx.strokeStyle = color
+                ctx.fillStyle = color
+                ctx.fillRect(w,hlev,0.4*w,-hl)
+                icol+=3
+            }
+            
+            ctx.strokeStyle = "rgb(0,0,0)"
+            ctx.fillStyle = "rgb(0,0,0)"
+            for (var i=0;i<levels.length;i++)
+            {
+                var hlev=h1-dh*(levels[i]-lmin)/(lmax-lmin)-0.5*hl
+                ctx.fillText(`${levels[i]}`,1.5*w,hlev)
+            }
+        }
+    }
+}
+
+   const jsdict = /* See the documentation for AbstractPlutoDingetjes.Display.published_to_js */ getPublishedObject("4e5581b6-efce-11f0-9b12-cd76da51939f/31ec2a535ce27799")
+   plutovtkplot("b618d508-efce-11f0-8ef4-4fb8d21c647c",jsdict,invalidation)
+   canvascolorbar("b618d508-efce-11f0-8ef4-4fb8d21c647ccbar",20,500.0,jsdict)        
+   </script>
+
+<pre class='language-julia'><code class='language-julia'>begin
+    ## call low level solver
+    sol = solve_poisson_lowlevel(FES, μ, f)
+end</code></pre>
+<pre class="code-output documenter-example-output" id="var-sol">FEVector information
+====================
+   block  |  ndofs 	|     min  /  max    	| FEType 		 (name/tag)
+ [    1]  |  263169	| -1.21e-02/1.21e-02  	| H1Pk{1,2,1}  	 (#1)</pre>
+
+<pre class='language-julia'><code class='language-julia'>function solve_poisson_lowlevel(FES, μ, f)
+
+    Solution = FEVector(FES)
+    FES = Solution[1].FES
+    A = FEMatrix(FES, FES)
+    b = FEVector(FES)
+    println("Assembling operators...")
+    @time assemble!(A.entries, b.entries, FES, f, μ)
+
+    ## fix boundary dofs
+    println("Assembling boundary data...")
+    @time begin
+        BFaceDofs::Adjacency{Int32} = FES[ExtendableFEMBase.BFaceDofs]
+        nbfaces::Int = num_sources(BFaceDofs)
+        AM::ExtendableSparseMatrix{Float64, Int64} = A.entries
+        dof_j::Int = 0
+        for bface in 1:nbfaces
+            for j in 1:num_targets(BFaceDofs, 1)
+                dof_j = BFaceDofs[j, bface]
+                AM[dof_j, dof_j] = 1.0e60
+                b.entries[dof_j] = 0
+            end
+        end
+    end
+    ExtendableSparse.flush!(A.entries)
+
+    ## solve
+    println("Solving linear system...")
+    @time copyto!(Solution.entries, A.entries \ b.entries)
+
+    return Solution
+end</code></pre>
+<pre class="code-output documenter-example-output" id="var-solve_poisson_lowlevel">solve_poisson_lowlevel (generic function with 1 method)</pre>
+
+<pre class='language-julia'><code class='language-julia'>begin
+    ## create finite element space
+    FEType = H1Pk{1, 2, order}
+
+    ## prepare finite element space and dofmaps
+    println("Creating FESpace...")
+    @time FES = FESpace{FEType}(xgrid)
+    FES
+end</code></pre>
+<pre class="code-output documenter-example-output" id="var-FES">FESpace information
+===================
+     name = H1Pk{1,2,1}
+   FEType = H1Pk{1,2,1}
+  FEClass = ExtendableFEMBase.AbstractH1FiniteElement
+    ndofs = 263169
+
+
+DofMaps
+==========
+</pre>
+
+<pre class='language-julia'><code class='language-julia'>begin
+    ## create grid
+    X = LinRange(0, 1, 2^nref + 1)
+    Y = LinRange(0, 1, 2^nref + 1)
+    println("Creating grid...")
+    @time xgrid = simplexgrid(X, Y)
+    println("Preparing FaceNodes...")
+    @time xgrid[FaceNodes]
+    println("Preparing CellVolumes...")
+    @time xgrid[CellVolumes]
+    xgrid
+end</code></pre>
+<pre class="code-output documenter-example-output" id="var-xgrid">ExtendableGrids.ExtendableGrid{Float64, Int32};
+dim: 2 nodes: 263169 cells: 524288 bfaces: 2048
+
+</pre>
+
+<pre class='language-julia'><code class='language-julia'>function assemble!(A::ExtendableSparseMatrix, b::Vector, FES, f, μ = 1)
+
+    xgrid = FES.xgrid
+    EG = xgrid[UniqueCellGeometries][1]
+    FEType = eltype(FES)
+    L2G = L2GTransformer(EG, xgrid, ON_CELLS)
+
+    ## dofmap
+    CellDofs = FES[ExtendableFEMBase.CellDofs]
+
+    ## quadrature formula
+    qf = QuadratureRule{Float64, EG}(2 * (get_polynomialorder(FEType, EG) - 1))
+    weights::Vector{Float64} = qf.w
+    xref::Vector{Vector{Float64}} = qf.xref
+    nweights::Int = length(weights)
+
+    ## FE basis evaluator
+    FEBasis_∇ = FEEvaluator(FES, Gradient, qf)
+    ∇vals = FEBasis_∇.cvals
+    FEBasis_id = FEEvaluator(FES, Identity, qf)
+    idvals = FEBasis_id.cvals
+
+
+    cellvolumes = xgrid[CellVolumes]
+
+    ## ASSEMBLY LOOP
+    function barrier(EG, L2G::L2GTransformer)
+        ## barrier function to avoid allocations by EG dispatch
+
+        ndofs4cell::Int = get_ndofs(ON_CELLS, FEType, EG)
+        Aloc = zeros(Float64, ndofs4cell, ndofs4cell)
+        ncells::Int = num_cells(xgrid)
+        dof_j::Int, dof_k::Int = 0, 0
+        x::Vector{Float64} = zeros(Float64, 2)
+
+        for cell in 1:ncells
+            ## update FE basis evaluators
+            FEBasis_∇.citem[] = cell
+            update_basis!(FEBasis_∇)
+
+            ## assemble local stiffness matrix
+            for j in 1:ndofs4cell, k in j:ndofs4cell
+                temp = 0
+                for qp in 1:nweights
+                    temp += weights[qp] * dot(view(∇vals, :, j, qp), view(∇vals, :, k, qp))
+                end
+                Aloc[j, k] = temp
+            end
+            Aloc .*= μ * cellvolumes[cell]
+
+            ## add local matrix to global matrix
+            for j in 1:ndofs4cell
+                dof_j = CellDofs[j, cell]
+                for k in j:ndofs4cell
+                    dof_k = CellDofs[k, cell]
+                    if abs(Aloc[j, k]) &gt; 1.0e-15
+                        # write into sparse matrix, only lines with allocations
+                        rawupdateindex!(A, +, Aloc[j, k], dof_j, dof_k)
+                        if k &gt; j
+                            rawupdateindex!(A, +, Aloc[j, k], dof_k, dof_j)
+                        end
+                    end
+                end
+            end
+            fill!(Aloc, 0)
+
+            ## assemble right-hand side
+            update_trafo!(L2G, cell)
+            for j in 1:ndofs4cell
+                ## right-hand side
+                temp = 0
+                for qp in 1:nweights
+                    ## get global x for quadrature point
+                    eval_trafo!(x, L2G, xref[qp])
+                    ## evaluate (f(x), v_j(x))
+                    temp += weights[qp] * idvals[1, j, qp] * f(x)
+                end
+                ## write into global vector
+                dof_j = CellDofs[j, cell]
+                b[dof_j] += temp * cellvolumes[cell]
+            end
+        end
+        return
+    end
+    barrier(EG, L2G)
+    return flush!(A)
+end</code></pre>
+<pre class="code-output documenter-example-output" id="var-assemble!">assemble! (generic function with 2 methods)</pre>
+<div class='manifest-versions'>
+<p>Built with Julia 1.12.4 and</p>
+ExtendableFEMBase 0.2.0<br>
+ExtendableGrids 1.2.3<br>
+ExtendableSparse 1.2.1<br>
+GridVisualize 1.5.1<br>
+PlutoVista 1.0.1
+</div>
+
+<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../plots/">« Plots</a><a class="docs-footer-nextpage" href="../LowLevelNavierStokes/">Low level Navier-Stokes »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Monday 12 January 2026 15:54">Monday 12 January 2026</span>. Using Julia version 1.12.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

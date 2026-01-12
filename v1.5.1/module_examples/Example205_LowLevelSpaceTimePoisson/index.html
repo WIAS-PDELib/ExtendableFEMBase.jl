@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Example205_LowLevelSpaceTimePoisson · ExtendableFEMBase.jl</title><meta name="title" content="Example205_LowLevelSpaceTimePoisson · ExtendableFEMBase.jl"/><meta property="og:title" content="Example205_LowLevelSpaceTimePoisson · ExtendableFEMBase.jl"/><meta property="twitter:title" content="Example205_LowLevelSpaceTimePoisson · ExtendableFEMBase.jl"/><meta name="description" content="Documentation for ExtendableFEMBase.jl."/><meta property="og:description" content="Documentation for ExtendableFEMBase.jl."/><meta property="twitter:description" content="Documentation for ExtendableFEMBase.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ExtendableFEMBase.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../changelog/">Changelog</a></li><li><a class="tocitem" href="../../package_index/">Index</a></li><li><a class="tocitem" href="../../fems/">List of Finite Elements</a></li><li><span class="tocitem">Base Structures</span><ul><li><a class="tocitem" href="../../fespace/">FESpace</a></li><li><a class="tocitem" href="../../fevector/">FEVector</a></li><li><a class="tocitem" href="../../fematrix/">FEMatrix</a></li><li><a class="tocitem" href="../../functionoperators/">Function Operators</a></li><li><a class="tocitem" href="../../feevaluator/">FEEvaluator</a></li><li><a class="tocitem" href="../../interpolations/">Finite Element Interpolations</a></li><li><a class="tocitem" href="../../quadrature/">Quadrature</a></li></ul></li><li><span class="tocitem">Advanced Stuff</span><ul><li><a class="tocitem" href="../../pointevaluators/">PointEvaluator</a></li><li><a class="tocitem" href="../../segmentintegrators/">SegmentIntegrator</a></li><li><a class="tocitem" href="../../plots/">Plots</a></li></ul></li><li><span class="tocitem">Tutorial Notebooks</span><ul><li><a class="tocitem" href="../../plutostatichtml_examples/LowLevelPoisson/">Low level Poisson</a></li><li><a class="tocitem" href="../../plutostatichtml_examples/LowLevelNavierStokes/">Low level Navier-Stokes</a></li></ul></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../../examples_intro/">Introduction</a></li><li><a class="tocitem" href="../Example200_LowLevelPoisson/">Example200_LowLevelPoisson</a></li><li class="is-active"><a class="tocitem" href>Example205_LowLevelSpaceTimePoisson</a></li><li><a class="tocitem" href="../Example210_LowLevelNavierStokes/">Example210_LowLevelNavierStokes</a></li><li><a class="tocitem" href="../Example280_BasisPlotter/">Example280_BasisPlotter</a></li><li><a class="tocitem" href="../Example281_DiscontinuousPlot/">Example281_DiscontinuousPlot</a></li><li><a class="tocitem" href="../Example290_InterpolationBetweenMeshes/">Example290_InterpolationBetweenMeshes</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>Example205_LowLevelSpaceTimePoisson</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Example205_LowLevelSpaceTimePoisson</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/WIAS-PDELib/ExtendableFEMBase.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/WIAS-PDELib/ExtendableFEMBase.jl/blob/master/docs/src/module_examples/Example205_LowLevelSpaceTimePoisson.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="205-:-Space-Time-FEM-for-Heat-Equation"><a class="docs-heading-anchor" href="#205-:-Space-Time-FEM-for-Heat-Equation">205 : Space-Time FEM for Heat Equation</a><a id="205-:-Space-Time-FEM-for-Heat-Equation-1"></a><a class="docs-heading-anchor-permalink" href="#205-:-Space-Time-FEM-for-Heat-Equation" title="Permalink"></a></h1><p>(<a href="../Example205_LowLevelSpaceTimePoisson.jl">source code</a>)</p><p>This example computes the solution <span>$u$</span> of the two-dimensional heat equation</p><p class="math-container">\[\begin{aligned}
+u_t - \Delta u &amp; = f \quad \text{in } \Omega
+\end{aligned}\]</p><p>with a (possibly space- and time-depepdent) right-hand side <span>$f$</span> and homogeneous Dirichlet boundary and initial conditions on the unit square domain <span>$\Omega$</span> on a given grid with space-time finite element methods based on tensorized ansatz functions.</p><p><img src="../example205.png" alt/></p><pre><code class="language-julia hljs">module Example205_LowLevelSpaceTimePoisson
+
+using ExtendableFEMBase
+using ExtendableGrids
+using ExtendableSparse
+using GridVisualize
+using UnicodePlots
+using Test #
+
+# data for Poisson problem
+const μ = (t) -&gt; 1.0e-1 * t + 1 * max(0, (1 - 2 * t))
+const f = (x, t) -&gt; sin(3 * pi * x[1]) * 4 * t - cos(3 * pi * x[2]) * 4 * (1 - t)
+
+function main(; dt = 0.01, Tfinal = 1, level = 5, order = 1, Plotter = nothing, produce_movie = false)
+
+    # Finite element type
+    FEType_time = H1Pk{1, 1, order}
+    FEType_space = H1Pk{1, 2, order}
+
+    # time grid
+    T = LinRange(0, Tfinal, round(Int, Tfinal / dt + 1))
+    grid_time = simplexgrid(T)
+
+    # space grid
+    X = LinRange(0, 1, 2^level + 1)
+    grid_space = simplexgrid(X, X)
+
+    # FESpaces for time and space
+    FES_time = FESpace{FEType_time}(grid_time)
+    FES_space = FESpace{FEType_space}(grid_space)
+
+    # solve
+    sol = solve_poisson_lowlevel(FES_time, FES_space, μ, f)
+
+    # visualize
+    if produce_movie
+        @info &quot;Producing movie...&quot;
+        vis = GridVisualizer(Plotter = Plotter)
+        movie(vis, file = &quot;example205_video.mp4&quot;) do vis
+            for tj in 2:length(T)
+                t = T[tj]
+                first = (tj - 1) * FES_space.ndofs + 1
+                last = tj * FES_space.ndofs
+                scalarplot!(vis, grid_space, view(sol, first:last), title = &quot;t = $(Float16(t))&quot;)
+                reveal(vis)
+            end
+        end
+        return sol, vis
+    else
+        @info &quot;Plotting at five times...&quot;
+        plot_timesteps = [2, round(Int, length(T) / 4 + 0.25), round(Int, length(T) / 2 + 0.5), round(Int, length(T) - length(T) / 4), FES_time.ndofs]
+        plt = GridVisualizer(; Plotter = Plotter, layout = (1, length(plot_timesteps)), clear = true, resolution = (200 * length(plot_timesteps), 200))
+        for tj in 1:length(plot_timesteps)
+            t = plot_timesteps[tj]
+            first = (t - 1) * FES_space.ndofs + 1
+            last = t * FES_space.ndofs
+            scalarplot!(plt[1, tj], grid_space, view(sol, first:last), title = &quot;t = $(T[t])&quot;)
+        end
+        return sol, plt
+    end
+
+end
+
+
+function solve_poisson_lowlevel(FES_time, FES_space, μ, f)
+    ndofs_time = FES_time.ndofs
+    ndofs_space = FES_space.ndofs
+    ndofs_total = ndofs_time * ndofs_space
+    sol = zeros(Float64, ndofs_total)
+
+    A = ExtendableSparseMatrix{Float64, Int64}(ndofs_total, ndofs_total)
+    b = zeros(Float64, ndofs_total)
+
+    println(&quot;Assembling...&quot;)
+    time_assembly = @elapsed @time begin
+        loop_allocations = assemble!(A, b, FES_time, FES_space, f, μ)
+
+        # fix homogeneous boundary dofs
+        bdofs = boundarydofs(FES_space)
+        for sdof in bdofs
+            for dof_t in 1:ndofs_time
+                dof = (dof_t - 1) * ndofs_space + sdof
+                A[dof, dof] = 1.0e60
+                b[dof] = 0
+            end
+        end
+
+        # fix initial value by zero
+        for j in 1:ndofs_space
+            A[j, j] = 1.0e60
+            b[j] = 0
+        end
+        ExtendableSparse.flush!(A)
+    end
+
+    @info &quot;.... spy plot of system matrix:\n$(UnicodePlots.spy(sparse(A.cscmatrix)))&quot;
+
+    # solve
+    println(&quot;Solving linear system...&quot;)
+    time_solve = @elapsed @time copyto!(sol, A \ b)
+
+    # compute linear residual
+    @show norm(A * sol - b)
+
+    return sol
+end
+
+function assemble!(A::ExtendableSparseMatrix, b::Vector, FES_time, FES_space, f, μ = 1)
+
+    # get space and time grids
+    grid_time = FES_time.xgrid
+    grid_space = FES_space.xgrid
+
+    # get number of degrees of freedom
+    ndofs_time = FES_time.ndofs
+    ndofs_space = FES_space.ndofs
+
+    # get local to global maps
+    EG_time = grid_time[UniqueCellGeometries][1]
+    EG_space = grid_space[UniqueCellGeometries][1]
+    L2G_time = L2GTransformer(EG_time, grid_time, ON_CELLS)
+    L2G_space = L2GTransformer(EG_space, grid_space, ON_CELLS)
+
+    # get finite element types
+    FEType_time = eltype(FES_time)
+    FEType_space = eltype(FES_space)
+
+    # quadrature formula in space
+    qf_space = QuadratureRule{Float64, EG_space}(2 * (get_polynomialorder(FEType_space, EG_space) - 1))
+    weights_space::Vector{Float64} = qf_space.w
+    xref_space::Vector{Vector{Float64}} = qf_space.xref
+    nweights_space::Int = length(weights_space)
+    cellvolumes_space = grid_space[CellVolumes]
+
+    # quadrature formula in time
+    qf_time = QuadratureRule{Float64, EG_time}(2 * (get_polynomialorder(FEType_time, EG_time) - 1))
+    weights_time::Vector{Float64} = qf_time.w
+    xref_time::Vector{Vector{Float64}} = qf_time.xref
+    nweights_time::Int = length(weights_time)
+    cellvolumes_time = grid_time[CellVolumes]
+
+    # FE basis evaluators and dofmap for space elements
+    FEBasis_space_∇ = FEEvaluator(FES_space, Gradient, qf_space)
+    ∇vals_space = FEBasis_space_∇.cvals
+    FEBasis_space_id = FEEvaluator(FES_space, Identity, qf_space)
+    idvals_space = FEBasis_space_id.cvals
+    celldofs_space = FES_space[ExtendableFEMBase.CellDofs]
+
+    # FE basis evaluators and dofmap for time elements
+    FEBasis_time_∇ = FEEvaluator(FES_time, Gradient, qf_time)
+    ∇vals_time = FEBasis_time_∇.cvals
+    FEBasis_time_id = FEEvaluator(FES_time, Identity, qf_time)
+    idvals_time = FEBasis_time_id.cvals
+    celldofs_time = FES_time[ExtendableFEMBase.CellDofs]
+
+    # ASSEMBLY LOOP
+    loop_allocations = 0
+    function barrier(EG_time, EG_space, L2G_time::L2GTransformer, L2G_space::L2GTransformer)
+        # barrier function to avoid allocations by type dispatch
+
+        ndofs4cell_time::Int = get_ndofs(ON_CELLS, FEType_time, EG_time)
+        ndofs4cell_space::Int = get_ndofs(ON_CELLS, FEType_space, EG_space)
+        Aloc = zeros(Float64, ndofs4cell_space, ndofs4cell_space)
+        Mloc = zeros(Float64, ndofs4cell_time, ndofs4cell_time)
+        ncells_space::Int = num_cells(grid_space)
+        ncells_time::Int = num_cells(grid_time)
+        x::Vector{Float64} = zeros(Float64, 2)
+        t::Vector{Float64} = zeros(Float64, 1)
+
+        # assemble Laplacian
+        loop_allocations += @allocated for cell in 1:ncells_space
+            # update FE basis evaluators for space
+            FEBasis_space_∇.citem[] = cell
+            update_basis!(FEBasis_space_∇)
+
+            # assemble local stiffness matrix in space
+            for j in 1:ndofs4cell_space, k in 1:ndofs4cell_space
+                temp = 0
+                for qp in 1:nweights_space
+                    temp += weights_space[qp] * dot(view(∇vals_space, :, j, qp), view(∇vals_space, :, k, qp))
+                end
+                Aloc[j, k] = temp
+            end
+            Aloc .*= cellvolumes_space[cell]
+
+            # add local matrix to global matrix
+            for time_cell in 1:ncells_time
+                update_trafo!(L2G_time, time_cell)
+                for jT in 1:ndofs4cell_time, kT in 1:ndofs4cell_time
+                    dofTj = celldofs_time[jT, time_cell]
+                    dofTk = celldofs_time[kT, time_cell]
+                    for qpT in 1:nweights_time
+                        # evaluate time coordinate and μ
+                        eval_trafo!(t, L2G_time, xref_time[qpT])
+                        factor = μ(t[1]) * weights_time[qpT] * idvals_time[1, jT, qpT] * idvals_time[1, kT, qpT] * cellvolumes_time[time_cell]
+                        for j in 1:ndofs4cell_space
+                            dof_j = celldofs_space[j, cell] + (dofTj - 1) * ndofs_space
+                            for k in 1:ndofs4cell_space
+                                dof_k = celldofs_space[k, cell] + (dofTk - 1) * ndofs_space
+                                if abs(Aloc[j, k]) &gt; 1.0e-15
+                                    # write into sparse matrix, only lines with allocations
+                                    rawupdateindex!(A, +, Aloc[j, k] * factor, dof_j, dof_k)
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+            fill!(Aloc, 0)
+
+            # assemble right-hand side
+            update_trafo!(L2G_space, cell)
+            for qp in 1:nweights_space
+                # evaluate coordinates of quadrature point in space
+                eval_trafo!(x, L2G_space, xref_space[qp])
+                for time_cell in 1:ncells_time
+                    update_trafo!(L2G_time, time_cell)
+                    for qpT in 1:nweights_time
+                        # evaluate time coordinate
+                        eval_trafo!(t, L2G_time, xref_time[qpT])
+
+                        # evaluate right-hand side in x and t
+                        fval = f(x, t[1])
+
+                        # multiply with test function and add to right-hand side
+                        for j in 1:ndofs4cell_space
+                            temp = weights_time[qpT] * weights_space[qp] * idvals_space[1, j, qp] * fval * cellvolumes_space[cell] * cellvolumes_time[time_cell]
+
+                            # write into global vector
+                            for jT in 1:ndofs4cell_time
+                                dof_j = celldofs_space[j, cell] + (celldofs_time[jT, time_cell] - 1) * ndofs_space
+                                b[dof_j] += temp * idvals_time[1, jT, qpT]
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        # assemble time derivative
+        return loop_allocations += @allocated for time_cell in 1:ncells_time
+            # update FE basis evaluators for time derivative
+            FEBasis_time_∇.citem[] = time_cell
+            update_basis!(FEBasis_time_∇)
+
+            # assemble local convection term in time
+            for j in 1:ndofs4cell_time, k in 1:ndofs4cell_time
+                temp = 0
+                for qpT in 1:nweights_time
+                    temp += weights_time[qpT] * dot(view(∇vals_time, :, j, qpT), view(∇vals_time, :, k, qpT))
+                end
+                Mloc[j, k] = temp
+            end
+            Mloc .*= cellvolumes_time[time_cell]
+
+            # add local matrix to global matrix
+            for cell in 1:ncells_space
+                for jX in 1:ndofs4cell_space, kX in 1:ndofs4cell_space
+                    dofXj = celldofs_space[jX, cell]
+                    dofXk = celldofs_space[kX, cell]
+                    for qpX in 1:nweights_space
+                        factor = weights_space[qpX] * idvals_space[1, jX, qpX] * idvals_space[1, kX, qpX] * cellvolumes_space[cell]
+                        for j in 1:ndofs4cell_time
+                            dof_j = dofXj + (celldofs_time[j, time_cell] - 1) * ndofs_space
+                            for k in 1:ndofs4cell_time
+                                dof_k = dofXk + (celldofs_time[k, time_cell] - 1) * ndofs_space
+                                if abs(Mloc[j, k]) &gt; 1.0e-15
+                                    # write into sparse matrix, only lines with allocations
+                                    rawupdateindex!(A, +, Mloc[j, k] * factor, dof_j, dof_k)
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+            fill!(Mloc, 0)
+        end
+    end
+    barrier(EG_time, EG_space, L2G_time, L2G_space)
+    flush!(A)
+    return loop_allocations
+end
+
+function generateplots(dir = pwd(); Plotter = nothing, kwargs...)
+    ~, plt = main(; Plotter = Plotter, kwargs...)
+    scene = GridVisualize.reveal(plt)
+    return GridVisualize.save(joinpath(dir, &quot;example205.png&quot;), scene; Plotter = Plotter)
+end
+
+end #module</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example200_LowLevelPoisson/">« Example200_LowLevelPoisson</a><a class="docs-footer-nextpage" href="../Example210_LowLevelNavierStokes/">Example210_LowLevelNavierStokes »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Monday 12 January 2026 15:54">Monday 12 January 2026</span>. Using Julia version 1.12.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
