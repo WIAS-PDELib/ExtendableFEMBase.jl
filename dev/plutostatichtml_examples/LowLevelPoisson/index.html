@@ -26,7 +26,7 @@
     # This information is used for caching.
     [PlutoStaticHTML.State]
     input_sha = "94ce8bde3a99bdac13d0be8499a12c2c7703b86eae5c3a6f4d49d727d1e2809f"
-    julia_version = "1.12.2"
+    julia_version = "1.12.4"
 -->
 <pre class='language-julia'><code class='language-julia'>begin
     using ExtendableFEMBase
@@ -58,7 +58,7 @@ end</code></pre>
 <pre class="code-output documenter-example-output" id="var-f">1</pre>
 
 <pre class='language-julia'><code class='language-julia'>tricontour(xgrid[Coordinates], xgrid[CellNodes], sol.entries[1:num_nodes(xgrid)]; levels = 5, resolution = (500, 500))</code></pre>
-<div style="white-space:nowrap;"><div id="f9ae0728-c9df-11f0-80b5-f9db279697cc" style="width: 440.0px; height: 440.0px; display: inline-block; "></div><canvas height="475.0" id="f9ae0728-c9df-11f0-80b5-f9db279697cccbar" style="display: inline-block; " width="60,"></canvas></div>
+<div style="white-space:nowrap;"><div id="7608044a-efbd-11f0-bede-b1e554b60389" style="width: 440.0px; height: 440.0px; display: inline-block; "></div><canvas height="475.0" id="7608044a-efbd-11f0-bede-b1e554b60389cbar" style="display: inline-block; " width="60,"></canvas></div>
 <script>
    // overwrite handleKeyPress and others
 // kind of modeled after https://kitware.github.io/vtk-js/api/Rendering_Core_Follower.html 
@@ -723,9 +723,9 @@ function canvascolorbar(uuid,w,h,cbdict)
     }
 }
 
-   const jsdict = /* See the documentation for AbstractPlutoDingetjes.Display.published_to_js */ getPublishedObject("8cd11258-c9df-11f0-9cd9-d17b57de19aa/4574f0d2411c1ac1")
-   plutovtkplot("f9ae0728-c9df-11f0-80b5-f9db279697cc",jsdict,invalidation)
-   canvascolorbar("f9ae0728-c9df-11f0-80b5-f9db279697cccbar",20,500.0,jsdict)        
+   const jsdict = /* See the documentation for AbstractPlutoDingetjes.Display.published_to_js */ getPublishedObject("117db63c-efbd-11f0-9b02-c98a3e432875/9371bdfdeff3fb0c")
+   plutovtkplot("7608044a-efbd-11f0-bede-b1e554b60389",jsdict,invalidation)
+   canvascolorbar("7608044a-efbd-11f0-bede-b1e554b60389cbar",20,500.0,jsdict)        
    </script>
 
 <pre class='language-julia'><code class='language-julia'>begin
@@ -898,7 +898,7 @@ dim: 2 nodes: 263169 cells: 524288 bfaces: 2048
 end</code></pre>
 <pre class="code-output documenter-example-output" id="var-assemble!">assemble! (generic function with 2 methods)</pre>
 <div class='manifest-versions'>
-<p>Built with Julia 1.12.2 and</p>
+<p>Built with Julia 1.12.4 and</p>
 ExtendableFEMBase 0.2.0<br>
 ExtendableGrids 1.2.3<br>
 ExtendableSparse 1.2.1<br>
@@ -906,4 +906,4 @@ GridVisualize 1.5.1<br>
 PlutoVista 1.0.1
 </div>
 
-<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../plots/">« Plots</a><a class="docs-footer-nextpage" href="../LowLevelNavierStokes/">Low level Navier-Stokes »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Tuesday 25 November 2025 09:21">Tuesday 25 November 2025</span>. Using Julia version 1.12.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+<!-- PlutoStaticHTML.End --></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../plots/">« Plots</a><a class="docs-footer-nextpage" href="../LowLevelNavierStokes/">Low level Navier-Stokes »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Monday 12 January 2026 13:50">Monday 12 January 2026</span>. Using Julia version 1.12.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
