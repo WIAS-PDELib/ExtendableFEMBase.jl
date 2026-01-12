@@ -1,6 +1,6 @@
 name = "ExtendableFEMBase"
 uuid = "12fb9182-3d4c-4424-8fd1-727a0899810c"
-version = "1.5.0"
+version = "1.5.1"
 authors = ["Christian Merdon <merdon@wias-berlin.de>", "Patrick Jaap <patrick.jaap@wias-berlin.de>"]
 
 [deps]
