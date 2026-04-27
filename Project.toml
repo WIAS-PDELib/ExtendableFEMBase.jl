@@ -40,3 +40,15 @@ SparseMatrixColorings = "0.4.22"
 SpecialPolynomials = "0.4.9, 0.5"
 UnicodePlots = "3.6"
 julia = "1.9"
+
+[extras]
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+ExampleJuggler = "3bbe58f8-ed81-4c4e-a134-03e85fcf4a1a"
+ExplicitImports = "7d51a73a-1435-4ff3-83d9-f097790105c7"
+GridVisualize = "5eed8a63-0fb0-45eb-886d-8d5a387d12b8"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
+Term = "22787eb5-b846-44ae-b979-8e399b8463ab"
+
+[targets]
+test = ["Aqua", "ExampleJuggler", "ExplicitImports", "GridVisualize", "Term", "Test", "UnicodePlots"]
