@@ -48,7 +48,7 @@ function main(;
     solution, time_assembly, time_solve = solve_poisson_lowlevel(fe_space, mu, rhs)
 
     ## loop over uniform refinements + timings
-    plt = GridVisualizer(; Plotter = Plotter, layout = (1, 2), clear = true, resolution = (500, 500))
+    plt = GridVisualizer(; Plotter = Plotter, layout = (1, 2), clear = true, resolution = (1000, 500))
     loop_allocations = 0
     for level in 1:maxnref
         X = LinRange(0, 1, 2^level + 1)

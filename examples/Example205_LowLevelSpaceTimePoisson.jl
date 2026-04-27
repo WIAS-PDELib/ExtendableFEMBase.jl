@@ -73,7 +73,7 @@ function main(; dt = 0.01, Tfinal = 1, level = 5, order = 1, Plotter = UnicodePl
     else
         @info "Plotting at five times..."
         plot_timesteps = [2, round(Int, length(T) / 4 + 0.25), round(Int, length(T) / 2 + 0.5), round(Int, length(T) - length(T) / 4), FES_time.ndofs]
-        plt = GridVisualizer(; Plotter = Plotter, layout = (1, length(plot_timesteps)), clear = true, resolution = (200 * length(plot_timesteps), 200))
+        plt = GridVisualizer(; Plotter = Plotter, layout = (1, length(plot_timesteps)), clear = true, resolution = (300 * length(plot_timesteps), 300))
         for tj in 1:length(plot_timesteps)
             t = plot_timesteps[tj]
             first = (t - 1) * FES_space.ndofs + 1
@@ -118,7 +118,7 @@ function solve_poisson_lowlevel(FES_time, FES_space, μ, f)
         ExtendableSparse.flush!(A)
     end
 
-    @info ".... spy plot of system matrix:\n$(UnicodePlots.spy(sparse(A.cscmatrix)))"
+    @info ".... spy plot of system matrix:\n$(UnicodePlots.spy(A.cscmatrix))"
 
     ## solve
     println("Solving linear system...")

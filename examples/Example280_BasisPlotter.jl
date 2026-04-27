@@ -6,7 +6,7 @@
 This example plots all the basis functions of a H1 finite element on Edge1D or Triangle2D
 as unicode plots. This is the result with the default parameters (dim = 1, order = 3):
 
-![](https://github.com/chmerdon/ExtendableFEMBase.jl/blob/master/docs/src/assets/example280.png?raw=true")
+![](example280.png)
 
 =#
 
@@ -51,6 +51,13 @@ function main(; dim = 1, order = 3, Plotter = UnicodePlots)
     for j in 1:ndofs
         GridVisualize.scalarplot!(plt[1, 1], xgrid_plot, nodevals[j]; Plotter = Plotter, clear = false, limits = (-1, 1.5), label = "dof $j", color = colors[j])
     end
-    return reveal(plt)
+    reveal(plt)
+    return FEFunc, plt
+end
+
+function generateplots(dir = pwd(); Plotter = nothing, kwargs...)
+    ~, plt = main(; Plotter = Plotter, kwargs...)
+    scene = GridVisualize.reveal(plt)
+    return GridVisualize.save(joinpath(dir, "example280.png"), scene; Plotter = Plotter)
 end
 end
