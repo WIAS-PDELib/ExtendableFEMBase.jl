@@ -46,11 +46,11 @@ function main(; dim = 1, order = 3, Plotter = UnicodePlots)
 
     ## plot
     nodevals = nodevalues_view(I[1])
-    plt = GridVisualizer(; Plotter = Plotter, layout = (1,1), size = (800,600))
+    plt = GridVisualizer(; Plotter = Plotter, layout = (1, 1), size = (800, 600))
     colors = [:red, :green, :blue, :white, :yellow, :cyan, :magenta]
-    for j = 1 : ndofs
-        GridVisualize.scalarplot!(plt[1,1], xgrid_plot, nodevals[j]; Plotter = Plotter, clear = false, limits = (-1, 1.5), label = "dof $j", color = colors[j])
+    for j in 1:ndofs
+        GridVisualize.scalarplot!(plt[1, 1], xgrid_plot, nodevals[j]; Plotter = Plotter, clear = false, limits = (-1, 1.5), label = "dof $j", color = colors[j])
     end
-    reveal(plt)
+    return reveal(plt)
 end
 end
