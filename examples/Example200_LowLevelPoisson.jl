@@ -28,12 +28,13 @@ using ExtendableGrids
 using ExtendableSparse
 using GridVisualize
 using UnicodePlots
+using Term
 using Test #
 
 function main(;
         maxnref = 8,
         order = 2,
-        Plotter = nothing,
+        Plotter = UnicodePlots,
         mu = 1.0,
         rhs = x -> x[1] - x[2]
     )
@@ -47,7 +48,7 @@ function main(;
     solution, time_assembly, time_solve = solve_poisson_lowlevel(fe_space, mu, rhs)
 
     ## loop over uniform refinements + timings
-    plt = GridVisualizer(; Plotter = Plotter, layout = (1, 1), clear = true, resolution = (500, 500))
+    plt = GridVisualizer(; Plotter = Plotter, layout = (1, 2), clear = true, resolution = (500, 500))
     loop_allocations = 0
     for level in 1:maxnref
         X = LinRange(0, 1, 2^level + 1)
@@ -55,9 +56,7 @@ function main(;
         time_facenodes = @elapsed xgrid[FaceNodes]
         fe_space = FESpace{FEType}(xgrid)
         println("\nLEVEL = $level, ndofs = $(fe_space.ndofs)\n")
-        if level < 4
-            println(stdout, unicode_gridplot(xgrid))
-        end
+
         time_dofmap = @elapsed fe_space[CellDofs]
         solution, time_assembly, time_solve = solve_poisson_lowlevel(fe_space, mu, rhs)
 
@@ -65,12 +64,9 @@ function main(;
         println(stdout, barplot(["Grid", "FaceNodes", "celldofs", "Assembly", "Solve"], [time_grid, time_facenodes, time_dofmap, time_assembly, time_solve], title = "Runtimes"))
 
         ## plot
-        if Plotter !== nothing
-            scalarplot!(plt[1, 1], xgrid, view(solution.entries, 1:num_nodes(xgrid)), limits = (-0.0125, 0.0125))
-        else
-            solution_grad = continuify(solution[1], Gradient)
-            println(stdout, unicode_scalarplot(solution[1]))
-        end
+        scalarplot!(plt[1, 1], xgrid, view(solution.entries, 1:num_nodes(xgrid)), limits = (-0.0125, 0.0125))
+        gridplot!(plt[1, 2], xgrid; markersize = 0)
+        reveal(plt)
     end
 
     return solution, plt

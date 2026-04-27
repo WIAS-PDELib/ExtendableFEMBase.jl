@@ -16,6 +16,8 @@ module Example290_InterpolationBetweenMeshes
 using ExtendableFEMBase
 using ExtendableGrids
 using GridVisualize
+using UnicodePlots
+using Term
 
 ## function to interpolate
 function u!(result, qpinfo)
@@ -25,7 +27,7 @@ function u!(result, qpinfo)
 end
 
 ## everything is wrapped in a main function
-function main(; ν = 1.0e-3, nrefs = 4, Plotter = nothing)
+function main(; ν = 1.0e-3, nrefs = 3, Plotter = UnicodePlots)
 
     ## generate two grids
     xgrid1 = uniform_refine(grid_unitsquare(Triangle2D), nrefs)
@@ -52,11 +54,13 @@ function main(; ν = 1.0e-3, nrefs = 4, Plotter = nothing)
     @time lazy_interpolate!(FEFunction2[1], FEFunction1; use_cellparents = true)
 
     ## plot
-    p = GridVisualizer(; Plotter = Plotter, layout = (1, 2), clear = true, resolution = (800, 400))
-    scalarplot!(p[1, 1], xgrid1, view(nodevalues(FEFunction1[1]), 1, :), levels = 11, title = "u_h ($FEType1, coarse grid)")
-    scalarplot!(p[1, 2], xgrid2, view(nodevalues(FEFunction2[1]), 1, :), levels = 11, title = "u_h ($FEType2, fine grid)")
-
-    return p
+    plt = GridVisualizer(; Plotter = Plotter, layout = (2, 2), clear = true, resolution = (1200, 1200))
+    scalarplot!(plt[1, 1], xgrid1, view(nodevalues(FEFunction1[1]), 1, :), levels = 11, title = "u_h ($FEType1, coarse grid)")
+    scalarplot!(plt[1, 2], xgrid2, view(nodevalues(FEFunction2[1]), 1, :), levels = 11, title = "u_h ($FEType2, fine grid)")
+    gridplot!(plt[2, 1], xgrid1, title = "coarse grid", markersize = 0)
+    gridplot!(plt[2, 2], xgrid2, title = "fine grid", markersize = 0)
+    reveal(plt)
+    return plt
 end
 
 function generateplots(dir = pwd(); Plotter = nothing, kwargs...)

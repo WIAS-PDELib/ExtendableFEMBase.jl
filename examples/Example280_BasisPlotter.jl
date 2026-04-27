@@ -14,9 +14,12 @@ module Example280_BasisPlotter
 
 using ExtendableFEMBase
 using ExtendableGrids
+using GridVisualize
+using UnicodePlots
+using Term
 
 ## everything is wrapped in a main function
-function main(; dim = 1, order = 3)
+function main(; dim = 1, order = 3, Plotter = UnicodePlots)
 
     ## generate two grids
     @assert dim in [1, 2] "dim must be 1 or 2"
@@ -36,7 +39,18 @@ function main(; dim = 1, order = 3)
         FEFunc[1][j + coffsets[j]] = 1
     end
 
+    ## interpolate on finer grid
+    xgrid_plot = simplexgrid(0:0.01:1)
+    I = FEVector(FESpace{H1P1{ndofs}}(xgrid_plot))
+    lazy_interpolate!(I[1], FEFunc, [(1, Identity)])
+
     ## plot
-    return println(stdout, unicode_scalarplot(FEFunc[1]; title = "φ", ylim = (-0.5, 1), resolution = dim == 1 ? (40, 10) : (20, 15), nrows = order))
+    nodevals = nodevalues_view(I[1])
+    plt = GridVisualizer(; Plotter = Plotter, layout = (1,1), size = (800,600))
+    colors = [:red, :green, :blue, :white, :yellow, :cyan, :magenta]
+    for j = 1 : ndofs
+        GridVisualize.scalarplot!(plt[1,1], xgrid_plot, nodevals[j]; Plotter = Plotter, clear = false, limits = (-1, 1.5), label = "dof $j", color = colors[j])
+    end
+    reveal(plt)
 end
 end
