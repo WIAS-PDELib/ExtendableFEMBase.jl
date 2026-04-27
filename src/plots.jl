@@ -3,7 +3,7 @@
 
 A standard scalarplot of (the operator evaluation of) a finite element vector.
 
-All kwargs of the calling method are transferred to the scalarplot in this method.
+All kwargs of the calling method are transferred to the scalarplot.
 """
 function GridVisualize.scalarplot!(vis::Union{Nothing, Dict{Symbol, Any}}, feVectorBlock::FEVectorBlock, operator = Identity; abs = false, component = 1, kwargs...)
     return GridVisualize.scalarplot!(vis, feVectorBlock.FES.dofgrid, view(nodevalues(feVectorBlock, operator; abs = abs), component, :); kwargs...)
@@ -20,7 +20,7 @@ A "broken" scalarplot (the operator evaluation of) a broken finite element vecto
 Instead of averaging the discontinuous values on the grid nodes, each grid cell is plotted
 independently. Thus, a discontinuous plot is generated.
 
-All kwargs of the calling method are transferred to the scalarplot in this method.
+All kwargs of the calling method are transferred to the scalarplot.
 """
 function broken_scalarplot!(vis, feVectorBlock::FEVectorBlock, operator = Identity; kwargs...)
 
@@ -45,11 +45,26 @@ end
 
 A standard vectorplot of (the operator evaluation of) a finite element vector.
 
-All kwargs of the calling method are transferred to the vectorplot in this method.
+All kwargs of the calling method are transferred to the vectorplot.
 """
 function GridVisualize.vectorplot!(p, feVectorBlock::FEVectorBlock, operator = Identity; title = feVectorBlock.name, kwargs...)
     return GridVisualize.vectorplot!(p, feVectorBlock.FES.dofgrid, eval_func_bary(PointEvaluator([(1, operator)], [feVectorBlock])); title = title, kwargs...)
 end
 function GridVisualize.vectorplot(feVectorBlock::FEVectorBlock, operator = Identity; title = feVectorBlock.name, kwargs...)
     return GridVisualize.vectorplot(feVectorBlock.FES.dofgrid, eval_func_bary(PointEvaluator([(1, operator)], [feVectorBlock])); title = title, kwargs...)
+end
+
+
+"""
+    vectorplot!(vis, feVectorBlock::FEVectorBlock, operator = Identity; kwargs...)
+
+A standard streamplot of (the operator evaluation of) a finite element vector.
+
+All kwargs of the calling method are transferred to the streamplot.
+"""
+function GridVisualize.streamplot!(p, feVectorBlock::FEVectorBlock, operator = Identity; title = feVectorBlock.name * " (streamlines)", kwargs...)
+    return streamplot!(p, feVectorBlock.FES.dofgrid, eval_func_bary(PointEvaluator([(1, operator)], [feVectorBlock])); title = title, kwargs...)
+end
+function GridVisualize.streamplot(feVectorBlock::FEVectorBlock, operator = Identity; title = feVectorBlock.name * " (streamlines)", kwargs...)
+    return streamplot(feVectorBlock.FES.dofgrid, eval_func_bary(PointEvaluator([(1, operator)], [feVectorBlock])); title = title, kwargs...)
 end

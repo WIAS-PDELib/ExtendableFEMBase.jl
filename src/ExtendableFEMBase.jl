@@ -48,8 +48,8 @@ using ExtendableSparse: ExtendableSparse, ExtendableSparseMatrix, flush!,
     rawupdateindex!
 using DifferentiationInterface: AutoForwardDiff, AutoSparse, jacobian
 using ForwardDiff: ForwardDiff, DiffResults
-using GridVisualize: GridVisualize, GridVisualizer, gridplot!, reveal, save,
-    scalarplot, scalarplot!, vectorplot, vectorplot!, streamplot!
+using GridVisualize: GridVisualize, GridVisualizer, reveal,
+    scalarplot, scalarplot!, vectorplot, vectorplot!, streamplot, streamplot!
 using LinearAlgebra: LinearAlgebra, convert, det, diagm, dot, eigen, ldiv!, lu,
     mul!, norm, transpose
 using Polynomials: Polynomials, Polynomial, coeffs
@@ -271,6 +271,7 @@ include("plots.jl")
 export scalarplot!, scalarplot
 export broken_scalarplot!, broken_scalarplot
 export vectorplot!, vectorplot
+export streamplot!, streamplot
 
 
 end # module ExtendableFEMBase.
