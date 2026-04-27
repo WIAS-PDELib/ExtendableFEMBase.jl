@@ -63,13 +63,13 @@ function main(; broken = false, nrefs = 3, abs = false, Plotter = UnicodePlots)
     nodevals4nodes2 = nodevalues(FEFunction[1], Identity; abs = abs, regions = [2], nodes = subnodes2)
 
     ## plot
-    plt = GridVisualizer(; Plotter = Plotter, layout = (1, 4), clear = true, resolution = (1600, 400))
-    gridplot!(plt[1, 1], xgrid)
-    scalarplot!(plt[1, 2], subgrid1, view(nodevals4nodes1, :), cellwise = false, levels = 11, title = "u (region 1)")
-    scalarplot!(plt[1, 3], subgrid2, view(nodevals4nodes2, :), cellwise = false, levels = 11, title = "u (region 2)")
-    scalarplot!(plt[1, 4], [subgrid1, subgrid2], xgrid, [view(nodevals4nodes1, :), view(nodevals4nodes2, :)], cellwise = false, levels = 11, title = "u")
-    reveal(plt)
-    return plt
+    #plt = GridVisualizer(; Plotter = Plotter, layout = (1, 5), clear = true, resolution = (1500, 300))
+    #gridplot!(plt[1, 1], xgrid)
+    #scalarplot!(plt[1, 2], subgrid1, view(nodevals4nodes1, :), cellwise = false, levels = 11, title = "u (region 1)")
+    #scalarplot!(plt[1, 3], subgrid2, view(nodevals4nodes2, :), cellwise = false, levels = 11, title = "u (region 2)")
+    #scalarplot!(plt[1, 4], [subgrid1, subgrid2], xgrid, [view(nodevals4nodes1, :), view(nodevals4nodes2, :)], cellwise = false, levels = 11, title = "u")
+    return broken_scalarplot(FEFunction[1]; Plotter = Plotter)
+    #return plt
 end
 
 function generateplots(dir = pwd(); Plotter = nothing, kwargs...)

@@ -10,6 +10,7 @@ DocStringExtensions = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
 ExtendableGrids = "cfc395e8-590f-11e8-1f13-43a2532b2fa8"
 ExtendableSparse = "95c220a8-a1cf-11e9-0c77-dbfce5f500b3"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+GridVisualize = "5eed8a63-0fb0-45eb-886d-8d5a387d12b8"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Polynomials = "f27b6e38-b328-58d1-80ce-0feddd5e7a45"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
@@ -52,9 +53,9 @@ Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 ExampleJuggler = "3bbe58f8-ed81-4c4e-a134-03e85fcf4a1a"
 ExplicitImports = "7d51a73a-1435-4ff3-83d9-f097790105c7"
 GridVisualize = "5eed8a63-0fb0-45eb-886d-8d5a387d12b8"
+Term = "22787eb5-b846-44ae-b979-8e399b8463ab"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
-Term = "22787eb5-b846-44ae-b979-8e399b8463ab"
 
 [targets]
 test = ["Aqua", "ExampleJuggler", "ExplicitImports", "GridVisualize", "Term", "Test", "UnicodePlots"]

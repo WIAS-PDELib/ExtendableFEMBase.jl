@@ -23,6 +23,7 @@ function main(; dim = 1, order = 3, Plotter = UnicodePlots)
 
     ## generate two grids
     @assert dim in [1, 2] "dim must be 1 or 2"
+    @assert order in 1:4 "order must be between 1 and 4"
     refgeom = dim == 1 ? Edge1D : Triangle2D
     xgrid = reference_domain(refgeom)
 
@@ -40,16 +41,35 @@ function main(; dim = 1, order = 3, Plotter = UnicodePlots)
     end
 
     ## interpolate on finer grid
-    xgrid_plot = simplexgrid(0:0.01:1)
+    xgrid_plot = dim == 1 ? simplexgrid(0:0.01:1) : uniform_refine(xgrid, 4)
     I = FEVector(FESpace{H1P1{ndofs}}(xgrid_plot))
     lazy_interpolate!(I[1], FEFunc, [(1, Identity)])
 
     ## plot
-    nodevals = nodevalues_view(I[1])
-    plt = GridVisualizer(; Plotter = Plotter, layout = (1, 1), size = (800, 600))
+    if dim == 1
+        layout = (1, 1) # everything is plotted into one plot
+        size = (600, 600)
+    elseif dim == 2
+        if order in [1, 2]
+            layout = (order, 3)
+            size = (900, 300 * order)
+        elseif order == 3
+            layout = (2, 5)
+            size = (1000, 400)
+        elseif order == 4
+            layout = (3, 5)
+            size = (1000, 600)
+        end
+    end
+    plt = GridVisualizer(; Plotter = Plotter, layout = layout, size = size)
     colors = [:red, :green, :blue, :white, :yellow, :cyan, :magenta]
+    r, c = 1, 1
     for j in 1:ndofs
-        GridVisualize.scalarplot!(plt[1, 1], xgrid_plot, nodevals[j]; Plotter = Plotter, clear = false, limits = (-1, 1.5), label = "dof $j", color = colors[j])
+        if dim == 2
+            c = mod(j - 1, layout[2]) + 1
+            r = Int(ceil((j - 0.5) / layout[2]))
+        end
+        GridVisualize.scalarplot!(plt[r, c], I[1], IdentityComponent{j}; Plotter = Plotter, clear = false, title = "dof $j", color = dim == 1 ? colors[j] : :white)
     end
     reveal(plt)
     return FEFunc, plt

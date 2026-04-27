@@ -54,9 +54,9 @@ function main(; ν = 1.0e-3, nrefs = 3, Plotter = UnicodePlots)
     @time lazy_interpolate!(FEFunction2[1], FEFunction1; use_cellparents = true)
 
     ## plot
-    plt = GridVisualizer(; Plotter = Plotter, layout = (2, 2), clear = true, resolution = (1200, 1200))
-    scalarplot!(plt[1, 1], xgrid1, view(nodevalues(FEFunction1[1]), 1, :), levels = 11, title = "u_h ($FEType1, coarse grid)")
-    scalarplot!(plt[1, 2], xgrid2, view(nodevalues(FEFunction2[1]), 1, :), levels = 11, title = "u_h ($FEType2, fine grid)")
+    plt = GridVisualizer(; Plotter = Plotter, layout = (2, 2), clear = true, resolution = (1000, 1000))
+    scalarplot!(plt[1, 1], FEFunction1[1], levels = 11, title = "u_h ($FEType1, coarse grid)")
+    scalarplot!(plt[1, 2], FEFunction2[1], levels = 11, title = "u_h ($FEType2, fine grid)")
     gridplot!(plt[2, 1], xgrid1, title = "coarse grid", markersize = 0)
     gridplot!(plt[2, 2], xgrid2, title = "fine grid", markersize = 0)
     reveal(plt)

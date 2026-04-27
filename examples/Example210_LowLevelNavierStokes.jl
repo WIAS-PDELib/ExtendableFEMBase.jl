@@ -101,9 +101,9 @@ function main(; nref = 5, teval = 0, order = 2, Plotter = UnicodePlots)
 
     ## plot
     plt = GridVisualizer(; Plotter = Plotter, layout = (1, 2), clear = true, resolution = (1200, 600))
-    scalarplot!(plt[1, 1], xgrid, nodevalues(sol[1]; abs = true)[1, :]; title = "|u| + quiver", Plotter = Plotter)
-    vectorplot!(plt[1, 1], xgrid, eval_func_bary(PointEvaluator([(1, Identity)], sol)), clear = false)
-    scalarplot!(plt[1, 2], xgrid, nodevalues(sol[2]; abs = true)[1, :]; title = "p", Plotter = Plotter)
+    scalarplot!(plt[1, 1], sol[1]; title = "|u| + quiver", abs = true)
+    vectorplot!(plt[1, 1], sol[1]; clear = false)
+    scalarplot!(plt[1, 2], sol[2]; title = "p")
     reveal(plt)
 
     return sol, plt

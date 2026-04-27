@@ -48,7 +48,7 @@ function main(;
     solution, time_assembly, time_solve = solve_poisson_lowlevel(fe_space, mu, rhs)
 
     ## loop over uniform refinements + timings
-    plt = GridVisualizer(; Plotter = Plotter, layout = (1, 2), clear = true, resolution = (1000, 500))
+    plt = GridVisualizer(; Plotter = Plotter, layout = (1, 3), clear = true, resolution = (1200, 400))
     loop_allocations = 0
     for level in 1:maxnref
         X = LinRange(0, 1, 2^level + 1)
@@ -63,9 +63,11 @@ function main(;
         ## plot statistics
         println(stdout, barplot(["Grid", "FaceNodes", "celldofs", "Assembly", "Solve"], [time_grid, time_facenodes, time_dofmap, time_assembly, time_solve], title = "Runtimes"))
 
-        ## plot
-        scalarplot!(plt[1, 1], xgrid, view(solution.entries, 1:num_nodes(xgrid)), limits = (-0.0125, 0.0125))
-        gridplot!(plt[1, 2], xgrid; markersize = 0)
+        # plot
+        scalarplot!(plt[1, 1], solution[1])
+        scalarplot!(plt[1, 2], solution[1], Gradient; abs = true, clear = true)
+        vectorplot!(plt[1, 2], solution[1], Gradient; clear = false)
+        gridplot!(plt[1, 3], xgrid; markersize = 0)
         reveal(plt)
     end
 
