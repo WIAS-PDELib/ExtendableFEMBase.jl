@@ -388,7 +388,16 @@ function ParsedDofMap(pattern::String, ncomponents, EG::Type{<:AbstractElementGe
             end
         end
     end
-    ndofs_total = num_nodes(EG) * ndofs_node + num_faces(EG) * ndofs_face + num_edges(EG) * ndofs_edge + ndofs_interior
+    ndofs_total = ndofs_interior
+    if ndofs_node > 0
+        ndofs_total += num_nodes(EG) * ndofs_node
+    end
+    if ndofs_face > 0
+        ndofs_total += num_faces(EG) * ndofs_face
+    end
+    if ndofs_edge > 0
+        ndofs_total += num_edges(EG) * ndofs_edge
+    end
     return ParsedDofMap(segments, ndofs_node4c, ndofs_face4c, ndofs_edge4c, ndofs_interior4c, ndofs_pcell4c, ndofs_node, ndofs_face, ndofs_edge, ndofs_interior, ndofs_pcell, ndofs_total)
 end
 
