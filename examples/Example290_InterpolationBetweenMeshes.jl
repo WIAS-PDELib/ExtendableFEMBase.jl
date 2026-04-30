@@ -16,8 +16,7 @@ module Example290_InterpolationBetweenMeshes
 using ExtendableFEMBase
 using ExtendableGrids
 using GridVisualize
-using UnicodePlots
-using Term
+using UnicodePlots, Term
 
 ## function to interpolate
 function u!(result, qpinfo)

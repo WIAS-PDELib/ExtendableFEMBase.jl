@@ -27,8 +27,7 @@ using ExtendableFEMBase
 using ExtendableGrids
 using ExtendableSparse
 using GridVisualize
-using UnicodePlots
-using Term
+using UnicodePlots, Term
 using Test #
 
 function main(;

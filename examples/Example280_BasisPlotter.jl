@@ -15,8 +15,7 @@ module Example280_BasisPlotter
 using ExtendableFEMBase
 using ExtendableGrids
 using GridVisualize
-using UnicodePlots
-using Term
+using UnicodePlots, Term
 
 ## everything is wrapped in a main function
 function main(; dim = 1, order = 3, Plotter = UnicodePlots)
@@ -49,27 +48,24 @@ function main(; dim = 1, order = 3, Plotter = UnicodePlots)
     if dim == 1
         layout = (1, 1) # everything is plotted into one plot
         size = (600, 600)
+        colors = [:red, :green, :blue, :white, :yellow, :cyan, :magenta]
     elseif dim == 2
-        if order in [1, 2]
-            layout = (order, 3)
-            size = (900, 300 * order)
-        elseif order == 3
-            layout = (2, 5)
-            size = (1000, 400)
-        elseif order == 4
-            layout = (3, 5)
-            size = (1000, 600)
+        l = round(Int, ceil(sqrt(ndofs)))
+        if l^2 - l >= ndofs
+            layout = (l - 1, l)
+        else
+            layout = (l, l)
         end
+        size = (1000, 1000)
+        p = permutedims(reshape(1:prod(layout), layout))[:]
     end
     plt = GridVisualizer(; Plotter = Plotter, layout = layout, size = size)
-    colors = [:red, :green, :blue, :white, :yellow, :cyan, :magenta]
-    r, c = 1, 1
     for j in 1:ndofs
-        if dim == 2
-            c = mod(j - 1, layout[2]) + 1
-            r = Int(ceil((j - 0.5) / layout[2]))
+        if dim == 1
+            ExtendableFEMBase.scalarplot!(plt[1], I[1], IdentityComponent{j}; Plotter = Plotter, clear = false, title = "dof $j", color = dim == 1 ? colors[j] : :white)
+        else
+            ExtendableFEMBase.scalarplot!(plt[p[j]], I[1], IdentityComponent{j}; Plotter = Plotter, clear = false, title = "dof $j", color = dim == 1 ? colors[j] : :white)
         end
-        GridVisualize.scalarplot!(plt[r, c], I[1], IdentityComponent{j}; Plotter = Plotter, clear = false, title = "dof $j", color = dim == 1 ? colors[j] : :white)
     end
     reveal(plt)
     return FEFunc, plt
