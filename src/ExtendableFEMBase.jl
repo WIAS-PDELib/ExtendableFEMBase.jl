@@ -41,13 +41,15 @@ using ExtendableGrids: ExtendableGrids, AT_NODES, AbstractElementGeometry,
     local_celledgenodes, local_cellfacenodes, mapderiv!,
     max_num_targets_per_source, num_cells, num_edges,
     num_faces, num_nodes, num_sources, num_targets,
-    reference_domain, subgrid, unique,
+    reference_domain, subgrid, unique, simplexgrid,
     update_trafo!
 using ExtendableSparse: ExtendableSparse, ExtendableSparseMatrix, flush!,
     AbstractExtendableSparseMatrixCSC, ExtendableSparseMatrixCSC, MTExtendableSparseMatrixCSC,
     rawupdateindex!
 using DifferentiationInterface: AutoForwardDiff, AutoSparse, jacobian
 using ForwardDiff: ForwardDiff, DiffResults
+using GridVisualize: GridVisualize, GridVisualizer, reveal,
+    scalarplot, scalarplot!, vectorplot, vectorplot!, streamplot, streamplot!
 using LinearAlgebra: LinearAlgebra, convert, det, diagm, dot, eigen, ldiv!, lu,
     mul!, norm, transpose
 using Polynomials: Polynomials, Polynomial, coeffs
@@ -263,6 +265,13 @@ This function visualizes the nodal values of the FE function stored in `u` by in
 """
 function unicode_scalarplot end
 export unicode_gridplot, unicode_scalarplot
+
+
+include("plots.jl")
+export scalarplot!, scalarplot
+export broken_scalarplot!, broken_scalarplot
+export vectorplot!, vectorplot
+export streamplot!, streamplot
 
 
 end # module ExtendableFEMBase.

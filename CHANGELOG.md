@@ -1,6 +1,9 @@
 # CHANGES
 
-## v1.6.0
+## v1.6.0 April 28, 2026
+  - unicode plotting extension marked as deprecated (will be removed in next major version), they can be realized now with GridVisualize 1.9 and backend Plotter = UnicdePlots
+  - added scalarplot, vectorplot and broken_scalarplot defined for FEVectorBlocks (moved from ExtendableFEM)
+  - updated plotting code in all examples
   - added Curl2D and Curl3D evaluation for Hdiv
   
 

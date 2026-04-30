@@ -18,6 +18,11 @@ function unicode_gridplot(
         plot_based = ON_CELLS,   # or ON_FACES/ON_EDGES
         kwargs...,
     )
+    Base.depwarn(
+        "The unicode extension of ExtendableFEMBase will be deprecated in a future release. A unicode gridplot can now be achieved
+         via GridVisualize and UnicodePlots as an backend, e.g., use gridplot(xgrid; Plotter = UnicodePlots) instead of unicode_gridplot(xgrid)",
+        :unicode_gridplot; force = true
+    )
     coords = xgrid[Coordinates]
     ex = extrema(view(coords, 1, :))
     ey = extrema(view(coords, 2, :))
@@ -84,6 +89,12 @@ function unicode_scalarplot(
         colormap = :viridis,        # only used for 2D plots
         title = u.name,
         kwargs...
+    )
+    Base.depwarn(
+        "The unicode extension of ExtendableFEMBase will be deprecated in a future release. A unicode scalarplot can now be achieved
+         via GridVisualize and UnicodePlots as an backend, e.g., use scalarplot(u; Plotter = UnicodePlots)
+         instead of unicode_scalarplot(u)",
+        :unicode_scalarplot; force = true
     )
 
     xgrid = u.FES.xgrid
