@@ -7,14 +7,14 @@ using ExtendableFEMBase
 using ExtendableGrids
 using ExtendableSparse
 using GridVisualize
-using UnicodePlots
+using UnicodePlots, Term
 using Test #
 
 # data for Poisson problem
 const μ = (t) -&gt; 1.0e-1 * t + 1 * max(0, (1 - 2 * t))
 const f = (x, t) -&gt; sin(3 * pi * x[1]) * 4 * t - cos(3 * pi * x[2]) * 4 * (1 - t)
 
-function main(; dt = 0.01, Tfinal = 1, level = 5, order = 1, Plotter = nothing, produce_movie = false)
+function main(; dt = 0.01, Tfinal = 1, level = 5, order = 1, Plotter = UnicodePlots, produce_movie = false)
 
     # Finite element type
     FEType_time = H1Pk{1, 1, order}
@@ -52,13 +52,14 @@ function main(; dt = 0.01, Tfinal = 1, level = 5, order = 1, Plotter = nothing, 
     else
         @info &quot;Plotting at five times...&quot;
         plot_timesteps = [2, round(Int, length(T) / 4 + 0.25), round(Int, length(T) / 2 + 0.5), round(Int, length(T) - length(T) / 4), FES_time.ndofs]
-        plt = GridVisualizer(; Plotter = Plotter, layout = (1, length(plot_timesteps)), clear = true, resolution = (200 * length(plot_timesteps), 200))
+        plt = GridVisualizer(; Plotter = Plotter, layout = (1, length(plot_timesteps)), clear = true, resolution = (300 * length(plot_timesteps), 300))
         for tj in 1:length(plot_timesteps)
             t = plot_timesteps[tj]
             first = (t - 1) * FES_space.ndofs + 1
             last = t * FES_space.ndofs
             scalarplot!(plt[1, tj], grid_space, view(sol, first:last), title = &quot;t = $(T[t])&quot;)
         end
+        reveal(plt)
         return sol, plt
     end
 
@@ -96,7 +97,7 @@ function solve_poisson_lowlevel(FES_time, FES_space, μ, f)
         ExtendableSparse.flush!(A)
     end
 
-    @info &quot;.... spy plot of system matrix:\n$(UnicodePlots.spy(sparse(A.cscmatrix)))&quot;
+    @info &quot;.... spy plot of system matrix:\n$(UnicodePlots.spy(A.cscmatrix))&quot;
 
     # solve
     println(&quot;Solving linear system...&quot;)
@@ -290,4 +291,4 @@ function generateplots(dir = pwd(); Plotter = nothing, kwargs...)
     return GridVisualize.save(joinpath(dir, &quot;example205.png&quot;), scene; Plotter = Plotter)
 end
 
-end #module</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example200_LowLevelPoisson/">« Example200_LowLevelPoisson</a><a class="docs-footer-nextpage" href="../Example210_LowLevelNavierStokes/">Example210_LowLevelNavierStokes »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Thursday 30 April 2026 11:39">Thursday 30 April 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end #module</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example200_LowLevelPoisson/">« Example200_LowLevelPoisson</a><a class="docs-footer-nextpage" href="../Example210_LowLevelNavierStokes/">Example210_LowLevelNavierStokes »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Thursday 30 April 2026 12:04">Thursday 30 April 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

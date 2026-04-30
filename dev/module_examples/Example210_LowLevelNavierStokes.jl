@@ -35,6 +35,7 @@ using ExtendableFEMBase
 using ExtendableGrids
 using ExtendableSparse
 using GridVisualize
+using UnicodePlots, Term
 using ForwardDiff
 using DiffResults
 
@@ -63,7 +64,7 @@ function p!(pval, qpinfo)
     return nothing
 end
 
-function main(; nref = 5, teval = 0, order = 2, Plotter = nothing)
+function main(; nref = 5, teval = 0, order = 2, Plotter = UnicodePlots)
 
     @assert order >= 2
 
@@ -98,9 +99,11 @@ function main(; nref = 5, teval = 0, order = 2, Plotter = nothing)
     println("l2 error pressure = $(error_p)")
 
     ## plot
-    plt = GridVisualizer(; Plotter = Plotter, layout = (1, 1), clear = true, resolution = (500, 500))
-    scalarplot!(plt[1, 1], xgrid, nodevalues(sol[1]; abs = true)[1, :]; title = "|u| + quiver", Plotter = Plotter)
-    vectorplot!(plt[1, 1], xgrid, eval_func_bary(PointEvaluator([(1, Identity)], sol)), clear = false)
+    plt = GridVisualizer(; Plotter = Plotter, layout = (1, 2), clear = true, resolution = (1200, 600))
+    scalarplot!(plt[1, 1], sol[1]; title = "|u| + quiver", abs = true)
+    vectorplot!(plt[1, 1], sol[1]; clear = false)
+    scalarplot!(plt[1, 2], sol[2]; title = "p")
+    reveal(plt)
 
     return sol, plt
 end

@@ -27,14 +27,14 @@ using ExtendableFEMBase
 using ExtendableGrids
 using ExtendableSparse
 using GridVisualize
-using UnicodePlots
+using UnicodePlots, Term
 using Test #
 
 ## data for Poisson problem
 const μ = (t) -> 1.0e-1 * t + 1 * max(0, (1 - 2 * t))
 const f = (x, t) -> sin(3 * pi * x[1]) * 4 * t - cos(3 * pi * x[2]) * 4 * (1 - t)
 
-function main(; dt = 0.01, Tfinal = 1, level = 5, order = 1, Plotter = nothing, produce_movie = false)
+function main(; dt = 0.01, Tfinal = 1, level = 5, order = 1, Plotter = UnicodePlots, produce_movie = false)
 
     ## Finite element type
     FEType_time = H1Pk{1, 1, order}
@@ -72,13 +72,14 @@ function main(; dt = 0.01, Tfinal = 1, level = 5, order = 1, Plotter = nothing, 
     else
         @info "Plotting at five times..."
         plot_timesteps = [2, round(Int, length(T) / 4 + 0.25), round(Int, length(T) / 2 + 0.5), round(Int, length(T) - length(T) / 4), FES_time.ndofs]
-        plt = GridVisualizer(; Plotter = Plotter, layout = (1, length(plot_timesteps)), clear = true, resolution = (200 * length(plot_timesteps), 200))
+        plt = GridVisualizer(; Plotter = Plotter, layout = (1, length(plot_timesteps)), clear = true, resolution = (300 * length(plot_timesteps), 300))
         for tj in 1:length(plot_timesteps)
             t = plot_timesteps[tj]
             first = (t - 1) * FES_space.ndofs + 1
             last = t * FES_space.ndofs
             scalarplot!(plt[1, tj], grid_space, view(sol, first:last), title = "t = $(T[t])")
         end
+        reveal(plt)
         return sol, plt
     end
 
@@ -116,7 +117,7 @@ function solve_poisson_lowlevel(FES_time, FES_space, μ, f)
         ExtendableSparse.flush!(A)
     end
 
-    @info ".... spy plot of system matrix:\n$(UnicodePlots.spy(sparse(A.cscmatrix)))"
+    @info ".... spy plot of system matrix:\n$(UnicodePlots.spy(A.cscmatrix))"
 
     ## solve
     println("Solving linear system...")

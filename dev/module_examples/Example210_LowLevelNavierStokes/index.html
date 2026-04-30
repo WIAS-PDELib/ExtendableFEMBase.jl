@@ -13,6 +13,7 @@ using ExtendableFEMBase
 using ExtendableGrids
 using ExtendableSparse
 using GridVisualize
+using UnicodePlots, Term
 using ForwardDiff
 using DiffResults
 
@@ -41,7 +42,7 @@ function p!(pval, qpinfo)
     return nothing
 end
 
-function main(; nref = 5, teval = 0, order = 2, Plotter = nothing)
+function main(; nref = 5, teval = 0, order = 2, Plotter = UnicodePlots)
 
     @assert order &gt;= 2
 
@@ -76,9 +77,11 @@ function main(; nref = 5, teval = 0, order = 2, Plotter = nothing)
     println(&quot;l2 error pressure = $(error_p)&quot;)
 
     # plot
-    plt = GridVisualizer(; Plotter = Plotter, layout = (1, 1), clear = true, resolution = (500, 500))
-    scalarplot!(plt[1, 1], xgrid, nodevalues(sol[1]; abs = true)[1, :]; title = &quot;|u| + quiver&quot;, Plotter = Plotter)
-    vectorplot!(plt[1, 1], xgrid, eval_func_bary(PointEvaluator([(1, Identity)], sol)), clear = false)
+    plt = GridVisualizer(; Plotter = Plotter, layout = (1, 2), clear = true, resolution = (1200, 600))
+    scalarplot!(plt[1, 1], sol[1]; title = &quot;|u| + quiver&quot;, abs = true)
+    vectorplot!(plt[1, 1], sol[1]; clear = false)
+    scalarplot!(plt[1, 2], sol[2]; title = &quot;p&quot;)
+    reveal(plt)
 
     return sol, plt
 end
@@ -373,4 +376,4 @@ function generateplots(dir = pwd(); Plotter = nothing, kwargs...)
     scene = GridVisualize.reveal(plt)
     return GridVisualize.save(joinpath(dir, &quot;example210.png&quot;), scene; Plotter = Plotter)
 end
-end #module</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example205_LowLevelSpaceTimePoisson/">« Example205_LowLevelSpaceTimePoisson</a><a class="docs-footer-nextpage" href="../Example280_BasisPlotter/">Example280_BasisPlotter »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Thursday 30 April 2026 11:39">Thursday 30 April 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end #module</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example205_LowLevelSpaceTimePoisson/">« Example205_LowLevelSpaceTimePoisson</a><a class="docs-footer-nextpage" href="../Example280_BasisPlotter/">Example280_BasisPlotter »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Thursday 30 April 2026 12:04">Thursday 30 April 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

@@ -4,6 +4,7 @@
 using ExtendableFEMBase
 using ExtendableGrids
 using GridVisualize
+using UnicodePlots, Term
 
 # function to interpolate
 function u!(result, qpinfo)
@@ -13,7 +14,7 @@ function u!(result, qpinfo)
 end
 
 # everything is wrapped in a main function
-function main(; ν = 1.0e-3, nrefs = 4, Plotter = nothing)
+function main(; ν = 1.0e-3, nrefs = 3, Plotter = UnicodePlots)
 
     # generate two grids
     xgrid1 = uniform_refine(grid_unitsquare(Triangle2D), nrefs)
@@ -40,11 +41,13 @@ function main(; ν = 1.0e-3, nrefs = 4, Plotter = nothing)
     @time lazy_interpolate!(FEFunction2[1], FEFunction1; use_cellparents = true)
 
     # plot
-    p = GridVisualizer(; Plotter = Plotter, layout = (1, 2), clear = true, resolution = (800, 400))
-    scalarplot!(p[1, 1], xgrid1, view(nodevalues(FEFunction1[1]), 1, :), levels = 11, title = &quot;u_h ($FEType1, coarse grid)&quot;)
-    scalarplot!(p[1, 2], xgrid2, view(nodevalues(FEFunction2[1]), 1, :), levels = 11, title = &quot;u_h ($FEType2, fine grid)&quot;)
-
-    return p
+    plt = GridVisualizer(; Plotter = Plotter, layout = (2, 2), clear = true, resolution = (1000, 1000))
+    scalarplot!(plt[1, 1], FEFunction1[1], levels = 11, title = &quot;u_h ($FEType1, coarse grid)&quot;)
+    scalarplot!(plt[1, 2], FEFunction2[1], levels = 11, title = &quot;u_h ($FEType2, fine grid)&quot;)
+    gridplot!(plt[2, 1], xgrid1, title = &quot;coarse grid&quot;, markersize = 0)
+    gridplot!(plt[2, 2], xgrid2, title = &quot;fine grid&quot;, markersize = 0)
+    reveal(plt)
+    return plt
 end
 
 function generateplots(dir = pwd(); Plotter = nothing, kwargs...)
@@ -53,4 +56,4 @@ function generateplots(dir = pwd(); Plotter = nothing, kwargs...)
     return GridVisualize.save(joinpath(dir, &quot;example290.png&quot;), scene; Plotter = Plotter)
 end
 
-end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example281_DiscontinuousPlot/">« Example281_DiscontinuousPlot</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Thursday 30 April 2026 11:39">Thursday 30 April 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example281_DiscontinuousPlot/">« Example281_DiscontinuousPlot</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Thursday 30 April 2026 12:04">Thursday 30 April 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

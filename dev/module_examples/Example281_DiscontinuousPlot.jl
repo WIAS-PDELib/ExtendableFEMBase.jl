@@ -16,6 +16,7 @@ module Example281_DiscontinuousPlot
 using ExtendableFEMBase
 using ExtendableGrids
 using GridVisualize
+using UnicodePlots, Term
 
 ## function to interpolate
 function u!(result, qpinfo)
@@ -30,7 +31,7 @@ function u!(result, qpinfo)
 end
 
 ## everything is wrapped in a main function
-function main(; broken = false, nrefs = 3, abs = false, Plotter = nothing)
+function main(; broken = false, nrefs = 3, abs = false, Plotter = UnicodePlots)
 
     ## generate two grids
     xgrid = grid_unitsquare(Triangle2D)
@@ -61,13 +62,14 @@ function main(; broken = false, nrefs = 3, abs = false, Plotter = nothing)
     nodevals4nodes2 = nodevalues(FEFunction[1], Identity; abs = abs, regions = [2], nodes = subnodes2)
 
     ## plot
-    if Plotter !== nothing
-        p = GridVisualizer(; Plotter = Plotter, layout = (2, 2), clear = true, resolution = (1000, 500))
-        gridplot!(p[1, 1], xgrid)
-        scalarplot!(p[1, 2], [subgrid1, subgrid2], xgrid, [view(nodevals4nodes1, :), view(nodevals4nodes2, :)], cellwise = false, levels = 11, title = "u")
-    end
-
-    return p
+    plt = GridVisualizer(; Plotter = Plotter, layout = (1, 5), clear = true, resolution = (1500, 300))
+    gridplot!(plt[1, 1], xgrid)
+    scalarplot!(plt[1, 2], subgrid1, view(nodevals4nodes1, :), cellwise = false, levels = 11, title = "u (region 1)")
+    scalarplot!(plt[1, 3], subgrid2, view(nodevals4nodes2, :), cellwise = false, levels = 11, title = "u (region 2)")
+    scalarplot!(plt[1, 4], [subgrid1, subgrid2], xgrid, [view(nodevals4nodes1, :), view(nodevals4nodes2, :)], cellwise = false, levels = 11, title = "u")
+    broken_scalarplot!(plt[1, 5], FEFunction[1])
+    reveal(plt)
+    return plt
 end
 
 function generateplots(dir = pwd(); Plotter = nothing, kwargs...)
