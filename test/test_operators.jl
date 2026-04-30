@@ -6,7 +6,11 @@ function run_operator_tests()
         println("============================")
         error = test_derivatives2D()
         @test error < 1.0e-14
+        error = test_derivatives2D_hdiv()
+        @test error < 1.0e-14
         error = test_derivatives3D()
+        @test error < 1.0e-14
+        error = test_derivatives3D_hdiv()
         @test error < 1.0e-14
         test_reconstructions()
     end
@@ -79,8 +83,7 @@ function test_derivatives2D()
     xgrid = grid_triangle([-1.0 0.0; 1.0 0.0; 0.0 1.0]')
 
     ## define P2-Courant finite element space
-    FEType = H1P2{2, 2}
-    FES = FESpace{FEType}(xgrid)
+    FES = FESpace{H1P2{2, 2}}(xgrid)
     show(devnull, FES)
 
     ## get midpoint quadrature rule for constants
@@ -137,6 +140,52 @@ function test_derivatives2D()
     println("EG = Triangle2D | operator = SymmetricHessian{√2} | error = $error_symH2")
 
     return maximum([error_curl2, error_L, error_H, error_symH, error_symH2])
+end
+
+
+function test_derivatives2D_hdiv()
+    ## define test function and expected operator evals
+    function testf(result, qpinfo)
+        x = qpinfo.x
+        result[1] = x[1]^2
+        return result[2] = 3 * x[2]^2 + x[1] * x[2]
+    end
+
+    ## expected values of operators in cell midpoint
+    expected_curl2 = [1 / 3]
+
+    ## define grid = a single non-refenrece triangle
+    xgrid = grid_triangle([-1.0 0.0; 1.0 0.0; 0.0 1.0]')
+
+    ## define P2-Courant finite element space
+    FES = FESpace{HDIVBDM2{2}}(xgrid)
+    show(devnull, FES)
+
+    ## get midpoint quadrature rule for constants
+    qf = QuadratureRule{Float64, Triangle2D}(0)
+
+    ## define FE basis Evaluator for Hessian
+    FEBE_curl2 = FEEvaluator(FES, Curl2D, qf)
+
+    ## update on cell 1
+    update_basis!(FEBE_curl2, 1)
+
+    ## interpolate quadratic testfunction
+    Iu = FEVector(FES)
+    interpolate!(Iu[1], testf)
+
+    ## check if operator evals have the correct length
+    @assert size(FEBE_curl2.cvals, 1) == length(expected_curl2)
+
+    # compute derivatives
+    curl2 = zeros(Float64, 1)
+    eval_febe!(curl2, FEBE_curl2, Iu.entries[FES[CellDofs][:, 1]], 1)
+
+    ## compute errors to expected values
+    error_curl2 = sqrt(sum((curl2 - expected_curl2) .^ 2))
+    println("EG = Triangle2D | operator = Curl2 | error = $error_curl2")
+
+    return maximum([error_curl2])
 end
 
 
@@ -219,4 +268,54 @@ function test_derivatives3D()
     println("EG = Tetrahedron3D | operator = SymmetricHessian{√2} | error = $error_symH2")
 
     return maximum([error_curl3, error_L, error_H, error_symH, error_symH2])
+end
+
+
+function test_derivatives3D_hdiv()
+    ## define test function and expected operator evals
+    function testf(result, qpinfo)
+        x = qpinfo.x
+        result[1] = x[2]
+        result[2] = 3 * x[3]
+        return result[3] = x[2]
+    end
+
+    ## expected values of operators in cell midpoint
+    expected_curl3 = [1 - 3, 0, -1]
+
+    ## define grid = a single non-refenrece triangle
+    xgrid = reference_domain(Tetrahedron3D)
+    xgrid[Coordinates][:, 2] = [2, 0, 0]
+
+    ## define P2-Courant finite element space
+    FES = FESpace{HDIVRT1{3}}(xgrid)
+    show(devnull, FES)
+
+    ## get midpoint quadrature rule for constants
+    qf = QuadratureRule{Float64, Tetrahedron3D}(0)
+
+    ## define FE basis Evaluator for Hessian
+    FEBE_curl3 = FEEvaluator(FES, Curl3D, qf)
+
+    ## update on cell 1
+    update_basis!(FEBE_curl3, 1)
+
+    ## interpolate quadratic testfunction
+    Iu = FEVector(FES)
+    interpolate!(Iu[1], testf)
+
+    ## check if operator evals have the correct length
+    @assert size(FEBE_curl3.cvals, 1) == length(expected_curl3)
+
+    ## eval 2nd order derivatives at only quadrature point 1
+    ## since function is quadratic this should be constant
+    curl3 = zeros(Float64, 3)
+    eval_febe!(curl3, FEBE_curl3, Iu.entries[FES[CellDofs][:, 1]], 1)
+    @info curl3
+
+    ## compute errors to expected values
+    error_curl3 = sqrt(sum((curl3 - expected_curl3) .^ 2))
+    println("EG = Tetrahedron3D | operator = Curl3 | error = $error_curl3")
+
+    return maximum([error_curl3])
 end

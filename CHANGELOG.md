@@ -1,5 +1,9 @@
 # CHANGES
 
+## v1.6.0
+  - added Curl2D and Curl3D evaluation for Hdiv
+  
+
 ## v1.5.0 November 21, 2025
   - added type parameter to `PointEvaluator` so `lazy_interpolate!` is now accessible for automatic differentiation
   - added new `compute_lazy_interpolation_jacobian` function for computing Jacobians of interpolations between finite element spaces
