@@ -146,7 +146,7 @@ function initialize!(O::PointEvaluator{T, TCoeff, UT}, sol; time = 0, kwargs...)
     O.L2G = []
     for EG in EGs
         ## FE basis evaluator for EG
-        push!(O.BE_args, [FEEvaluator(FES_args[j], O.ops_args[j], QuadratureRule{T, EG}(0); AT = AT) for j in 1:nargs])
+        push!(O.BE_args, [FEEvaluator(FES_args[j], O.ops_args[j], QuadratureRule{T, EG}(0); T, AT) for j in 1:nargs])
 
         ## L2G map for EG
         push!(O.L2G, L2GTransformer(EG, xgrid, gridAT))
