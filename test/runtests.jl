@@ -4,6 +4,8 @@ using ExtendableFEMBase
 using ExtendableSparse
 using ExplicitImports
 using ExampleJuggler
+using ForwardDiff
+using LinearAlgebra
 using SparseArrays
 using Aqua
 
@@ -143,6 +145,37 @@ function exact_function(::Val{3}, polyorder)
     return polynomial, exact_integral, gradient, hessian
 end
 
+function point_evaluator_closure(coeffs = [1.0, 0.0, 0.0])
+    input_types = Dict{DataType, Any}()
+    result_types = Dict{DataType, Any}()
+
+    grid_types = Dict{DataType, Any}()
+    FES_types = Dict{DataType, Any}()
+    RVec_types = Dict{DataType, Any}()
+    PE_types = Dict{DataType, Any}()
+
+    function closure(x::Vector{T}) where {T}
+        if !haskey(PE_types, T)
+            input_types[T] = zeros(T, 2)
+            result_types[T] = zeros(T, 1)
+
+            grid_types[T] = reference_domain(Triangle2D, T)
+            FES_types[T] = FESpace{H1P1{1}}(grid_types[T])
+            RVec_types[T] = FEVector(FES_types[T])
+            RVec_types[T].entries .= coeffs
+            PE_types[T] = PointEvaluator([(1, Identity)], [RVec_types[T][1]]; Tv = T, TCoeff = T)
+        end
+
+        input_types[T][1] = log(x[1])
+        input_types[T][2] = log(x[2])
+
+        ExtendableFEMBase.evaluate!(result_types[T], PE_types[T], input_types[T])
+
+        return result_types[T]
+    end
+
+    return closure
+end
 
 function run_all_tests()
     return begin

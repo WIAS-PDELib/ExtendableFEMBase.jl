@@ -6,6 +6,7 @@ function run_pointevaluator_tests()
         println("======================")
         test_pointevaluation2D()
         test_pointevaluation3D()
+        test_pointevaluation_differentiability()
     end
 end
 
@@ -51,4 +52,26 @@ function test_pointevaluation3D()
 
     evaluate!(eval, PE, x)
     return @test abs(eval[1] - sum(x)) < 1.0e-15
+end
+
+function test_pointevaluation_differentiability()
+    ## check if point evaluation can be differentiated
+    ## wrt. coordinates
+    coefficient_test_cases = I(3)
+    x = [exp(1.0), exp(0.0)]
+
+    evals = [[0.0], [1.0], [0.0]]
+    derivs = [
+        [-1 / exp(1.0) -1.0;],
+        [1 / exp(1.0) 0.0;],
+        [0.0 1.0;],
+    ]
+
+    for (case_index, coeffs) in enumerate(eachcol(coefficient_test_cases))
+        f = point_evaluator_closure(coeffs)
+        @test norm(f(x) - evals[case_index], Inf) < tolerance
+        @test norm(ForwardDiff.jacobian(f, x) - derivs[case_index], Inf) < tolerance
+    end
+
+    return nothing
 end
