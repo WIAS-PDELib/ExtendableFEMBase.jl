@@ -167,7 +167,7 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Tang
     cvals = FEBE.cvals
     refbasisvals = FEBE.refbasisvals
     fill!(cvals, 0)
-    for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2), k in 1:length(normal)
+    for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2)
         cvals[1, dof_i, i] = refbasisvals[i][subset[dof_i], 1] * normal[2] - refbasisvals[i][subset[dof_i], 2] * normal[1]
     end
     return nothing
