@@ -78,9 +78,10 @@ function test_derivatives2D()
     expected_symH = [2, 0, 0, 0, 6, 1] # expected symmetric Hessian
     expected_symH2 = [2, 0, 0, 0, 6, sqrt(2)] # expected symmetric Hessian
     expected_curl2 = [1 / 3]
+    expected_grad = [0, 0, 1 / 3, 2]
 
-    ## define grid = a single non-refenrece triangle
-    xgrid = grid_triangle([-1.0 0.0; 1.0 0.0; 0.0 1.0]')
+    ## define grid = a single non-reference triangle
+    xgrid = grid_triangle([-1.0 0.0; 1.0 0.0; 0.0 1.0]') # midpoint = [0.0, 1 / 3]
 
     ## define P2-Courant finite element space
     FES = FESpace{H1P2{2, 2}}(xgrid)
@@ -95,6 +96,7 @@ function test_derivatives2D()
     FEBE_H = FEEvaluator(FES, Hessian, qf)
     FEBE_symH = FEEvaluator(FES, SymmetricHessian{1}, qf)
     FEBE_symH2 = FEEvaluator(FES, SymmetricHessian{sqrt(2)}, qf)
+    FEBE_grad = FEEvaluator(FES, Gradient, qf)
 
     ## update on cell 1
     update_basis!(FEBE_L, 1)
@@ -102,7 +104,7 @@ function test_derivatives2D()
     update_basis!(FEBE_symH, 1)
     update_basis!(FEBE_symH2, 1)
     update_basis!(FEBE_curl2, 1)
-
+    update_basis!(FEBE_grad, 1)
     ## interpolate quadratic testfunction
     Iu = FEVector(FES)
     interpolate!(Iu[1], testf)
@@ -113,6 +115,7 @@ function test_derivatives2D()
     @assert size(FEBE_symH.cvals, 1) == length(expected_symH)
     @assert size(FEBE_symH2.cvals, 1) == length(expected_symH2)
     @assert size(FEBE_curl2.cvals, 1) == length(expected_curl2)
+    @assert size(FEBE_grad.cvals, 1) == length(expected_grad)
 
     ## eval 2nd order derivatives at only quadrature point 1
     ## since function is quadratic this should be constant
@@ -121,11 +124,13 @@ function test_derivatives2D()
     symH2 = zeros(Float64, 6)
     L = zeros(Float64, 2)
     curl2 = zeros(Float64, 1)
+    grad = zeros(Float64, 4)
     eval_febe!(L, FEBE_L, Iu.entries[FES[CellDofs][:, 1]], 1)
     eval_febe!(H, FEBE_H, Iu.entries[FES[CellDofs][:, 1]], 1)
     eval_febe!(symH, FEBE_symH, Iu.entries[FES[CellDofs][:, 1]], 1)
     eval_febe!(symH2, FEBE_symH2, Iu.entries[FES[CellDofs][:, 1]], 1)
     eval_febe!(curl2, FEBE_curl2, Iu.entries[FES[CellDofs][:, 1]], 1)
+    eval_febe!(grad, FEBE_grad, Iu.entries[FES[CellDofs][:, 1]], 1)
 
     ## compute errors to expected values
     error_L = sqrt(sum((L - expected_L) .^ 2))
@@ -133,13 +138,15 @@ function test_derivatives2D()
     error_symH = sqrt(sum((symH - expected_symH) .^ 2))
     error_symH2 = sqrt(sum((symH2 - expected_symH2) .^ 2))
     error_curl2 = sqrt(sum((curl2 - expected_curl2) .^ 2))
-    println("EG = Triangle2D | operator = Curl2 | error = $error_curl2")
-    println("EG = Triangle2D | operator = Laplacian | error = $error_L")
-    println("EG = Triangle2D | operator = Hessian | error = $error_H")
-    println("EG = Triangle2D | operator = SymmetricHessian{1} | error = $error_symH")
-    println("EG = Triangle2D | operator = SymmetricHessian{√2} | error = $error_symH2")
+    error_grad = sqrt(sum((grad - expected_grad) .^ 2))
+    println("EG = Triangle2D | H1 | operator = Curl2 | error = $error_curl2")
+    println("EG = Triangle2D | H1 | operator = Laplacian | error = $error_L")
+    println("EG = Triangle2D | H1 | operator = Hessian | error = $error_H")
+    println("EG = Triangle2D | H1 | operator = SymmetricHessian{1} | error = $error_symH")
+    println("EG = Triangle2D | H1 | operator = SymmetricHessian{√2} | error = $error_symH2")
+    println("EG = Triangle2D | H1 | operator = Gradient | error = $error_grad")
 
-    return maximum([error_curl2, error_L, error_H, error_symH, error_symH2])
+    return maximum([error_curl2, error_L, error_H, error_symH, error_symH2, error_grad])
 end
 
 
@@ -153,9 +160,11 @@ function test_derivatives2D_hdiv()
 
     ## expected values of operators in cell midpoint
     expected_curl2 = [1 / 3]
+    expected_grad = [0, 0, 1 / 3, 2]
+    expected_div = [2]
 
     ## define grid = a single non-refenrece triangle
-    xgrid = grid_triangle([-1.0 0.0; 1.0 0.0; 0.0 1.0]')
+    xgrid = grid_triangle([-1.0 0.0; 1.0 0.0; 0.0 1.0]') # midpoint = [0.0, 1 / 3]
 
     ## define P2-Courant finite element space
     FES = FESpace{HDIVBDM2{2}}(xgrid)
@@ -166,9 +175,13 @@ function test_derivatives2D_hdiv()
 
     ## define FE basis Evaluator for Hessian
     FEBE_curl2 = FEEvaluator(FES, Curl2D, qf)
+    FEBE_grad = FEEvaluator(FES, Gradient, qf)
+    FEBE_div = FEEvaluator(FES, Divergence, qf)
 
     ## update on cell 1
     update_basis!(FEBE_curl2, 1)
+    update_basis!(FEBE_grad, 1)
+    update_basis!(FEBE_div, 1)
 
     ## interpolate quadratic testfunction
     Iu = FEVector(FES)
@@ -176,16 +189,26 @@ function test_derivatives2D_hdiv()
 
     ## check if operator evals have the correct length
     @assert size(FEBE_curl2.cvals, 1) == length(expected_curl2)
+    @assert size(FEBE_grad.cvals, 1) == length(expected_grad)
+    @assert size(FEBE_div.cvals, 1) == length(expected_div)
 
     # compute derivatives
     curl2 = zeros(Float64, 1)
+    grad = zeros(Float64, 4)
+    div = zeros(Float64, 1)
     eval_febe!(curl2, FEBE_curl2, Iu.entries[FES[CellDofs][:, 1]], 1)
+    eval_febe!(grad, FEBE_grad, Iu.entries[FES[CellDofs][:, 1]], 1)
+    eval_febe!(div, FEBE_div, Iu.entries[FES[CellDofs][:, 1]], 1)
 
     ## compute errors to expected values
     error_curl2 = sqrt(sum((curl2 - expected_curl2) .^ 2))
-    println("EG = Triangle2D | operator = Curl2 | error = $error_curl2")
+    error_grad = sqrt(sum((grad - expected_grad) .^ 2))
+    error_div = sqrt(sum((div - expected_div) .^ 2))
+    println("EG = Triangle2D | HDIV | operator = Curl2 | error = $error_curl2")
+    println("EG = Triangle2D | HDIV | operator = Gradient | error = $error_grad")
+    println("EG = Triangle2D | HDIV | operator = Divergence | error = $error_div")
 
-    return maximum([error_curl2])
+    return maximum([error_curl2, error_grad, error_div])
 end
 
 
@@ -204,10 +227,11 @@ function test_derivatives3D()
     expected_symH = [2, 0, 0, 1, 0, 0, 0, 0, 6, 0, 0, 1, 0, 0, 0, 0, 0, 1] # expected symmetric Hessian
     expected_symH2 = [2, 0, 0, sqrt(2), 0, 0, 0, 0, 6, 0, 0, sqrt(2), 0, 0, 0, 0, 0, sqrt(2)] # expected symmetric Hessian
     expected_curl3 = [1 / 2 - 6 / 4, 0, 1 / 4 - 1 / 4]
+    expected_grad = [1, 0.25, 0.25, 0.25, 0.5, 1.5, 0.25, 0.5, 0] # expected Gradient
 
     ## define grid = a single non-refenrece triangle
     xgrid = reference_domain(Tetrahedron3D)
-    xgrid[Coordinates][:, 2] = [2, 0, 0]
+    xgrid[Coordinates][:, 2] = [2, 0, 0] # midpoint = [0.5, 0.25, 0.25]
 
     ## define P2-Courant finite element space
     FEType = H1P2{3, 3}
@@ -223,6 +247,7 @@ function test_derivatives3D()
     FEBE_H = FEEvaluator(FES, Hessian, qf)
     FEBE_symH = FEEvaluator(FES, SymmetricHessian{1}, qf)
     FEBE_symH2 = FEEvaluator(FES, SymmetricHessian{sqrt(2)}, qf)
+    FEBE_grad = FEEvaluator(FES, Gradient, qf)
 
     ## update on cell 1
     update_basis!(FEBE_L, 1)
@@ -230,6 +255,7 @@ function test_derivatives3D()
     update_basis!(FEBE_symH, 1)
     update_basis!(FEBE_symH2, 1)
     update_basis!(FEBE_curl3, 1)
+    update_basis!(FEBE_grad, 1)
 
     ## interpolate quadratic testfunction
     Iu = FEVector(FES)
@@ -241,6 +267,7 @@ function test_derivatives3D()
     @assert size(FEBE_symH.cvals, 1) == length(expected_symH)
     @assert size(FEBE_symH2.cvals, 1) == length(expected_symH2)
     @assert size(FEBE_curl3.cvals, 1) == length(expected_curl3)
+    @assert size(FEBE_grad.cvals, 1) == length(expected_grad)
 
     ## eval 2nd order derivatives at only quadrature point 1
     ## since function is quadratic this should be constant
@@ -249,11 +276,13 @@ function test_derivatives3D()
     symH2 = zeros(Float64, 18)
     L = zeros(Float64, 3)
     curl3 = zeros(Float64, 3)
+    grad = zeros(Float64, 9)
     eval_febe!(L, FEBE_L, Iu.entries[FES[CellDofs][:, 1]], 1)
     eval_febe!(H, FEBE_H, Iu.entries[FES[CellDofs][:, 1]], 1)
     eval_febe!(symH, FEBE_symH, Iu.entries[FES[CellDofs][:, 1]], 1)
     eval_febe!(symH2, FEBE_symH2, Iu.entries[FES[CellDofs][:, 1]], 1)
     eval_febe!(curl3, FEBE_curl3, Iu.entries[FES[CellDofs][:, 1]], 1)
+    eval_febe!(grad, FEBE_grad, Iu.entries[FES[CellDofs][:, 1]], 1)
 
     ## compute errors to expected values
     error_L = sqrt(sum((L - expected_L) .^ 2))
@@ -261,13 +290,15 @@ function test_derivatives3D()
     error_symH = sqrt(sum((symH - expected_symH) .^ 2))
     error_symH2 = sqrt(sum((symH2 - expected_symH2) .^ 2))
     error_curl3 = sqrt(sum((curl3 - expected_curl3) .^ 2))
-    println("EG = Tetrahedron3D | operator = Curl3 | error = $error_curl3")
-    println("EG = Tetrahedron3D | operator = Laplacian | error = $error_L")
-    println("EG = Tetrahedron3D | operator = Hessian | error = $error_H")
-    println("EG = Tetrahedron3D | operator = SymmetricHessian{1} | error = $error_symH")
-    println("EG = Tetrahedron3D | operator = SymmetricHessian{√2} | error = $error_symH2")
+    error_grad = sqrt(sum((grad - expected_grad) .^ 2))
+    println("EG = Tetrahedron3D | H1 | operator = Curl3 | error = $error_curl3")
+    println("EG = Tetrahedron3D | H1 |operator = Laplacian | error = $error_L")
+    println("EG = Tetrahedron3D | H1 | operator = Hessian | error = $error_H")
+    println("EG = Tetrahedron3D | H1 | operator = SymmetricHessian{1} | error = $error_symH")
+    println("EG = Tetrahedron3D | H1 | operator = SymmetricHessian{√2} | error = $error_symH2")
+    println("EG = Tetrahedron3D | H1 | operator = Gradient | error = $error_grad")
 
-    return maximum([error_curl3, error_L, error_H, error_symH, error_symH2])
+    return maximum([error_curl3, error_L, error_H, error_symH, error_symH2, error_grad])
 end
 
 
@@ -282,10 +313,12 @@ function test_derivatives3D_hdiv()
 
     ## expected values of operators in cell midpoint
     expected_curl3 = [1 - 3, 0, -1]
+    expected_grad = [0, 1, 0, 0, 0, 3, 0, 1, 0] # expected Gradient
+    expected_div = [0]
 
     ## define grid = a single non-refenrece triangle
     xgrid = reference_domain(Tetrahedron3D)
-    xgrid[Coordinates][:, 2] = [2, 0, 0]
+    xgrid[Coordinates][:, 2] = [2, 0, 0] # midpoint = [0.5, 0.25, 0.25]
 
     ## define P2-Courant finite element space
     FES = FESpace{HDIVRT1{3}}(xgrid)
@@ -296,9 +329,13 @@ function test_derivatives3D_hdiv()
 
     ## define FE basis Evaluator for Hessian
     FEBE_curl3 = FEEvaluator(FES, Curl3D, qf)
+    FEBE_grad = FEEvaluator(FES, Gradient, qf)
+    FEBE_div = FEEvaluator(FES, Divergence, qf)
 
     ## update on cell 1
     update_basis!(FEBE_curl3, 1)
+    update_basis!(FEBE_grad, 1)
+    update_basis!(FEBE_div, 1)
 
     ## interpolate quadratic testfunction
     Iu = FEVector(FES)
@@ -306,16 +343,25 @@ function test_derivatives3D_hdiv()
 
     ## check if operator evals have the correct length
     @assert size(FEBE_curl3.cvals, 1) == length(expected_curl3)
+    @assert size(FEBE_grad.cvals, 1) == length(expected_grad)
+    @assert size(FEBE_div.cvals, 1) == length(expected_div)
 
     ## eval 2nd order derivatives at only quadrature point 1
     ## since function is quadratic this should be constant
     curl3 = zeros(Float64, 3)
+    grad = zeros(Float64, 9)
+    div = zeros(Float64, 1)
     eval_febe!(curl3, FEBE_curl3, Iu.entries[FES[CellDofs][:, 1]], 1)
-    @info curl3
+    eval_febe!(grad, FEBE_grad, Iu.entries[FES[CellDofs][:, 1]], 1)
+    eval_febe!(div, FEBE_div, Iu.entries[FES[CellDofs][:, 1]], 1)
 
     ## compute errors to expected values
     error_curl3 = sqrt(sum((curl3 - expected_curl3) .^ 2))
-    println("EG = Tetrahedron3D | operator = Curl3 | error = $error_curl3")
+    error_grad = sqrt(sum((grad - expected_grad) .^ 2))
+    error_div = sqrt(sum((div - expected_div) .^ 2))
+    println("EG = Tetrahedron3D | HIDV | operator = Curl3 | error = $error_curl3")
+    println("EG = Tetrahedron3D | HIDV | operator = Gradient | error = $error_grad")
+    println("EG = Tetrahedron3D | HIDV | operator = Divergence | error = $error_div")
 
-    return maximum([error_curl3])
+    return maximum([error_curl3, error_grad, error_div])
 end

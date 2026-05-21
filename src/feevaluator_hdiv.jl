@@ -96,12 +96,20 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Grad
     fill!(cvals, 0)
     det = FEBE.L2G.det # 1 alloc
     for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2)
-        for c in 1:size(L2GM, 1), k in 1:size(L2GAinv, 1)
+        for k in 1:size(L2GAinv, 1)
             # compute duc/dxk
-            for j in 1:size(L2GM, 2), m in 1:size(L2GAinv, 2)
-                cvals[k + offsets[c], dof_i, i] += L2GAinv[k, m] * L2GM[c, j] * refbasisderivvals[subset[dof_i] + offsets2[j], m, i]
+            for j in 1:size(L2GM, 2)
+                temp = 0
+                for m in 1:size(L2GAinv, 2)
+                    temp += L2GAinv[k, m] * refbasisderivvals[subset[dof_i] + offsets2[j], m, i]
+                end
+                for c in 1:size(L2GM, 1)
+                    cvals[k + offsets[c], dof_i, i] += L2GM[c, j] * temp
+                end
             end
-            cvals[k + offsets[c], dof_i, i] *= coefficients[c, dof_i] / det
+            for c in 1:size(L2GM, 1)
+                cvals[k + offsets[c], dof_i, i] *= coefficients[c, dof_i] / det
+            end
         end
     end
     return nothing
