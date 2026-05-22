@@ -43,8 +43,8 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Curl
     fill!(cvals, 0)
     det = FEBE.L2G.det
     for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2)
-        cvals[1, dof_i, i] = refbasisderivvals[subset[dof_i] + offsets2[1], 2, i]
-        cvals[1, dof_i, i] -= refbasisderivvals[subset[dof_i] + offsets2[2], 1, i]
+        cvals[1, dof_i, i] = refbasisderivvals[subset[dof_i] + offsets2[2], 1, i] # du2/dx
+        cvals[1, dof_i, i] -= refbasisderivvals[subset[dof_i] + offsets2[1], 2, i] # -du1/dy
         cvals[1, dof_i, i] *= coefficients[1, dof_i] / det
     end
     return nothing
