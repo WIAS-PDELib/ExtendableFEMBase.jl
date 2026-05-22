@@ -173,7 +173,7 @@ function initialize!(O::PointEvaluator{T, Ti, TCoeff, UT}, sol; time = 0, kwargs
             BE_args::Array{<:FEEvaluator, 1},
             L2G::L2GTransformer{Tv, Ti},
             xref,
-            item::Ti, # cell used to evaluate local coordinates
+            item, # cell used to evaluate local coordinates
         ) where {Tv, Ti}
 
         for id in 1:nargs
@@ -247,7 +247,7 @@ function evaluate_bary!(
         result,
         PE::PointEvaluator{Tv, Ti},
         xref,
-        item::Ti,
+        item,
     ) where {Tv, Ti}
 
     ## find cell geometry id
