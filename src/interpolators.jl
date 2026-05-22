@@ -392,7 +392,7 @@ function MomentInterpolator(
         end
         weights, xref = QF.w, QF.xref
         nweights = length(weights)
-        for item::Int in items
+        for item::Ti in items
             if item < 1
                 continue
             end
@@ -609,7 +609,7 @@ function FunctionalInterpolator(
         end
         weights, xref = QF.w, QF.xref
         nweights = length(weights)
-        for item::Int in items
+        for item::Ti in items
             if item < 1
                 continue
             end

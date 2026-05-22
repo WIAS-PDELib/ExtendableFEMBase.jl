@@ -312,7 +312,7 @@ end
 function get_reconstruction_coefficients!(xgrid::ExtendableGrid{Tv, Ti}, ::Union{Type{<:ON_FACES}, Type{<:ON_BFACES}}, FE::Type{<:H1BR{2}}, FER::Type{<:HDIVRT0{2}}, ::Type{<:Edge1D}) where {Tv, Ti}
     xFaceVolumes::Array{<:Real, 1} = xgrid[FaceVolumes]
     xFaceNormals::Array{<:Real, 2} = xgrid[FaceNormals]
-    return function closure(coefficients::Array{<:Real, 2}, face::Int)
+    return function closure(coefficients::Array{<:Real, 2}, face)
         coefficients[1, 1] = 1 // 2 * xFaceVolumes[face] * xFaceNormals[1, face]
         coefficients[2, 1] = 1 // 2 * xFaceVolumes[face] * xFaceNormals[1, face]
         coefficients[3, 1] = 1 // 2 * xFaceVolumes[face] * xFaceNormals[2, face]
@@ -350,7 +350,7 @@ function get_reconstruction_coefficients!(xgrid::ExtendableGrid{Tv, Ti}, ::Union
     xFaceVolumes::Array{Tv, 1} = xgrid[FaceVolumes]
     xFaceNormals::Array{Tv, 2} = xgrid[FaceNormals]
     nfacenodes::Int = num_nodes(EG)
-    return function closure(coefficients::Array{<:Real, 2}, face::Int)
+    return function closure(coefficients::Array{<:Real, 2}, face)
         for j in 1:nfacenodes, k in 1:3
             coefficients[(j - 1) * 3 + j, 1] = 1 // nfacenodes * xFaceVolumes[face] * xFaceNormals[k, face]
             coefficients[(j - 1) * 3 + j, 2] = -1 // 36 * xFaceVolumes[face] * xFaceNormals[k, face]

@@ -4,7 +4,6 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Iden
     if FEBE.subset_handler != NothingFunction
         subset = _update_subset!(FEBE)
         cvals = FEBE.cvals
-        fill!(cvals, 0)
         refbasisvals = FEBE.refbasisvals
         for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2), k in 1:size(cvals, 1)
             cvals[k, dof_i, i] = refbasisvals[i][subset[dof_i], k]
@@ -19,7 +18,6 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Iden
         subset = _update_subset!(FEBE)
         cvals = FEBE.cvals
         refbasisvals = FEBE.refbasisvals
-        fill!(cvals, 0)
         for i in 1:size(cvals, 3)
             for dof_i in 1:size(cvals, 2)
                 cvals[1, dof_i, i] = refbasisvals[i][subset[dof_i], c]
@@ -35,7 +33,6 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Iden
     coefficients = _update_coefficients!(FEBE)
     cvals = FEBE.cvals
     refbasisvals = FEBE.refbasisvals
-    fill!(cvals, 0)
     for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2), k in 1:size(cvals, 1)
         cvals[k, dof_i, i] = refbasisvals[i][subset[dof_i], k] * coefficients[k, dof_i]
     end
@@ -48,7 +45,6 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Iden
     coefficients = _update_coefficients!(FEBE)
     cvals = FEBE.cvals
     refbasisvals = FEBE.refbasisvals
-    fill!(cvals, 0)
     for i in 1:size(cvals, 3)
         for dof_i in 1:size(cvals, 2)
             cvals[1, dof_i, i] = refbasisvals[i][subset[dof_i], c] * coefficients[c, dof_i]
@@ -65,10 +61,9 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Grad
     offsets = FEBE.offsets
     offsets2 = FEBE.offsets2
     refbasisderivvals = FEBE.refbasisderivvals
-    fill!(cvals, 0)
-    for i in 1:size(cvals, 3), c in 1:length(offsets), j in 1:size(L2GAinv, 1), k in 1:size(L2GAinv, 2), dof_i in 1:size(cvals, 2)
+    for i in 1:size(cvals, 3), c in 1:length(offsets), k in 1:size(L2GAinv, 2), dof_i in 1:size(cvals, 2)
         # compute duc/dxk
-        cvals[k + offsets[c], dof_i, i] += L2GAinv[k, j] * refbasisderivvals[subset[dof_i] + offsets2[c], j, i]
+        cvals[k + offsets[c], dof_i, i] = dot(view(L2GAinv, k, :), view(refbasisderivvals, subset[dof_i] + offsets2[c], :, i))
     end
     return nothing
 end
@@ -82,13 +77,8 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Grad
     offsets = FEBE.offsets
     offsets2 = FEBE.offsets2
     refbasisderivvals = FEBE.refbasisderivvals
-    fill!(cvals, 0)
     for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2), c in 1:length(offsets), k in 1:size(L2GAinv, 2)
-        for j in 1:size(L2GAinv, 1)
-            # compute duc/dxk
-            cvals[k + offsets[c], dof_i, i] += L2GAinv[k, j] * refbasisderivvals[subset[dof_i] + offsets2[c], j, i]
-        end
-        cvals[k + offsets[c], dof_i, i] *= coefficients[c, dof_i]
+        cvals[k + offsets[c], dof_i, i] = dot(view(L2GAinv, k, :), view(refbasisderivvals, subset[dof_i] + offsets2[c], :, i)) * coefficients[c, dof_i]
     end
     return nothing
 end
@@ -103,15 +93,15 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Symm
     offsets2 = FEBE.offsets2
     refbasisderivvals = FEBE.refbasisderivvals
     fill!(cvals, 0)
-    for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2), c in 1:length(offsets), k in 1:size(L2GAinv, 2), j in 1:size(L2GAinv, 1)
+    for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2), c in 1:length(offsets), k in 1:size(L2GAinv, 2)
         # compute duc/dxk and put it into the right spot in the Voigt vector
+        temp = dot(view(L2GAinv, k, :), view(refbasisderivvals, subset[dof_i] + offsets2[c], :, i))
         if k != c
-            cvals[compression[k + offsets[c]], dof_i, i] += offdiagval * L2GAinv[k, j] * refbasisderivvals[subset[dof_i] + offsets2[c], j, i]
+            cvals[compression[k + offsets[c]], dof_i, i] += offdiagval * temp
         else
-            cvals[compression[k + offsets[c]], dof_i, i] += L2GAinv[k, j] * refbasisderivvals[subset[dof_i] + offsets2[c], j, i]
+            cvals[compression[k + offsets[c]], dof_i, i] += temp
         end
     end
-
     return nothing
 end
 
@@ -123,8 +113,8 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Dive
     offsets2 = FEBE.offsets2
     refbasisderivvals = FEBE.refbasisderivvals
     fill!(cvals, 0)
-    for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2), k in 1:size(L2GAinv, 2), j in 1:size(L2GAinv, 1)
-        cvals[1, dof_i, i] += L2GAinv[k, j] * refbasisderivvals[subset[dof_i] + offsets2[k], j, i]
+    for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2), k in 1:size(L2GAinv, 2)
+        cvals[1, dof_i, i] += dot(view(L2GAinv, k, :), view(refbasisderivvals, subset[dof_i] + offsets2[k], :, i))
     end
     return nothing
 end
@@ -138,8 +128,8 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Dive
     offsets2 = FEBE.offsets2
     refbasisderivvals = FEBE.refbasisderivvals
     fill!(cvals, 0)
-    for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2), k in 1:size(L2GAinv, 2), j in 1:size(L2GAinv, 1)
-        cvals[1, dof_i, i] += L2GAinv[k, j] * refbasisderivvals[subset[dof_i] + offsets2[k], j, i] * coefficients[k, dof_i]
+    for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2), k in 1:size(L2GAinv, 2)
+        cvals[1, dof_i, i] += dot(view(L2GAinv, k, :), view(refbasisderivvals, subset[dof_i] + offsets2[k], :, i)) * coefficients[k, dof_i]
     end
     return nothing
 end
@@ -363,10 +353,8 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Tang
     for i in 1:size(cvals, 3)
         for dof_i in 1:size(cvals, 2)
             for c in 1:length(offsets), k in 1:size(L2GAinv, 1)
-                for j in 1:size(L2GAinv, 2)
-                    # compute duc/dxk
-                    cvals[1, dof_i, i] += L2GAinv[k, j] * refbasisderivvals[subset[dof_i] + offsets2[c], j, i] * tangent[c]
-                end
+                temp = dot(view(L2GAinv, k, :), view(refbasisderivvals, subset[dof_i] + offsets2[c], :, i))
+                cvals[1, dof_i, i] += temp * tangent[c]
             end
         end
     end
