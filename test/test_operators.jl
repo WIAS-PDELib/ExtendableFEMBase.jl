@@ -130,59 +130,57 @@ function test_derivatives2D(fetype, order)
     println("EG = Triangle2D | $fetype | operator = Curl2 | error = $error_curl2")
     if fetype <: AbstractHcurlFiniteElement
         return maximum([error_id, error_curl2])
-    else
-        grad = zeros(Float64, 4)
-        div = zeros(Float64, 1)
-        FEBE_grad = FEEvaluator(FES, Gradient, qf)
-        FEBE_div = FEEvaluator(FES, Divergence, qf)
-        update_basis!(FEBE_grad, 1)
-        update_basis!(FEBE_div, 1)
-        @assert size(FEBE_grad.cvals, 1) == length(expected_grad)
-        @assert size(FEBE_div.cvals, 1) == length(expected_div)
-        eval_febe!(grad, FEBE_grad, Iu.entries[FES[CellDofs][:, 1]], 1)
-        eval_febe!(div, FEBE_div, Iu.entries[FES[CellDofs][:, 1]], 1)
-        error_grad = sqrt(sum((grad - expected_grad) .^ 2))
-        error_div = sqrt(sum((div - expected_div) .^ 2))
-        println("EG = Triangle2D | $fetype | operator = Gradient | error = $error_grad")
-        println("EG = Triangle2D | $fetype | operator = Divergence | error = $error_div")
-
-        if fetype <: AbstractH1FiniteElement
-            # do the same for second order derivatives
-            FEBE_L = FEEvaluator(FES, Laplacian, qf)
-            FEBE_H = FEEvaluator(FES, Hessian, qf)
-            FEBE_symH = FEEvaluator(FES, SymmetricHessian{1}, qf)
-            FEBE_symH2 = FEEvaluator(FES, SymmetricHessian{sqrt(2)}, qf)
-            update_basis!(FEBE_L, 1)
-            update_basis!(FEBE_H, 1)
-            update_basis!(FEBE_symH, 1)
-            update_basis!(FEBE_symH2, 1)
-            @assert size(FEBE_L.cvals, 1) == length(expected_L)
-            @assert size(FEBE_H.cvals, 1) == length(expected_H)
-            @assert size(FEBE_symH.cvals, 1) == length(expected_symH)
-            @assert size(FEBE_symH2.cvals, 1) == length(expected_symH2)
-            H = zeros(Float64, 8)
-            symH = zeros(Float64, 6)
-            symH2 = zeros(Float64, 6)
-            L = zeros(Float64, 2)
-            eval_febe!(L, FEBE_L, Iu.entries[FES[CellDofs][:, 1]], 1)
-            eval_febe!(H, FEBE_H, Iu.entries[FES[CellDofs][:, 1]], 1)
-            eval_febe!(symH, FEBE_symH, Iu.entries[FES[CellDofs][:, 1]], 1)
-            eval_febe!(symH2, FEBE_symH2, Iu.entries[FES[CellDofs][:, 1]], 1)
-            error_L = sqrt(sum((L - expected_L) .^ 2))
-            error_H = sqrt(sum((H - expected_H) .^ 2))
-            error_symH = sqrt(sum((symH - expected_symH) .^ 2))
-            error_symH2 = sqrt(sum((symH2 - expected_symH2) .^ 2))
-            println("EG = Triangle2D | $fetype | operator = Laplacian | error = $error_L")
-            println("EG = Triangle2D | $fetype | operator = Hessian | error = $error_H")
-            println("EG = Triangle2D | $fetype | operator = SymmetricHessian{1} | error = $error_symH")
-            println("EG = Triangle2D | $fetype | operator = SymmetricHessian{√2} | error = $error_symH2")
-            return maximum([error_id, error_curl2, error_L, error_H, error_symH, error_symH2, error_grad, error_div])
-        else
-            return maximum([error_id, error_curl2, error_grad])
-        end
     end
 
+    grad = zeros(Float64, 4)
+    div = zeros(Float64, 1)
+    FEBE_grad = FEEvaluator(FES, Gradient, qf)
+    FEBE_div = FEEvaluator(FES, Divergence, qf)
+    update_basis!(FEBE_grad, 1)
+    update_basis!(FEBE_div, 1)
+    @assert size(FEBE_grad.cvals, 1) == length(expected_grad)
+    @assert size(FEBE_div.cvals, 1) == length(expected_div)
+    eval_febe!(grad, FEBE_grad, Iu.entries[FES[CellDofs][:, 1]], 1)
+    eval_febe!(div, FEBE_div, Iu.entries[FES[CellDofs][:, 1]], 1)
+    error_grad = sqrt(sum((grad - expected_grad) .^ 2))
+    error_div = sqrt(sum((div - expected_div) .^ 2))
+    println("EG = Triangle2D | $fetype | operator = Gradient | error = $error_grad")
+    println("EG = Triangle2D | $fetype | operator = Divergence | error = $error_div")
 
+    if fetype <: AbstractHdivFiniteElement
+        return maximum([error_id, error_curl2, error_grad])
+    end
+
+    # do the same for second order derivatives
+    FEBE_L = FEEvaluator(FES, Laplacian, qf)
+    FEBE_H = FEEvaluator(FES, Hessian, qf)
+    FEBE_symH = FEEvaluator(FES, SymmetricHessian{1}, qf)
+    FEBE_symH2 = FEEvaluator(FES, SymmetricHessian{sqrt(2)}, qf)
+    update_basis!(FEBE_L, 1)
+    update_basis!(FEBE_H, 1)
+    update_basis!(FEBE_symH, 1)
+    update_basis!(FEBE_symH2, 1)
+    @assert size(FEBE_L.cvals, 1) == length(expected_L)
+    @assert size(FEBE_H.cvals, 1) == length(expected_H)
+    @assert size(FEBE_symH.cvals, 1) == length(expected_symH)
+    @assert size(FEBE_symH2.cvals, 1) == length(expected_symH2)
+    H = zeros(Float64, 8)
+    symH = zeros(Float64, 6)
+    symH2 = zeros(Float64, 6)
+    L = zeros(Float64, 2)
+    eval_febe!(L, FEBE_L, Iu.entries[FES[CellDofs][:, 1]], 1)
+    eval_febe!(H, FEBE_H, Iu.entries[FES[CellDofs][:, 1]], 1)
+    eval_febe!(symH, FEBE_symH, Iu.entries[FES[CellDofs][:, 1]], 1)
+    eval_febe!(symH2, FEBE_symH2, Iu.entries[FES[CellDofs][:, 1]], 1)
+    error_L = sqrt(sum((L - expected_L) .^ 2))
+    error_H = sqrt(sum((H - expected_H) .^ 2))
+    error_symH = sqrt(sum((symH - expected_symH) .^ 2))
+    error_symH2 = sqrt(sum((symH2 - expected_symH2) .^ 2))
+    println("EG = Triangle2D | $fetype | operator = Laplacian | error = $error_L")
+    println("EG = Triangle2D | $fetype | operator = Hessian | error = $error_H")
+    println("EG = Triangle2D | $fetype | operator = SymmetricHessian{1} | error = $error_symH")
+    println("EG = Triangle2D | $fetype | operator = SymmetricHessian{√2} | error = $error_symH2")
+    return maximum([error_id, error_curl2, error_L, error_H, error_symH, error_symH2, error_grad, error_div])
 end
 
 function test_derivatives3D(fetype, order)
@@ -244,64 +242,62 @@ function test_derivatives3D(fetype, order)
 
     if fetype <: AbstractHcurlFiniteElement
         return maximum([error_curl3])
-    else
-
-        update_basis!(FEBE_grad, 1)
-        update_basis!(FEBE_div, 1)
-
-        @assert size(FEBE_grad.cvals, 1) == length(expected_grad)
-        @assert size(FEBE_div.cvals, 1) == length(expected_div)
-        grad = zeros(Float64, 9)
-        div = zeros(Float64, 1)
-        eval_febe!(grad, FEBE_grad, Iu.entries[FES[CellDofs][:, 1]], 1)
-        eval_febe!(div, FEBE_div, Iu.entries[FES[CellDofs][:, 1]], 1)
-        error_grad = sqrt(sum((grad - expected_grad) .^ 2))
-        error_div = sqrt(sum((div - expected_div) .^ 2))
-        println("EG = Tetrahedron3D | $fetype | operator = Gradient | error = $error_grad")
-        println("EG = Tetrahedron3D | $fetype | operator = Divergence | error = $error_div")
-
-        if fetype <: AbstractH1FiniteElement
-            FEBE_L = FEEvaluator(FES, Laplacian, qf)
-            FEBE_H = FEEvaluator(FES, Hessian, qf)
-            FEBE_symH = FEEvaluator(FES, SymmetricHessian{1}, qf)
-            FEBE_symH2 = FEEvaluator(FES, SymmetricHessian{sqrt(2)}, qf)
-
-            ## update on cell 1
-            update_basis!(FEBE_L, 1)
-            update_basis!(FEBE_H, 1)
-            update_basis!(FEBE_symH, 1)
-            update_basis!(FEBE_symH2, 1)
-
-            ## check if operator evals have the correct length
-            @assert size(FEBE_L.cvals, 1) == length(expected_L)
-            @assert size(FEBE_H.cvals, 1) == length(expected_H)
-            @assert size(FEBE_symH.cvals, 1) == length(expected_symH)
-            @assert size(FEBE_symH2.cvals, 1) == length(expected_symH2)
-
-            ## eval 2nd order derivatives at only quadrature point 1
-            ## since function is quadratic this should be constant
-            H = zeros(Float64, 27)
-            symH = zeros(Float64, 18)
-            symH2 = zeros(Float64, 18)
-            L = zeros(Float64, 3)
-            eval_febe!(L, FEBE_L, Iu.entries[FES[CellDofs][:, 1]], 1)
-            eval_febe!(H, FEBE_H, Iu.entries[FES[CellDofs][:, 1]], 1)
-            eval_febe!(symH, FEBE_symH, Iu.entries[FES[CellDofs][:, 1]], 1)
-            eval_febe!(symH2, FEBE_symH2, Iu.entries[FES[CellDofs][:, 1]], 1)
-
-            ## compute errors to expected values
-            error_L = sqrt(sum((L - expected_L) .^ 2))
-            error_H = sqrt(sum((H - expected_H) .^ 2))
-            error_symH = sqrt(sum((symH - expected_symH) .^ 2))
-            error_symH2 = sqrt(sum((symH2 - expected_symH2) .^ 2))
-            println("EG = Tetrahedron3D | $fetype | operator = Laplacian | error = $error_L")
-            println("EG = Tetrahedron3D | $fetype | operator = Hessian | error = $error_H")
-            println("EG = Tetrahedron3D | $fetype | operator = SymmetricHessian{1} | error = $error_symH")
-            println("EG = Tetrahedron3D | $fetype | operator = SymmetricHessian{√2} | error = $error_symH2")
-            return maximum([error_curl3, error_L, error_H, error_symH, error_symH2, error_grad, error_div])
-        else
-            return maximum([error_curl3, error_grad, error_div])
-        end
     end
 
+    update_basis!(FEBE_grad, 1)
+    update_basis!(FEBE_div, 1)
+
+    @assert size(FEBE_grad.cvals, 1) == length(expected_grad)
+    @assert size(FEBE_div.cvals, 1) == length(expected_div)
+    grad = zeros(Float64, 9)
+    div = zeros(Float64, 1)
+    eval_febe!(grad, FEBE_grad, Iu.entries[FES[CellDofs][:, 1]], 1)
+    eval_febe!(div, FEBE_div, Iu.entries[FES[CellDofs][:, 1]], 1)
+    error_grad = sqrt(sum((grad - expected_grad) .^ 2))
+    error_div = sqrt(sum((div - expected_div) .^ 2))
+    println("EG = Tetrahedron3D | $fetype | operator = Gradient | error = $error_grad")
+    println("EG = Tetrahedron3D | $fetype | operator = Divergence | error = $error_div")
+
+    if fetype <: AbstractHdivFiniteElement
+        return maximum([error_curl3, error_grad, error_div])
+    end
+
+    FEBE_L = FEEvaluator(FES, Laplacian, qf)
+    FEBE_H = FEEvaluator(FES, Hessian, qf)
+    FEBE_symH = FEEvaluator(FES, SymmetricHessian{1}, qf)
+    FEBE_symH2 = FEEvaluator(FES, SymmetricHessian{sqrt(2)}, qf)
+
+    ## update on cell 1
+    update_basis!(FEBE_L, 1)
+    update_basis!(FEBE_H, 1)
+    update_basis!(FEBE_symH, 1)
+    update_basis!(FEBE_symH2, 1)
+
+    ## check if operator evals have the correct length
+    @assert size(FEBE_L.cvals, 1) == length(expected_L)
+    @assert size(FEBE_H.cvals, 1) == length(expected_H)
+    @assert size(FEBE_symH.cvals, 1) == length(expected_symH)
+    @assert size(FEBE_symH2.cvals, 1) == length(expected_symH2)
+
+    ## eval 2nd order derivatives at only quadrature point 1
+    ## since function is quadratic this should be constant
+    H = zeros(Float64, 27)
+    symH = zeros(Float64, 18)
+    symH2 = zeros(Float64, 18)
+    L = zeros(Float64, 3)
+    eval_febe!(L, FEBE_L, Iu.entries[FES[CellDofs][:, 1]], 1)
+    eval_febe!(H, FEBE_H, Iu.entries[FES[CellDofs][:, 1]], 1)
+    eval_febe!(symH, FEBE_symH, Iu.entries[FES[CellDofs][:, 1]], 1)
+    eval_febe!(symH2, FEBE_symH2, Iu.entries[FES[CellDofs][:, 1]], 1)
+
+    ## compute errors to expected values
+    error_L = sqrt(sum((L - expected_L) .^ 2))
+    error_H = sqrt(sum((H - expected_H) .^ 2))
+    error_symH = sqrt(sum((symH - expected_symH) .^ 2))
+    error_symH2 = sqrt(sum((symH2 - expected_symH2) .^ 2))
+    println("EG = Tetrahedron3D | $fetype | operator = Laplacian | error = $error_L")
+    println("EG = Tetrahedron3D | $fetype | operator = Hessian | error = $error_H")
+    println("EG = Tetrahedron3D | $fetype | operator = SymmetricHessian{1} | error = $error_symH")
+    println("EG = Tetrahedron3D | $fetype | operator = SymmetricHessian{√2} | error = $error_symH2")
+    return maximum([error_curl3, error_L, error_H, error_symH, error_symH2, error_grad, error_div])
 end

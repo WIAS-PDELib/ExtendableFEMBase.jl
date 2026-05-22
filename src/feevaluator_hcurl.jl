@@ -6,7 +6,7 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Iden
     refbasisvals = FEBE.refbasisvals
     cvals = FEBE.cvals
     for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2), k in 1:size(cvals, 1)
-        cvals[k, dof_i, i] = dot(view(L2GAinv, k, :), view(refbasisvals[i], subset[dof_i], :)) * coefficients[k, dof_i]
+        cvals[k, dof_i, i] = @views dot(L2GAinv[k, :], refbasisvals[i][subset[dof_i], :]) * coefficients[k, dof_i]
     end
     return nothing
 end

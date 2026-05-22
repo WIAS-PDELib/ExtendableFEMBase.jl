@@ -8,7 +8,7 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Iden
     refbasisvals = FEBE.refbasisvals
     for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2)
         for k in 1:size(L2GM, 1)
-            cvals[k, dof_i, i] = dot(view(L2GM, k, :), view(refbasisvals[i], subset[dof_i], :)) * coefficients[k, dof_i] / det
+            cvals[k, dof_i, i] = @views dot(L2GM[k, :], refbasisvals[i][subset[dof_i], :]) * coefficients[k, dof_i] / det
         end
     end
     return nothing
@@ -24,7 +24,7 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Iden
     cvals = FEBE.cvals
     refbasisvals = FEBE.refbasisvals
     for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2)
-        cvals[1, dof_i, i] = dot(view(L2GM, c, :), view(refbasisvals[i], subset[dof_i], :)) * coefficients[c, dof_i] / det
+        cvals[1, dof_i, i] = @views dot(L2GM[c, :], refbasisvals[i][subset[dof_i], :]) * coefficients[c, dof_i] / det
     end
     return nothing
 end
@@ -91,7 +91,7 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Grad
         for k in 1:size(L2GAinv, 1)
             for j in 1:size(L2GM, 2)
                 # apply inverse transform to d/dx_k of j-th component of i-th reference basis function
-                temp = dot(view(L2GAinv, k, :), view(refbasisderivvals, subset[dof_i] + offsets2[j], :, i))
+                temp = @views dot(L2GAinv[k, :], refbasisderivvals[subset[dof_i] + offsets2[j], :, i])
                 # add contribution d/dx_k of c-th component of i-th reference basis function
                 for c in 1:size(L2GM, 1)
                     cvals[k + offsets[c], dof_i, i] += L2GM[c, j] * temp
