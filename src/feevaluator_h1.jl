@@ -78,7 +78,7 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Grad
     offsets2 = FEBE.offsets2
     refbasisderivvals = FEBE.refbasisderivvals
     for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2), c in 1:length(offsets), k in 1:size(L2GAinv, 2)
-        cvals[k + offsets[c], dof_i, i] = @views dot([L2GAinv, k, :], refbasisderivvals[subset[dof_i] + offsets2[c], :, i]) * coefficients[c, dof_i]
+        cvals[k + offsets[c], dof_i, i] = @views dot(L2GAinv[k, :], refbasisderivvals[subset[dof_i] + offsets2[c], :, i]) * coefficients[c, dof_i]
     end
     return nothing
 end

@@ -1,7 +1,9 @@
 # CHANGES
 
-## v1.7.0 May 22, 2026
+## v1.7.0 May 26, 2026
 - improved operator evaluations, more operator tests
+- improved Examples, fixed Example210
+- scalarplot for FEVectorPlot now uses its name as default title (like vectorplot)
 
 ## v1.6.1 May 18, 2026
 - fixed bug in `PointEvaluator` initialization which broke automatic differentiation of the `evaluate!` function with respect to spatial coordinates
