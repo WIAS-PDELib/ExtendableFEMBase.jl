@@ -1,5 +1,8 @@
 # CHANGES
 
+## v1.7.0 May 22, 2026
+- improved operator evaluations, more operator tests
+
 ## v1.6.1 May 18, 2026
 - fixed bug in `PointEvaluator` initialization which broke automatic differentiation of the `evaluate!` function with respect to spatial coordinates
 
