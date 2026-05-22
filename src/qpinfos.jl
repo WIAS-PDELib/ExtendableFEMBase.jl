@@ -9,7 +9,7 @@ A mutable struct that encapsulates information about the current quadrature poin
 - `region::Ti`: Index of the current region (with respect to the current assembly type).
 - `volume::TvG`: Volume associated with the current item.
 - `normal::Vector{TvG}`: Outward normal vector at the quadrature point, if applicable (e.g., for face assembly/integration).
-- `time::Ttime`: Current time value, useful for time-dependent problems.
+- `time::Ttime`: Current time value, useful for time-dependent problems (default: time = 1.0).
 - `x::Vector{Tx}`: World (physical) coordinates of the quadrature point.
 - `xref::Vector{Txref}`: Reference (local) coordinates of the quadrature point within the reference element.
 - `grid::ExtendableGrid{TvG, TiG}`: Reference to the underlying grid or mesh structure.

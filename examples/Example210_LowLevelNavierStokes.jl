@@ -87,22 +87,20 @@ function main(; nref = 5, teval = 0, order = 2, Plotter = UnicodePlots)
     sol = solve_stokes_lowlevel(FES; teval = teval)
 
     ## move integral mean of pressure
-    pmean = sum(compute_error(sol[2], nothing, order, 1))
-    for j in 1:sol[2].FES.ndofs
-        sol[2][j] -= pmean
-    end
+    pmean = sum(compute_error(sol["p"], nothing, order, 1))
+    view(sol["p"]) .-= pmean
 
     ## calculate l2 error
-    error_u = sqrt(sum(compute_error(sol[1], u!, 2)))
-    error_p = sqrt(sum(compute_error(sol[2], p!, 2)))
-    println("\nl2 error velo = $(error_u)")
+    error_u = sqrt(sum(compute_error(sol["u"], u!, 2)))
+    error_p = sqrt(sum(compute_error(sol["p"], p!, 2)))
+    println("\nl2 error velocity = $(error_u)")
     println("l2 error pressure = $(error_p)")
 
     ## plot
     plt = GridVisualizer(; Plotter = Plotter, layout = (1, 2), clear = true, resolution = (1200, 600))
-    scalarplot!(plt[1, 1], sol[1]; title = "|u| + quiver", abs = true)
-    vectorplot!(plt[1, 1], sol[1]; clear = false)
-    scalarplot!(plt[1, 2], sol[2]; title = "p")
+    scalarplot!(plt[1, 1], sol["u"]; abs = true)
+    vectorplot!(plt[1, 1], sol["u"]; clear = false)
+    scalarplot!(plt[1, 2], sol["p"])
     reveal(plt)
 
     return sol, plt
@@ -120,12 +118,12 @@ function compute_error(uh::FEVectorBlock, u, order = get_polynomialorder(get_FET
     uhval = zeros(Float64, ncomponents)
     uval = zeros(Float64, ncomponents)
     L2G = L2GTransformer(EG, xgrid, ON_CELLS)
-    QP = QPInfos(xgrid)
+    QP = QPInfos(xgrid; time = 0)
     qf = VertexRule(EG, order)
     FEB = FEEvaluator(FES, Identity, qf)
 
-    function barrier(L2G::L2GTransformer)
-        for cell in 1:num_cells(xgrid)
+    function barrier(L2G::L2GTransformer{Tv, Ti}) where {Tv, Ti}
+        for cell::Ti in 1:num_cells(xgrid)
             update_trafo!(L2G, cell)
             update_basis!(FEB, cell)
             for (qp, weight) in enumerate(qf.w)
@@ -156,7 +154,7 @@ end
 function solve_stokes_lowlevel(FES; teval = 0)
 
     println("Initializing system...")
-    sol = FEVector(FES)
+    sol = FEVector(FES; tags = ["u", "p"])
     A = FEMatrix(FES)
     b = FEVector(FES)
     @time update_system! = prepare_assembly!(A, b, FES[1], FES[2], sol)
@@ -171,6 +169,13 @@ function solve_stokes_lowlevel(FES; teval = 0)
         fixed_dofs = boundarydofs(FES[1])
         push!(fixed_dofs, FES[1].ndofs + 1) ## fix one pressure dof
     end
+
+    ## fix boundary dofs
+    for dof in fixed_dofs
+        A.entries[dof, dof] = 1.0e60
+        b.entries[dof] = 1.0e60 * u_init.entries[dof]
+    end
+    ExtendableSparse.flush!(A.entries)
 
     for it in 1:20
         ## solve
@@ -262,7 +267,7 @@ function prepare_assembly!(A, b, FESu, FESp, sol; teval = 0)
     value = DiffResults.value(Dresult)
 
     ## ASSEMBLY LOOP
-    function barrier(EG, L2G::L2GTransformer, linear::Bool, nonlinear::Bool)
+    function barrier(EG, L2G::L2GTransformer{Tv, Ti}, linear::Bool, nonlinear::Bool) where {Tv, Ti}
         ## barrier function to avoid allocations caused by L2G
 
         ndofs4cell_u::Int = get_ndofs(ON_CELLS, FEType_u, EG)
@@ -273,7 +278,7 @@ function prepare_assembly!(A, b, FESu, FESp, sol; teval = 0)
         fval::Vector{Float64} = zeros(Float64, 2)
         x::Vector{Float64} = zeros(Float64, 2)
 
-        for cell in 1:ncells
+        for cell::Ti in 1:ncells
             ## update FE basis evaluators
             update_basis!(FEBasis_∇u, cell)
             update_basis!(FEBasis_idu, cell)
