@@ -8,7 +8,7 @@ function run_operator_tests()
         @test error < 1.0e-14
         error = test_derivatives2D(HDIVBDM2{2}, 2)
         @test error < 1.0e-14
-        error = test_derivatives2D(HCURLN1{2}, 2)
+        error = test_derivatives2D(HCURLN1{2}, 1)
         @test error < 1.0e-14
         error = test_derivatives3D(H1P2{3, 3}, 2)
         @test error < 1.0e-14
@@ -87,6 +87,7 @@ function test_derivatives2D(fetype, order)
 
     ## expected values of operators in cell midpoint
     if order == 2
+        expected_id = [0, 1 / 3]
         expected_L = [2, 6] # expected Laplacian
         expected_H = [2, 0, 0, 0, 0, 1, 1, 6] # expected Hessian
         expected_symH = [2, 0, 0, 0, 6, 1] # expected symmetric Hessian
@@ -95,6 +96,7 @@ function test_derivatives2D(fetype, order)
         expected_grad = [0, 0, 1 / 3, 2]
         expected_div = [2]
     elseif order == 1
+        expected_id = [4 / 3, 1]
         expected_curl2 = [-2]
     end
 
@@ -109,21 +111,28 @@ function test_derivatives2D(fetype, order)
     ## get midpoint quadrature rule for constants
     qf = QuadratureRule{Float64, Triangle2D}(0)
 
+    FEBE_id = FEEvaluator(FES, Identity, qf)
     FEBE_curl2 = FEEvaluator(FES, Curl2D, qf)
+    update_basis!(FEBE_id, 1)
     update_basis!(FEBE_curl2, 1)
     ## check if operator evals have the correct length
+    @assert size(FEBE_id.cvals, 1) == length(expected_id)
     @assert size(FEBE_curl2.cvals, 1) == length(expected_curl2)
     # evaluate at quadrature points = cell midpoint
+    id = zeros(Float64, 2)
     curl2 = zeros(Float64, 1)
-    grad = zeros(Float64, 4)
-    div = zeros(Float64, 1)
+    eval_febe!(id, FEBE_id, Iu.entries[FES[CellDofs][:, 1]], 1)
     eval_febe!(curl2, FEBE_curl2, Iu.entries[FES[CellDofs][:, 1]], 1)
     ## compute errors to expected values
+    error_id = sqrt(sum((id - expected_id) .^ 2))
     error_curl2 = sqrt(sum((curl2 - expected_curl2) .^ 2))
+    println("EG = Triangle2D | $fetype | operator = Identity | error = $error_id")
     println("EG = Triangle2D | $fetype | operator = Curl2 | error = $error_curl2")
     if fetype <: AbstractHcurlFiniteElement
-        return maximum([error_curl2])
+        return maximum([error_id, error_curl2])
     else
+        grad = zeros(Float64, 4)
+        div = zeros(Float64, 1)
         FEBE_grad = FEEvaluator(FES, Gradient, qf)
         FEBE_div = FEEvaluator(FES, Divergence, qf)
         update_basis!(FEBE_grad, 1)
@@ -167,9 +176,9 @@ function test_derivatives2D(fetype, order)
             println("EG = Triangle2D | $fetype | operator = Hessian | error = $error_H")
             println("EG = Triangle2D | $fetype | operator = SymmetricHessian{1} | error = $error_symH")
             println("EG = Triangle2D | $fetype | operator = SymmetricHessian{√2} | error = $error_symH2")
-            return maximum([error_curl2, error_L, error_H, error_symH, error_symH2, error_grad, error_div])
+            return maximum([error_id, error_curl2, error_L, error_H, error_symH, error_symH2, error_grad, error_div])
         else
-            return maximum([error_curl2, error_grad])
+            return maximum([error_id, error_curl2, error_grad])
         end
     end
 

@@ -6,13 +6,9 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Iden
     det = FEBE.L2G.det # 1 alloc
     cvals = FEBE.cvals
     refbasisvals = FEBE.refbasisvals
-    fill!(cvals, 0)
     for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2)
         for k in 1:size(L2GM, 1)
-            for l in 1:size(L2GM, 2)
-                cvals[k, dof_i, i] += L2GM[k, l] * refbasisvals[i][subset[dof_i], l]
-            end
-            cvals[k, dof_i, i] *= coefficients[k, dof_i] / det
+            cvals[k, dof_i, i] = dot(view(L2GM, k, :), view(refbasisvals[i], subset[dof_i], :)) * coefficients[k, dof_i] / det
         end
     end
     return nothing
@@ -27,12 +23,8 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Iden
     det = FEBE.L2G.det # 1 alloc
     cvals = FEBE.cvals
     refbasisvals = FEBE.refbasisvals
-    fill!(cvals, 0)
     for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2)
-        for l in 1:size(L2GM, 2)
-            cvals[1, dof_i, i] += L2GM[c, l] * refbasisvals[i][subset[dof_i], l]
-        end
-        cvals[1, dof_i, i] *= coefficients[c, dof_i] / det
+        cvals[1, dof_i, i] = dot(view(L2GM, c, :), view(refbasisvals[i], subset[dof_i], :)) * coefficients[c, dof_i] / det
     end
     return nothing
 end
