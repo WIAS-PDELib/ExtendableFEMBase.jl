@@ -209,7 +209,7 @@ function assemble!(A::ExtendableSparseMatrix, b::Vector, FES_time, FES_space, f,
 
             ## add local matrix to global matrix
             for time_cell::Ti in 1:ncells_time
-                update_trafo!(L2G_time, time_cell, Val(true))
+                update_trafo!(L2G_time, time_cell)
                 for jT in 1:ndofs4cell_time, kT in 1:ndofs4cell_time
                     dofTj = celldofs_time[jT, time_cell]
                     dofTk = celldofs_time[kT, time_cell]
@@ -233,12 +233,12 @@ function assemble!(A::ExtendableSparseMatrix, b::Vector, FES_time, FES_space, f,
             fill!(Aloc, 0)
 
             ## assemble right-hand side
-            update_trafo!(L2G_space, cell, Val(true))
+            update_trafo!(L2G_space, cell)
             for qp in 1:nweights_space
                 ## evaluate coordinates of quadrature point in space
                 eval_trafo!(x, L2G_space, xref_space[qp])
                 for time_cell::Ti in 1:ncells_time
-                    update_trafo!(L2G_time, time_cell, Val(true))
+                    update_trafo!(L2G_time, time_cell)
                     for qpT in 1:nweights_time
                         ## evaluate time coordinate
                         eval_trafo!(t, L2G_time, xref_time[qpT])
