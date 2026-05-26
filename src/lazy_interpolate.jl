@@ -62,10 +62,10 @@ function lazy_interpolate!(
         operators = [(1, Identity)];
         postprocess = standard_kernel,
         xtrafo = nothing,
-        items = [],
+        items = Ti[],
         resultdim = get_ncomponents(eltype(target.FES)),
         not_in_domain_value = 1.0e30,
-        start_cell = 1,
+        start_cell::Ti = Ti(1),
         only_localsearch = false,
         use_cellparents::Bool = false,
         eps = 1.0e-13,
@@ -82,8 +82,8 @@ function lazy_interpolate!(
     PE = PointEvaluator(postprocess, operators, source; TCoeff = T1)
     xref = zeros(Tv, xdim_source)
     x_source = zeros(Tv, xdim_source)
-    cell::Int = start_cell
-    lastnonzerocell::Int = start_cell
+    cell::Ti = start_cell
+    lastnonzerocell::Ti = start_cell
     same_cells::Bool = xgrid == target.FES.xgrid
     CF::CellFinder{Tv, Ti} = CellFinder(xgrid)
 

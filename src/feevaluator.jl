@@ -1,7 +1,7 @@
 abstract type FEEvaluator{T <: Real, TvG <: Real, TiG <: Integer} end
 
 struct SingleFEEvaluator{T <: Real, TvG <: Real, TiG <: Integer, operator, FEType, EG, FType_basis <: Function, FType_coeffs <: Function, FType_subset <: Function, FType_jac <: Function} <: FEEvaluator{T, TvG, TiG}
-    citem::Base.RefValue{Int}                   # current item
+    citem::Base.RefValue{TiG}                   # current item
     FE::FESpace{TvG, TiG, FEType}                 # link to full FE (e.g. for coefficients)
     L2G::L2GTransformer{TvG, TiG, EG}           # local2global mapper
     L2GAinv::Array{TvG, 2}                       # 2nd heap for transformation matrix (e.g. Piola + mapderiv)
@@ -189,7 +189,7 @@ function FEEvaluator(
     end
 
     return SingleFEEvaluator{T, TvG, TiG, operator, FEType, EG, typeof(refbasis), typeof(coeff_handler), typeof(subset_handler), typeof(jacobian_wrap)}(
-        Ref(0),
+        Ref(TiG(0)),
         FE,
         L2G,
         L2GAinv,

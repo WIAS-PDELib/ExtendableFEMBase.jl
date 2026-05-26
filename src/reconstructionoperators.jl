@@ -7,7 +7,7 @@ DefaultName4Operator(::Type{Reconstruct{FETypeR, O}}) where {FETypeR, O} = "R(" 
 DefaultName4Operator(::Type{WeightedReconstruct{FETypeR, O, w}}) where {FETypeR, O, w} = "wR(r" * DefaultName4Operator(O) * ")"
 
 struct FEReconstEvaluator{T, TvG, TiG, FEType, FEType2, stdop, RH} <: FEEvaluator{T, TvG, TiG}
-    citem::Base.RefValue{Int}                       # current item
+    citem::Base.RefValue{TiG}                       # current item
     FE::FESpace{TvG, TiG, FEType}                     # link to full FE (e.g. for coefficients)
     FEB::SingleFEEvaluator{T, TvG, TiG, stdop, FEType2}                # FEBasisEvaluator for stdop in reconstruction space
     cvals::Array{T, 3}                               # current operator vals on item (reconstruction)

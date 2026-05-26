@@ -102,7 +102,7 @@ function get_coefficients(::Type{ON_CELLS}, FE::FESpace{Tv, Ti, <:HDIVBDM2, APT}
     xCellFaceSigns::Union{VariableTargetAdjacency{Int32}, Array{Int32, 2}} = xgrid[CellFaceSigns]
     nfaces::Int = num_faces(EG)
     dim::Int = dim_element(EG)
-    return function closure(coefficients::Array{<:Real, 2}, cell::Int)
+    return function closure(coefficients::Array{<:Real, 2}, cell)
         fill!(coefficients, 1.0)
         # multiplication with normal vector signs (only RT0)
         for j in 1:nfaces, k in 1:dim

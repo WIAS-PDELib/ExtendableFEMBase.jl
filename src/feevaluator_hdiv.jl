@@ -6,13 +6,9 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Iden
     det = FEBE.L2G.det # 1 alloc
     cvals = FEBE.cvals
     refbasisvals = FEBE.refbasisvals
-    fill!(cvals, 0)
     for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2)
         for k in 1:size(L2GM, 1)
-            for l in 1:size(L2GM, 2)
-                cvals[k, dof_i, i] += L2GM[k, l] * refbasisvals[i][subset[dof_i], l]
-            end
-            cvals[k, dof_i, i] *= coefficients[k, dof_i] / det
+            cvals[k, dof_i, i] = @views dot(L2GM[k, :], refbasisvals[i][subset[dof_i], :]) * coefficients[k, dof_i] / det
         end
     end
     return nothing
@@ -27,12 +23,8 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Iden
     det = FEBE.L2G.det # 1 alloc
     cvals = FEBE.cvals
     refbasisvals = FEBE.refbasisvals
-    fill!(cvals, 0)
     for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2)
-        for l in 1:size(L2GM, 2)
-            cvals[1, dof_i, i] += L2GM[c, l] * refbasisvals[i][subset[dof_i], l]
-        end
-        cvals[1, dof_i, i] *= coefficients[c, dof_i] / det
+        cvals[1, dof_i, i] = @views dot(L2GM[c, :], refbasisvals[i][subset[dof_i], :]) * coefficients[c, dof_i] / det
     end
     return nothing
 end
@@ -96,12 +88,19 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Grad
     fill!(cvals, 0)
     det = FEBE.L2G.det # 1 alloc
     for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2)
-        for c in 1:size(L2GM, 1), k in 1:size(L2GAinv, 1)
-            # compute duc/dxk
-            for j in 1:size(L2GM, 2), m in 1:size(L2GAinv, 2)
-                cvals[k + offsets[c], dof_i, i] += L2GAinv[k, m] * L2GM[c, j] * refbasisderivvals[subset[dof_i] + offsets2[j], m, i]
+        for k in 1:size(L2GAinv, 1)
+            for j in 1:size(L2GM, 2)
+                # apply inverse transform to d/dx_k of j-th component of i-th reference basis function
+                temp = @views dot(L2GAinv[k, :], refbasisderivvals[subset[dof_i] + offsets2[j], :, i])
+                # add contribution d/dx_k of c-th component of i-th reference basis function
+                for c in 1:size(L2GM, 1)
+                    cvals[k + offsets[c], dof_i, i] += L2GM[c, j] * temp
+                end
             end
-            cvals[k + offsets[c], dof_i, i] *= coefficients[c, dof_i] / det
+            # apply trafo and orientation factors
+            for c in 1:size(L2GM, 1)
+                cvals[k + offsets[c], dof_i, i] *= coefficients[c, dof_i] / det
+            end
         end
     end
     return nothing
@@ -119,10 +118,12 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Curl
     refbasisderivvals = FEBE.refbasisderivvals
     fill!(cvals, 0)
     det = FEBE.L2G.det # 1 alloc
-    for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2)
-        for j in 1:size(L2GM, 2), m in 1:size(L2GAinv, 2)
-            cvals[1, dof_i, i] -= L2GAinv[2, m] * L2GM[1, j] * refbasisderivvals[subset[dof_i] + offsets2[j], m, i] * coefficients[1, dof_i] / det
-            cvals[1, dof_i, i] += L2GAinv[1, m] * L2GM[2, j] * refbasisderivvals[subset[dof_i] + offsets2[j], m, i] * coefficients[2, dof_i] / det
+    for j in 1:size(L2GM, 2), m in 1:size(L2GAinv, 2)
+        A = L2GAinv[2, m] * L2GM[1, j] / det
+        B = L2GAinv[1, m] * L2GM[2, j] / det
+        for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2)
+            cvals[1, dof_i, i] -= A * refbasisderivvals[subset[dof_i] + offsets2[j], m, i] * coefficients[1, dof_i]
+            cvals[1, dof_i, i] += B * refbasisderivvals[subset[dof_i] + offsets2[j], m, i] * coefficients[2, dof_i]
         end
     end
     return nothing
@@ -140,14 +141,20 @@ function update_basis!(FEBE::SingleFEEvaluator{<:Real, <:Real, <:Integer, <:Curl
     refbasisderivvals = FEBE.refbasisderivvals
     fill!(cvals, 0)
     det = FEBE.L2G.det # 1 alloc
-    for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2)
-        for j in 1:size(L2GM, 2), m in 1:size(L2GAinv, 2)
-            cvals[1, dof_i, i] -= L2GAinv[3, m] * L2GM[2, j] * refbasisderivvals[subset[dof_i] + offsets2[j], m, i] * coefficients[2, dof_i] / det
-            cvals[1, dof_i, i] += L2GAinv[2, m] * L2GM[3, j] * refbasisderivvals[subset[dof_i] + offsets2[j], m, i] * coefficients[3, dof_i] / det
-            cvals[2, dof_i, i] -= L2GAinv[1, m] * L2GM[3, j] * refbasisderivvals[subset[dof_i] + offsets2[j], m, i] * coefficients[3, dof_i] / det
-            cvals[2, dof_i, i] += L2GAinv[3, m] * L2GM[1, j] * refbasisderivvals[subset[dof_i] + offsets2[j], m, i] * coefficients[1, dof_i] / det
-            cvals[3, dof_i, i] -= L2GAinv[2, m] * L2GM[1, j] * refbasisderivvals[subset[dof_i] + offsets2[j], m, i] * coefficients[1, dof_i] / det
-            cvals[3, dof_i, i] += L2GAinv[1, m] * L2GM[2, j] * refbasisderivvals[subset[dof_i] + offsets2[j], m, i] * coefficients[2, dof_i] / det
+    for j in 1:size(L2GM, 2), m in 1:size(L2GAinv, 2)
+        A = L2GAinv[3, m] * L2GM[2, j] / det
+        B = L2GAinv[2, m] * L2GM[3, j] / det
+        C = L2GAinv[1, m] * L2GM[3, j] / det
+        D = L2GAinv[3, m] * L2GM[1, j] / det
+        E = L2GAinv[2, m] * L2GM[1, j] / det
+        F = L2GAinv[1, m] * L2GM[2, j] / det
+        for i in 1:size(cvals, 3), dof_i in 1:size(cvals, 2)
+            cvals[1, dof_i, i] -= A * refbasisderivvals[subset[dof_i] + offsets2[j], m, i] * coefficients[2, dof_i]
+            cvals[1, dof_i, i] += B * refbasisderivvals[subset[dof_i] + offsets2[j], m, i] * coefficients[3, dof_i]
+            cvals[2, dof_i, i] -= C * refbasisderivvals[subset[dof_i] + offsets2[j], m, i] * coefficients[3, dof_i]
+            cvals[2, dof_i, i] += D * refbasisderivvals[subset[dof_i] + offsets2[j], m, i] * coefficients[1, dof_i]
+            cvals[3, dof_i, i] -= E * refbasisderivvals[subset[dof_i] + offsets2[j], m, i] * coefficients[1, dof_i]
+            cvals[3, dof_i, i] += F * refbasisderivvals[subset[dof_i] + offsets2[j], m, i] * coefficients[2, dof_i]
         end
     end
     return nothing

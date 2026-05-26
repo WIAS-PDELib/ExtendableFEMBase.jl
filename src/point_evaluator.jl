@@ -1,11 +1,11 @@
-mutable struct PointEvaluator{Tv <: Real, TCoeff <: Real, UT, KFT <: Function}
+mutable struct PointEvaluator{Tv <: Real, Ti <: Integer, TCoeff <: Real, UT, KFT <: Function}
     u_args::Array{UT, 1}
     ops_args::Array{DataType, 1}
     kernel::KFT
     BE_args::Any
     L2G::Any
     CF::Any
-    lastitem::Int
+    lastitem::Ti
     eval_selector::Any
     evaluator_bary::Any
     evaluator::Any
@@ -61,11 +61,11 @@ $(_myprint(default_peval_kwargs()))
 After construction, call `initialize!` to prepare the evaluator for a given solution, then use `evaluate!` or `evaluate_bary!` to perform point evaluations.
 
 """
-function PointEvaluator(kernel, u_args, ops_args, sol = nothing; Tv = Float64, TCoeff = Float64, kwargs...)
+function PointEvaluator(kernel, u_args, ops_args, sol = nothing; Tv = Float64, Ti = Int32, TCoeff = Float64, kwargs...)
     parameters = Dict{Symbol, Any}(k => v[1] for (k, v) in default_peval_kwargs())
     _update_params!(parameters, kwargs)
     @assert length(u_args) == length(ops_args)
-    PE = PointEvaluator{Tv, TCoeff, typeof(u_args[1]), typeof(kernel)}(u_args, ops_args, kernel, nothing, nothing, nothing, 1, nothing, nothing, nothing, zeros(Tv, 2), parameters)
+    PE = PointEvaluator{Tv, Ti, TCoeff, typeof(u_args[1]), typeof(kernel)}(u_args, ops_args, kernel, nothing, nothing, nothing, Ti(1), nothing, nothing, nothing, zeros(Tv, 2), parameters)
     if sol !== nothing
         initialize!(PE, sol)
     end
@@ -121,7 +121,7 @@ $(_myprint(default_peval_kwargs()))
 # Notes
 - This function must be called before using `evaluate!` or `evaluate_bary!` with the `PointEvaluator`.
 """
-function initialize!(O::PointEvaluator{T, TCoeff, UT}, sol; time = 0, kwargs...) where {T, TCoeff, UT}
+function initialize!(O::PointEvaluator{T, Ti, TCoeff, UT}, sol; time = 0, kwargs...) where {T, Ti, TCoeff, UT}
     _update_params!(O.parameters, kwargs)
     if UT <: Integer
         ind_args = O.u_args
@@ -131,7 +131,6 @@ function initialize!(O::PointEvaluator{T, TCoeff, UT}, sol; time = 0, kwargs...)
     FES_args = [sol[j].FES for j in ind_args]
     nargs = length(FES_args)
     xgrid = FES_args[1].xgrid
-    Ti = eltype(xgrid[CellNodes])
     EGs = xgrid[UniqueCellGeometries]
     AT = ON_CELLS
     gridAT = EffAT4AssemblyType(get_AT(FES_args[1]), AT)
@@ -172,10 +171,10 @@ function initialize!(O::PointEvaluator{T, TCoeff, UT}, sol; time = 0, kwargs...)
     function _evaluate_bary!(
             result,
             BE_args::Array{<:FEEvaluator, 1},
-            L2G::L2GTransformer,
+            L2G::L2GTransformer{Tv, Ti},
             xref,
             item, # cell used to evaluate local coordinates
-        )
+        ) where {Tv, Ti}
 
         for id in 1:nargs
             # update basis evaluations at xref
@@ -246,10 +245,10 @@ Evaluates the PointEvaluator at the specified reference coordinates in the cell 
 """
 function evaluate_bary!(
         result,
-        PE::PointEvaluator,
+        PE::PointEvaluator{Tv, Ti},
         xref,
         item,
-    )
+    ) where {Tv, Ti}
 
     ## find cell geometry id
     j = PE.eval_selector(item)

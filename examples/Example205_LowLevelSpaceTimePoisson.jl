@@ -179,7 +179,7 @@ function assemble!(A::ExtendableSparseMatrix, b::Vector, FES_time, FES_space, f,
 
     ## ASSEMBLY LOOP
     loop_allocations = 0
-    function barrier(EG_time, EG_space, L2G_time::L2GTransformer, L2G_space::L2GTransformer)
+    function barrier(EG_time, EG_space, L2G_time::L2GTransformer{Tv, Ti}, L2G_space::L2GTransformer{Tv, Ti}) where {Tv, Ti}
         ## barrier function to avoid allocations by type dispatch
 
         ndofs4cell_time::Int = get_ndofs(ON_CELLS, FEType_time, EG_time)
@@ -192,7 +192,7 @@ function assemble!(A::ExtendableSparseMatrix, b::Vector, FES_time, FES_space, f,
         t::Vector{Float64} = zeros(Float64, 1)
 
         ## assemble Laplacian
-        loop_allocations += @allocated for cell in 1:ncells_space
+        loop_allocations += @allocated for cell::Ti in 1:ncells_space
             ## update FE basis evaluators for space
             FEBasis_space_∇.citem[] = cell
             update_basis!(FEBasis_space_∇)
@@ -208,7 +208,7 @@ function assemble!(A::ExtendableSparseMatrix, b::Vector, FES_time, FES_space, f,
             Aloc .*= cellvolumes_space[cell]
 
             ## add local matrix to global matrix
-            for time_cell in 1:ncells_time
+            for time_cell::Ti in 1:ncells_time
                 update_trafo!(L2G_time, time_cell)
                 for jT in 1:ndofs4cell_time, kT in 1:ndofs4cell_time
                     dofTj = celldofs_time[jT, time_cell]
@@ -237,7 +237,7 @@ function assemble!(A::ExtendableSparseMatrix, b::Vector, FES_time, FES_space, f,
             for qp in 1:nweights_space
                 ## evaluate coordinates of quadrature point in space
                 eval_trafo!(x, L2G_space, xref_space[qp])
-                for time_cell in 1:ncells_time
+                for time_cell::Ti in 1:ncells_time
                     update_trafo!(L2G_time, time_cell)
                     for qpT in 1:nweights_time
                         ## evaluate time coordinate

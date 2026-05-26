@@ -767,7 +767,7 @@ function integrate!(
     resultdim::Int = (typeof(integral4items) <: AbstractArray{T, 1}) ? length(offset) : size(integral4items, 1)
     result::Vector{T} = zeros(T, resultdim)
     return if typeof(integral4items) <: AbstractArray{T, 1}
-        function _integrate_cell_1d!(integral4items, ilocal2global::L2GTransformer{T}, iqf::QuadratureRule{T}, QP, xCellParents, item)
+        function _integrate_cell_1d!(integral4items, ilocal2global::L2GTransformer{T}, iqf::QuadratureRule{T}, QP, xCellParents, item::Ti)
             update_trafo!(ilocal2global, item)
 
             QP.item = item
@@ -787,7 +787,7 @@ function integrate!(
         end
 
         fill!(integral4items, 0)
-        for item::Int in items
+        for item::Ti in items
             if xItemRegions[item] > 0
                 if !(visit_region[xItemRegions[item]]) || AT == ON_IFACES
                     continue
@@ -807,7 +807,7 @@ function integrate!(
             _integrate_cell_1d!(integral4items, local2global[iEG], qf[iEG], QP, xCellParents, item)
         end
     else # <: AbstractArray{T,2}
-        function _integrate_cell_2d!(integral4items, ilocal2global::L2GTransformer{T}, iqf::QuadratureRule{T}, QP, xCellParents, item)
+        function _integrate_cell_2d!(integral4items, ilocal2global::L2GTransformer{T}, iqf::QuadratureRule{T}, QP, xCellParents, item::Ti)
             update_trafo!(ilocal2global, item)
 
             QP.item = item
@@ -827,7 +827,7 @@ function integrate!(
         end
 
         fill!(integral4items, 0)
-        for item::Int in items
+        for item::Ti in items
             if xItemRegions[item] > 0
                 if !(visit_region[xItemRegions[item]]) || AT == ON_IFACES
                     continue
