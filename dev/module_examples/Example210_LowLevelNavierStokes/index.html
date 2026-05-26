@@ -65,22 +65,20 @@ function main(; nref = 5, teval = 0, order = 2, Plotter = UnicodePlots)
     sol = solve_stokes_lowlevel(FES; teval = teval)
 
     # move integral mean of pressure
-    pmean = sum(compute_error(sol[2], nothing, order, 1))
-    for j in 1:sol[2].FES.ndofs
-        sol[2][j] -= pmean
-    end
+    pmean = sum(compute_error(sol[&quot;p&quot;], nothing, order, 1))
+    view(sol[&quot;p&quot;]) .-= pmean
 
     # calculate l2 error
-    error_u = sqrt(sum(compute_error(sol[1], u!, 2)))
-    error_p = sqrt(sum(compute_error(sol[2], p!, 2)))
-    println(&quot;\nl2 error velo = $(error_u)&quot;)
+    error_u = sqrt(sum(compute_error(sol[&quot;u&quot;], u!, 2)))
+    error_p = sqrt(sum(compute_error(sol[&quot;p&quot;], p!, 2)))
+    println(&quot;\nl2 error velocity = $(error_u)&quot;)
     println(&quot;l2 error pressure = $(error_p)&quot;)
 
     # plot
     plt = GridVisualizer(; Plotter = Plotter, layout = (1, 2), clear = true, resolution = (1200, 600))
-    scalarplot!(plt[1, 1], sol[1]; title = &quot;|u| + quiver&quot;, abs = true)
-    vectorplot!(plt[1, 1], sol[1]; clear = false)
-    scalarplot!(plt[1, 2], sol[2]; title = &quot;p&quot;)
+    scalarplot!(plt[1, 1], sol[&quot;u&quot;]; abs = true)
+    vectorplot!(plt[1, 1], sol[&quot;u&quot;]; clear = false)
+    scalarplot!(plt[1, 2], sol[&quot;p&quot;])
     reveal(plt)
 
     return sol, plt
@@ -98,12 +96,12 @@ function compute_error(uh::FEVectorBlock, u, order = get_polynomialorder(get_FET
     uhval = zeros(Float64, ncomponents)
     uval = zeros(Float64, ncomponents)
     L2G = L2GTransformer(EG, xgrid, ON_CELLS)
-    QP = QPInfos(xgrid)
+    QP = QPInfos(xgrid; time = 0)
     qf = VertexRule(EG, order)
     FEB = FEEvaluator(FES, Identity, qf)
 
-    function barrier(L2G::L2GTransformer)
-        for cell in 1:num_cells(xgrid)
+    function barrier(L2G::L2GTransformer{Tv, Ti}) where {Tv, Ti}
+        for cell::Ti in 1:num_cells(xgrid)
             update_trafo!(L2G, cell)
             update_basis!(FEB, cell)
             for (qp, weight) in enumerate(qf.w)
@@ -134,7 +132,7 @@ end
 function solve_stokes_lowlevel(FES; teval = 0)
 
     println(&quot;Initializing system...&quot;)
-    sol = FEVector(FES)
+    sol = FEVector(FES; tags = [&quot;u&quot;, &quot;p&quot;])
     A = FEMatrix(FES)
     b = FEVector(FES)
     @time update_system! = prepare_assembly!(A, b, FES[1], FES[2], sol)
@@ -149,6 +147,13 @@ function solve_stokes_lowlevel(FES; teval = 0)
         fixed_dofs = boundarydofs(FES[1])
         push!(fixed_dofs, FES[1].ndofs + 1) ## fix one pressure dof
     end
+
+    # fix boundary dofs
+    for dof in fixed_dofs
+        A.entries[dof, dof] = 1.0e60
+        b.entries[dof] = 1.0e60 * u_init.entries[dof]
+    end
+    ExtendableSparse.flush!(A.entries)
 
     for it in 1:20
         # solve
@@ -240,7 +245,7 @@ function prepare_assembly!(A, b, FESu, FESp, sol; teval = 0)
     value = DiffResults.value(Dresult)
 
     # ASSEMBLY LOOP
-    function barrier(EG, L2G::L2GTransformer, linear::Bool, nonlinear::Bool)
+    function barrier(EG, L2G::L2GTransformer{Tv, Ti}, linear::Bool, nonlinear::Bool) where {Tv, Ti}
         # barrier function to avoid allocations caused by L2G
 
         ndofs4cell_u::Int = get_ndofs(ON_CELLS, FEType_u, EG)
@@ -251,7 +256,7 @@ function prepare_assembly!(A, b, FESu, FESp, sol; teval = 0)
         fval::Vector{Float64} = zeros(Float64, 2)
         x::Vector{Float64} = zeros(Float64, 2)
 
-        for cell in 1:ncells
+        for cell::Ti in 1:ncells
             # update FE basis evaluators
             update_basis!(FEBasis_∇u, cell)
             update_basis!(FEBasis_idu, cell)
@@ -376,4 +381,4 @@ function generateplots(dir = pwd(); Plotter = nothing, kwargs...)
     scene = GridVisualize.reveal(plt)
     return GridVisualize.save(joinpath(dir, &quot;example210.png&quot;), scene; Plotter = Plotter)
 end
-end #module</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example205_LowLevelSpaceTimePoisson/">« Example205_LowLevelSpaceTimePoisson</a><a class="docs-footer-nextpage" href="../Example280_BasisPlotter/">Example280_BasisPlotter »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Monday 18 May 2026 16:16">Monday 18 May 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end #module</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example205_LowLevelSpaceTimePoisson/">« Example205_LowLevelSpaceTimePoisson</a><a class="docs-footer-nextpage" href="../Example280_BasisPlotter/">Example280_BasisPlotter »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 26 May 2026 08:29">Tuesday 26 May 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

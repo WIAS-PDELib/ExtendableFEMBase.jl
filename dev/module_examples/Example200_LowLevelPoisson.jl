@@ -63,10 +63,10 @@ function main(;
         println(stdout, barplot(["Grid", "FaceNodes", "celldofs", "Assembly", "Solve"], [time_grid, time_facenodes, time_dofmap, time_assembly, time_solve], title = "Runtimes"))
 
         # plot
-        scalarplot!(plt[1, 1], solution[1])
-        scalarplot!(plt[1, 2], solution[1], Gradient; abs = true, clear = true)
-        vectorplot!(plt[1, 2], solution[1], Gradient; clear = false)
-        gridplot!(plt[1, 3], xgrid; markersize = 0)
+        scalarplot!(plt[1, 1], solution["u"])
+        scalarplot!(plt[1, 2], solution["u"], Gradient; abs = true, clear = true)
+        vectorplot!(plt[1, 2], solution["u"], Gradient; clear = false)
+        gridplot!(plt[1, 3], xgrid; markersize = 0, title = "grid")
         reveal(plt)
     end
 
@@ -75,7 +75,7 @@ end
 
 
 function solve_poisson_lowlevel(fe_space, mu, rhs)
-    solution = FEVector(fe_space)
+    solution = FEVector(fe_space; tags = ["u"])
     stiffness_matrix = FEMatrix(fe_space, fe_space)
     rhs_vector = FEVector(fe_space)
     println("Assembling...")
@@ -100,7 +100,7 @@ function solve_poisson_lowlevel(fe_space, mu, rhs)
     return solution, time_assembly, time_solve
 end
 
-function assemble!(A::ExtendableSparseMatrix, b::Vector, fe_space, rhs, mu = 1)
+function assemble!(A::ExtendableSparseMatrix, b::Vector, fe_space::FESpace{Tv, Ti}, rhs, mu = 1) where {Tv, Ti}
     xgrid = fe_space.xgrid
     EG = xgrid[UniqueCellGeometries][1]
     FEType = eltype(fe_space)
@@ -130,7 +130,7 @@ function assemble!(A::ExtendableSparseMatrix, b::Vector, fe_space, rhs, mu = 1)
         dof_j::Int, dof_k::Int = 0, 0
         x::Vector{Float64} = zeros(Float64, 2)
 
-        return loop_allocations += @allocated for cell in 1:ncells
+        return loop_allocations += @allocated for cell::Ti in 1:ncells
             ## update FE basis evaluators
             FEBasis_∇.citem[] = cell
             update_basis!(FEBasis_∇)

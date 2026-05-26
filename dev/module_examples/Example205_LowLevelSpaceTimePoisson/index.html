@@ -159,7 +159,7 @@ function assemble!(A::ExtendableSparseMatrix, b::Vector, FES_time, FES_space, f,
 
     # ASSEMBLY LOOP
     loop_allocations = 0
-    function barrier(EG_time, EG_space, L2G_time::L2GTransformer, L2G_space::L2GTransformer)
+    function barrier(EG_time, EG_space, L2G_time::L2GTransformer{Tv, Ti}, L2G_space::L2GTransformer{Tv, Ti}) where {Tv, Ti}
         # barrier function to avoid allocations by type dispatch
 
         ndofs4cell_time::Int = get_ndofs(ON_CELLS, FEType_time, EG_time)
@@ -172,7 +172,7 @@ function assemble!(A::ExtendableSparseMatrix, b::Vector, FES_time, FES_space, f,
         t::Vector{Float64} = zeros(Float64, 1)
 
         # assemble Laplacian
-        loop_allocations += @allocated for cell in 1:ncells_space
+        loop_allocations += @allocated for cell::Ti in 1:ncells_space
             # update FE basis evaluators for space
             FEBasis_space_∇.citem[] = cell
             update_basis!(FEBasis_space_∇)
@@ -188,7 +188,7 @@ function assemble!(A::ExtendableSparseMatrix, b::Vector, FES_time, FES_space, f,
             Aloc .*= cellvolumes_space[cell]
 
             # add local matrix to global matrix
-            for time_cell in 1:ncells_time
+            for time_cell::Ti in 1:ncells_time
                 update_trafo!(L2G_time, time_cell)
                 for jT in 1:ndofs4cell_time, kT in 1:ndofs4cell_time
                     dofTj = celldofs_time[jT, time_cell]
@@ -217,7 +217,7 @@ function assemble!(A::ExtendableSparseMatrix, b::Vector, FES_time, FES_space, f,
             for qp in 1:nweights_space
                 # evaluate coordinates of quadrature point in space
                 eval_trafo!(x, L2G_space, xref_space[qp])
-                for time_cell in 1:ncells_time
+                for time_cell::Ti in 1:ncells_time
                     update_trafo!(L2G_time, time_cell)
                     for qpT in 1:nweights_time
                         # evaluate time coordinate
@@ -291,4 +291,4 @@ function generateplots(dir = pwd(); Plotter = nothing, kwargs...)
     return GridVisualize.save(joinpath(dir, &quot;example205.png&quot;), scene; Plotter = Plotter)
 end
 
-end #module</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example200_LowLevelPoisson/">« Example200_LowLevelPoisson</a><a class="docs-footer-nextpage" href="../Example210_LowLevelNavierStokes/">Example210_LowLevelNavierStokes »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Monday 18 May 2026 16:16">Monday 18 May 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end #module</code></pre><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Example200_LowLevelPoisson/">« Example200_LowLevelPoisson</a><a class="docs-footer-nextpage" href="../Example210_LowLevelNavierStokes/">Example210_LowLevelNavierStokes »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 26 May 2026 08:29">Tuesday 26 May 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
