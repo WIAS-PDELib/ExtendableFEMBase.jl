@@ -21,6 +21,7 @@ function make_all(; with_examples::Bool = true)
             "Example200_LowLevelPoisson.jl",
             "Example205_LowLevelSpaceTimePoisson.jl",
             "Example210_LowLevelNavierStokes.jl",
+            "Example220_LowLevelHeatEquation.jl",
             "Example280_BasisPlotter.jl",
             "Example281_DiscontinuousPlot.jl",
             "Example290_InterpolationBetweenMeshes.jl",

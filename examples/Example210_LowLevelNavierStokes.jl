@@ -38,6 +38,7 @@ using GridVisualize
 using UnicodePlots, Term
 using ForwardDiff
 using DiffResults
+using Test #
 
 ## data for Poisson problem
 const μ = 1.0e-2
@@ -403,4 +404,34 @@ function generateplots(dir = pwd(); Plotter = nothing, kwargs...)
     scene = GridVisualize.reveal(plt)
     return GridVisualize.save(joinpath(dir, "example210.png"), scene; Plotter = Plotter)
 end
+
+## check that the l2 errors of the converged lattice flow are unchanged
+function runtests(;
+        nref = 5,
+        teval = 0,
+        order = 2
+    )
+    X = LinRange(0, 1, 2^nref + 1)
+    Y = LinRange(0, 1, 2^nref + 1)
+    xgrid = simplexgrid(X, Y)
+
+    FETypes = [H1Pk{2, 2, order}, H1Pk{1, 2, order - 1}]
+    FES = [
+        FESpace{FETypes[1]}(xgrid; name = "velocity space"),
+        FESpace{FETypes[2]}(xgrid; name = "pressure space"),
+    ]
+
+    sol = solve_stokes_lowlevel(FES; teval = teval)
+
+    ## shift integral mean of pressure
+    pmean = sum(compute_error(sol["p"], nothing, order, 1))
+    view(sol["p"]) .-= pmean
+
+    error_u = sqrt(sum(compute_error(sol["u"], u!, 2)))
+    error_p = sqrt(sum(compute_error(sol["p"], p!, 2)))
+
+    @info "l2 error velocity = $(error_u), l2 error pressure = $(error_p)"
+    @test isapprox(error_u, 2.709425184507529e-04; rtol = 1.0e-10)
+    return @test isapprox(error_p, 2.792324088800175e-03; rtol = 1.0e-10)
+end #hide
 end #module

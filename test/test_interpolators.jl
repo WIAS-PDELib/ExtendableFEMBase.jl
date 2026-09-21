@@ -1,61 +1,5 @@
 function run_interpolator_tests()
 
-    # list of FETypes that should be tested
-    TestCatalog1D = [
-        L2P0{1} => 0,
-        H1P1{1} => 1,
-        H1P2{1, 1} => 2,
-        H1P3{1, 1} => 3,
-        H1Pk{1, 1, 3} => 3,
-        H1Pk{1, 1, 4} => 4,
-        H1Pk{1, 1, 5} => 5,
-    ]
-
-    TestCatalog2D = [
-        HCURLN0{2} => 0,
-        HCURLN1{2} => 1,
-        HDIVRT0{2} => 0,
-        HDIVRTk{2, 0} => 0,
-        HDIVBDM1{2} => 1,
-        HDIVRT1{2} => 1,
-        HDIVRTk{2, 1} => 1,
-        HDIVBDM2{2} => 2,
-        HDIVRTk{2, 2} => 2,
-        HDIVRTk{2, 3} => 3,
-        HDIVRTk{2, 4} => 4,
-        L2P0{2} => 0,
-        L2P1{2} => 1,
-        H1P1{2} => 1,
-        H1Q1{2} => 1,
-        H1CR{2} => 1,
-        H1MINI{2, 2} => 1,
-        H1P1TEB{2} => 1,
-        H1BR{2} => 1,
-        H1P2{2, 2} => 2,
-        H1P2B{2, 2} => 2,
-        H1Q2{2, 2} => 2,
-        H1P3{2, 2} => 3,
-        H1Pk{2, 2, 3} => 3,
-        H1Pk{2, 2, 4} => 4,
-        H1Pk{2, 2, 5} => 5,
-    ]
-
-    TestCatalog3D = [
-        HCURLN0{3} => 0,
-        HDIVRT0{3} => 0,
-        HDIVBDM1{3} => 1,
-        HDIVRT1{3} => 1,
-        L2P0{3} => 0,
-        H1P1{3} => 1,
-        H1Q1{3} => 1,
-        H1CR{3} => 1,
-        H1MINI{3, 3} => 1,
-        H1P1TEB{3} => 1,
-        H1BR{3} => 1,
-        H1P2{3, 3} => 2,
-        H1P3{3, 3} => 3,
-    ]
-
     ## function that computes errors at enough quadrature points for polynomial of degree order
     function compute_error(uh::FEVectorBlock, u::Function, order = get_polynomialorder(get_FEType(uh), uh.FES.xgrid[CellGeometries][1]))
         xgrid = uh.FES.xgrid
@@ -119,39 +63,22 @@ function run_interpolator_tests()
         println("============================")
         println("Testing Interpolations in 1D")
         println("============================")
-        xgrid = testgrid(Edge1D)
-        for n in 1:length(TestCatalog1D)
-            test_interpolation(xgrid, TestCatalog1D[n].first, TestCatalog1D[n].second)
-            test_interpolation(xgrid, TestCatalog1D[n].first, TestCatalog1D[n].second, true)
+        for_each_catalog([Edge1D], TestCatalog1D) do ~, xgrid, FEType, order, broken
+            test_interpolation(xgrid, FEType, order, broken)
         end
         println("\n")
         println("============================")
         println("Testing Interpolations in 2D")
         println("============================")
-        for EG in [Triangle2D, Parallelogram2D]
-            xgrid = uniform_refine(reference_domain(EG), 1)
-            println("EG = $EG")
-            for n in 1:length(TestCatalog2D), broken in (false, true)
-                if ExtendableFEMBase.isdefined(TestCatalog2D[n].first, EG, broken)
-                    test_interpolation(xgrid, TestCatalog2D[n].first, TestCatalog2D[n].second, broken)
-                else
-                    @warn "$(TestCatalog2D[n]) (broken = $broken) not defined on $EG (skipping test case)"
-                end
-            end
+        for_each_catalog([Triangle2D, Parallelogram2D], TestCatalog2D; grid = testgrid_refdomain) do ~, xgrid, FEType, order, broken
+            test_interpolation(xgrid, FEType, order, broken)
         end
         println("\n")
         println("============================")
         println("Testing Interpolations in 3D")
         println("============================")
-        for EG in [Tetrahedron3D, Parallelepiped3D]
-            xgrid = uniform_refine(reference_domain(EG), 1)
-            for n in 1:length(TestCatalog3D), broken in (false, true)
-                if ExtendableFEMBase.isdefined(TestCatalog3D[n].first, EG, broken)
-                    test_interpolation(xgrid, TestCatalog3D[n].first, TestCatalog3D[n].second, broken)
-                else
-                    @warn "$(TestCatalog3D[n]) (broken = $broken) not defined on $EG (skipping test case)"
-                end
-            end
+        for_each_catalog([Tetrahedron3D, Parallelepiped3D], TestCatalog3D; grid = testgrid_refdomain) do ~, xgrid, FEType, order, broken
+            test_interpolation(xgrid, FEType, order, broken)
         end
     end
     return println("")
