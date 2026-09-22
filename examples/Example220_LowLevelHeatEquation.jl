@@ -89,7 +89,7 @@ function main(;
     append!(plotsteps, [round(Int, nsteps * j / 3) for j in 1:3])
     plt = GridVisualizer(; Plotter = Plotter, layout = (1, length(plotsteps) + 1), clear = true, resolution = (400 * (length(plotsteps) + 1), 400))
     for (j, n) in enumerate(plotsteps)
-        scalarplot!(plt[1, j], history[n + 1][1], title = "t = $(T * (n-1) / nsteps)")
+        scalarplot!(plt[1, j], history[n + 1][1], title = "t = $(T * (n - 1) / nsteps)")
     end
     gridplot!(plt[1, length(plotsteps) + 1], xgrid; markersize = 0, title = "grid (mixed geometries)")
     reveal(plt)

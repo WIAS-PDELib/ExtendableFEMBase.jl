@@ -431,7 +431,7 @@ function runtests(;
     error_p = sqrt(sum(compute_error(sol["p"], p!, 2)))
 
     @info "l2 error velocity = $(error_u), l2 error pressure = $(error_p)"
-    @test isapprox(error_u, 2.709425184507529e-04; rtol = 1.0e-10)
-    return @test isapprox(error_p, 2.792324088800175e-03; rtol = 1.0e-10)
+    @test isapprox(error_u, 2.709425184507529e-4; rtol = 1.0e-10)
+    return @test isapprox(error_p, 2.792324088800175e-3; rtol = 1.0e-10)
 end #hide
 end #module
