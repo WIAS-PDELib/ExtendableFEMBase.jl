@@ -40,6 +40,10 @@ looks like this:
 
 ![](example220.png)
 
+Since the plotter used in the docs build (CairoMakie) can only plot triangle
+cells, the solution is interpolated onto a P1 space on a triangle-only grid
+obtained from the mixed grid via `split_grid_into` before plotting.
+
 =#
 
 module Example220_LowLevelHeatEquation
@@ -84,14 +88,22 @@ function main(;
     ## solve
     history = solve_heat_lowlevel(fe_space, u0!, rhs, mu, T, nsteps)
 
+    ## separate grid for plotting: the plotter used in the docs build (CairoMakie)
+    ## can only plot triangle cells, so split the mixed grid into triangles and
+    ## interpolate the solution onto a P1 space on the plot grid
+    xgridplot = split_grid_into(xgrid, Triangle2D)
+    fe_space_plot = FESpace{H1P1{1}}(xgridplot)
+
     ## plot four time levels and the grid
     plotsteps = [1]
     append!(plotsteps, [round(Int, nsteps * j / 3) for j in 1:3])
     plt = GridVisualizer(; Plotter = Plotter, layout = (1, length(plotsteps) + 1), clear = true, resolution = (400 * (length(plotsteps) + 1), 400))
     for (j, n) in enumerate(plotsteps)
-        scalarplot!(plt[1, j], history[n + 1][1], title = "t = $(T * (n - 1) / nsteps)")
+        u_plot = FEVector(fe_space_plot; name = "u(t = $(T * (n - 1) / nsteps)) on plot grid")
+        lazy_interpolate!(u_plot[1], history[n + 1]; use_cellparents = true)
+        scalarplot!(plt[1, j], u_plot[1], title = "t = $(T * (n - 1) / nsteps)")
     end
-    gridplot!(plt[1, length(plotsteps) + 1], xgrid; markersize = 0, title = "grid (mixed geometries)")
+    gridplot!(plt[1, length(plotsteps) + 1], xgridplot; markersize = 0, title = "grid (mixed geometries, split into triangles)")
     reveal(plt)
 
     return history, plt
