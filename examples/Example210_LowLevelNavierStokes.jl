@@ -31,13 +31,13 @@ The computed solution for the default parameters looks like this:
 
 module Example210_LowLevelNavierStokes
 
+using ADTypes: AutoForwardDiff
 using ExtendableFEMBase
 using ExtendableGrids
 using ExtendableSparse
+using DifferentiationInterface: prepare_jacobian, value_and_jacobian!
 using GridVisualize
 using UnicodePlots, Term
-using ForwardDiff
-using DiffResults
 using Test #
 
 ## data for Poisson problem
@@ -262,10 +262,9 @@ function prepare_assembly!(A, b, FESu, FESp, sol; teval = 0)
     result = Vector{Float64}(undef, 2)
     input = Vector{Float64}(undef, 6)
     tempV = zeros(Float64, 2)
-    Dresult = DiffResults.JacobianResult(result, input)
-    cfg = ForwardDiff.JacobianConfig(operator!, result, input, ForwardDiff.Chunk{6}())
-    jac = DiffResults.jacobian(Dresult)
-    value = DiffResults.value(Dresult)
+    jac = Matrix{Float64}(undef, 2, 6)
+    backend = AutoForwardDiff()
+    cfg = prepare_jacobian(operator!, result, backend, input)
 
     ## ASSEMBLY LOOP
     function barrier(EG, L2G::L2GTransformer{Tv, Ti}, linear::Bool, nonlinear::Bool) where {Tv, Ti}
@@ -339,7 +338,7 @@ function prepare_assembly!(A, b, FESu, FESp, sol; teval = 0)
                     end
 
                     ## evaluate jacobian
-                    ForwardDiff.chunk_mode_jacobian!(Dresult, operator!, result, input, cfg)
+                    value, _ = value_and_jacobian!(operator!, result, jac, cfg, backend, input)
 
                     ## update matrix
                     for j in 1:ndofs4cell_u
