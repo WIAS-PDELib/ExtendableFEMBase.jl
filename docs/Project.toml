@@ -1,4 +1,5 @@
 [deps]
+ADTypes = "47edcb42-4c32-4615-8424-f2b9edc5f35b"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 DiffResults = "163ba53b-c6d8-5494-b064-1a9d43ac40c5"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
