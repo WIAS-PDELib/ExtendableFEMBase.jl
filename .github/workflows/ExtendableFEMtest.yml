@@ -17,6 +17,7 @@ jobs:
       - run: |
           julia --project -e '
             using Pkg
+            Pkg.develop(path=".")
             Pkg.add(url="https://github.com/WIAS-PDELib/ExtendableFEM.jl", rev="master")
             Pkg.instantiate()
             Pkg.test("ExtendableFEM")'
