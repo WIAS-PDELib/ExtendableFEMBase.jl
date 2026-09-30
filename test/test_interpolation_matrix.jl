@@ -1,60 +1,4 @@
 function run_grid_interpolation_matrix_tests()
-    # list of FETypes that should be tested
-    TestCatalog1D = [
-        L2P0{1} => 0,
-        H1P1{1} => 1,
-        H1P2{1, 1} => 2,
-        H1P3{1, 1} => 3,
-        H1Pk{1, 1, 3} => 3,
-        H1Pk{1, 1, 4} => 4,
-        H1Pk{1, 1, 5} => 5,
-    ]
-
-    TestCatalog2D = [
-        HCURLN0{2} => 0,
-        HCURLN1{2} => 1,
-        HDIVRT0{2} => 0,
-        HDIVRTk{2, 0} => 0,
-        HDIVBDM1{2} => 1,
-        HDIVRT1{2} => 1,
-        HDIVRTk{2, 1} => 1,
-        HDIVBDM2{2} => 2,
-        HDIVRTk{2, 2} => 2,
-        HDIVRTk{2, 3} => 3,
-        HDIVRTk{2, 4} => 4,
-        L2P0{2} => 0,
-        L2P1{2} => 1,
-        H1P1{2} => 1,
-        H1Q1{2} => 1,
-        H1CR{2} => 1,
-        H1MINI{2, 2} => 1,
-        H1P1TEB{2} => 1,
-        H1BR{2} => 1,
-        H1P2{2, 2} => 2,
-        H1P2B{2, 2} => 2,
-        H1Q2{2, 2} => 2,
-        H1P3{2, 2} => 3,
-        H1Pk{2, 2, 3} => 3,
-        H1Pk{2, 2, 4} => 4,
-        H1Pk{2, 2, 5} => 5,
-    ]
-
-    TestCatalog3D = [
-        HCURLN0{3} => 0,
-        HDIVRT0{3} => 0,
-        HDIVBDM1{3} => 1,
-        HDIVRT1{3} => 1,
-        L2P0{3} => 0,
-        H1P1{3} => 1,
-        H1Q1{3} => 1,
-        H1CR{3} => 1,
-        H1MINI{3, 3} => 1,
-        H1P1TEB{3} => 1,
-        H1BR{3} => 1,
-        H1P2{3, 3} => 2,
-        H1P3{3, 3} => 3,
-    ]
-
     # test interpolation of same space between refined grids
     function test_grid_matrix_computation(xgrid, FEType, order; broken::Bool = false, use_cellparents::Bool = false)
         u, ~ = exact_function(Val(dim_grid(xgrid)), order)
@@ -79,43 +23,27 @@ function run_grid_interpolation_matrix_tests()
         println("============================")
         println("Testing Grid Interpolation Matrices in 1D")
         println("============================")
-        xgrid = testgrid(Edge1D)
-        for (element, order) in TestCatalog1D
-            @info "Element: ($(element), $(order)) \n"
-            test_grid_matrix_computation(xgrid, element, order; broken = false)
-            test_grid_matrix_computation(xgrid, element, order; broken = true)
+        for_each_catalog([Edge1D], TestCatalog1D) do ~, xgrid, FEType, order, broken
+            @info "Element: ($(FEType), $(order), broken = $(broken)) \n"
+            test_grid_matrix_computation(xgrid, FEType, order; broken)
         end
 
         println("\n")
         println("============================")
         println("Testing Grid Interpolation Matrices in 2D")
         println("============================")
-        for EG in [Triangle2D, Parallelogram2D]
-            xgrid = uniform_refine(reference_domain(EG), 1)
-            for (element, order) in TestCatalog2D, broken in (false, true)
-                @info "Element: ($(EG), $(element), $(order), broken = $(broken)) \n"
-                if ExtendableFEMBase.isdefined(element, EG, broken)
-                    test_grid_matrix_computation(xgrid, element, order; broken)
-                else
-                    @warn "($(element),$(order)) (broken = $(broken)) not defined on $(EG) (skipping test case)"
-                end
-            end
+        for_each_catalog([Triangle2D, Parallelogram2D], TestCatalog2D; grid = testgrid_refdomain) do EG, xgrid, FEType, order, broken
+            @info "Element: ($(EG), $(FEType), $(order), broken = $(broken)) \n"
+            test_grid_matrix_computation(xgrid, FEType, order; broken)
         end
 
         println("\n")
         println("============================")
         println("Testing Grid Interpolation Matrices in 3D")
         println("============================")
-        for EG in [Tetrahedron3D, Parallelepiped3D]
-            xgrid = uniform_refine(reference_domain(EG), 1)
-            for (element, order) in TestCatalog3D, broken in (false, true)
-                @info "Element: ($(EG), $(element), $(order), broken = $(broken)) \n"
-                if ExtendableFEMBase.isdefined(element, EG, broken)
-                    test_grid_matrix_computation(xgrid, element, order; broken)
-                else
-                    @warn "($(element),$(order)) (broken = $(broken)) not defined on $(EG) (skipping test case)"
-                end
-            end
+        for_each_catalog([Tetrahedron3D, Parallelepiped3D], TestCatalog3D; grid = testgrid_refdomain) do EG, xgrid, FEType, order, broken
+            @info "Element: ($(EG), $(FEType), $(order), broken = $(broken)) \n"
+            test_grid_matrix_computation(xgrid, FEType, order; broken)
         end
     end
 
@@ -187,7 +115,7 @@ function run_space_interpolation_matrix_tests()
         println("Testing Space Interpolation Matrices in 2D")
         println("============================")
         for EG in [Triangle2D, Parallelogram2D]
-            xgrid = uniform_refine(reference_domain(EG), 1)
+            xgrid = testgrid_refdomain(EG)
             for ((source_element, target_element), order) in PairTestCatalog2D, broken in (false, true)
                 @info "Element pair: ($(EG), $(source_element), $(target_element)), order: $(order), broken = $(broken) \n"
                 if ExtendableFEMBase.isdefined(target_element, EG, broken) && ExtendableFEMBase.isdefined(source_element, EG, broken)
@@ -212,7 +140,7 @@ function run_space_interpolation_matrix_tests()
         println("Testing Space Interpolation Matrices in 3D")
         println("============================")
         for EG in [Tetrahedron3D, Parallelepiped3D]
-            xgrid = uniform_refine(reference_domain(EG), 1)
+            xgrid = testgrid_refdomain(EG)
             for ((source_element, target_element), order) in PairTestCatalog3D, broken in (false, true)
                 @info "Element pair: ($(EG), $(source_element), $(target_element)), order: $(order), broken = $(broken) \n"
                 if ExtendableFEMBase.isdefined(target_element, EG, broken) && ExtendableFEMBase.isdefined(source_element, EG, broken)

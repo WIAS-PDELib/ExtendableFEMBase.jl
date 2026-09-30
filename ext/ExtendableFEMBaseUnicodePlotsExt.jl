@@ -144,16 +144,16 @@ function unicode_scalarplot(
     elseif dim == 2
         plts = [
             heatmap(
-                    reshape(view(I[c][1]), (resolution[1], resolution[2]))',
-                    xlabel = "x",
-                    ylabel = "y",
-                    xfact = (ex[2] - ex[1]) / (resolution[1] - 1),
-                    yfact = (ey[2] - ey[1]) / (resolution[2] - 1),
-                    xoffset = ex[1],
-                    yoffset = ey[1],
-                    title = title * (length(components) == 1 ? "" : "[$(components[c])]"),
-                    colormap = colormap,
-                ) for c in 1:length(components)
+                reshape(view(I[c][1]), (resolution[1], resolution[2]))',
+                xlabel = "x",
+                ylabel = "y",
+                xfact = (ex[2] - ex[1]) / (resolution[1] - 1),
+                yfact = (ey[2] - ey[1]) / (resolution[2] - 1),
+                xoffset = ex[1],
+                yoffset = ey[1],
+                title = title * (length(components) == 1 ? "" : "[$(components[c])]"),
+                colormap = colormap,
+            ) for c in 1:length(components)
         ]
         return length(plts) == 1 ? plts[1] : plts
         ## the following command looks nicer, but requires the Term-based extension of UnicodePlots

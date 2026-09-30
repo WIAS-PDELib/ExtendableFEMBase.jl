@@ -31,13 +31,14 @@ The computed solution for the default parameters looks like this:
 
 module Example210_LowLevelNavierStokes
 
+using ADTypes: AutoForwardDiff
 using ExtendableFEMBase
 using ExtendableGrids
 using ExtendableSparse
+using DifferentiationInterface: prepare_jacobian, value_and_jacobian!
 using GridVisualize
 using UnicodePlots, Term
-using ForwardDiff
-using DiffResults
+using Test #
 
 ## data for Poisson problem
 const μ = 1.0e-2
@@ -261,10 +262,9 @@ function prepare_assembly!(A, b, FESu, FESp, sol; teval = 0)
     result = Vector{Float64}(undef, 2)
     input = Vector{Float64}(undef, 6)
     tempV = zeros(Float64, 2)
-    Dresult = DiffResults.JacobianResult(result, input)
-    cfg = ForwardDiff.JacobianConfig(operator!, result, input, ForwardDiff.Chunk{6}())
-    jac = DiffResults.jacobian(Dresult)
-    value = DiffResults.value(Dresult)
+    jac = Matrix{Float64}(undef, 2, 6)
+    backend = AutoForwardDiff()
+    cfg = prepare_jacobian(operator!, result, backend, input)
 
     ## ASSEMBLY LOOP
     function barrier(EG, L2G::L2GTransformer{Tv, Ti}, linear::Bool, nonlinear::Bool) where {Tv, Ti}
@@ -338,7 +338,7 @@ function prepare_assembly!(A, b, FESu, FESp, sol; teval = 0)
                     end
 
                     ## evaluate jacobian
-                    ForwardDiff.chunk_mode_jacobian!(Dresult, operator!, result, input, cfg)
+                    value, _ = value_and_jacobian!(operator!, result, jac, cfg, backend, input)
 
                     ## update matrix
                     for j in 1:ndofs4cell_u
@@ -403,4 +403,34 @@ function generateplots(dir = pwd(); Plotter = nothing, kwargs...)
     scene = GridVisualize.reveal(plt)
     return GridVisualize.save(joinpath(dir, "example210.png"), scene; Plotter = Plotter)
 end
+
+## check that the l2 errors of the converged lattice flow are unchanged
+function runtests(;
+        nref = 5,
+        teval = 0,
+        order = 2
+    )
+    X = LinRange(0, 1, 2^nref + 1)
+    Y = LinRange(0, 1, 2^nref + 1)
+    xgrid = simplexgrid(X, Y)
+
+    FETypes = [H1Pk{2, 2, order}, H1Pk{1, 2, order - 1}]
+    FES = [
+        FESpace{FETypes[1]}(xgrid; name = "velocity space"),
+        FESpace{FETypes[2]}(xgrid; name = "pressure space"),
+    ]
+
+    sol = solve_stokes_lowlevel(FES; teval = teval)
+
+    ## shift integral mean of pressure
+    pmean = sum(compute_error(sol["p"], nothing, order, 1))
+    view(sol["p"]) .-= pmean
+
+    error_u = sqrt(sum(compute_error(sol["u"], u!, 2)))
+    error_p = sqrt(sum(compute_error(sol["p"], p!, 2)))
+
+    @info "l2 error velocity = $(error_u), l2 error pressure = $(error_p)"
+    @test isapprox(error_u, 2.709425184507529e-4; rtol = 1.0e-10)
+    return @test isapprox(error_p, 2.792324088800175e-3; rtol = 1.0e-10)
+end #hide
 end #module
