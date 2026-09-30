@@ -1,5 +1,9 @@
 # CHANGES
 
+## v1.7.1 Sep 30, 2026
+- restructured test suite, added tests for Example210 and Example290
+- added new Example220 for the heat equation, Example210 now uses DifferentiationInterface
+
 ## v1.7.0 May 26, 2026
 - improved operator evaluations, more operator tests
 - improved Examples, fixed Example210
