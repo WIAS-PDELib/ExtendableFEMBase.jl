@@ -22,6 +22,10 @@ function run_operator_tests()
         @test error < 1.0e-14
         error = test_derivatives3D(HCURLN0{3}, 1)
         @test error < 1.0e-14
+        error = test_bubble_operators2D()
+        @test error < 1.0e-12
+        error = test_bubble_operators3D()
+        @test error < 1.0e-12
         test_reconstructions()
     end
 end
@@ -330,4 +334,104 @@ function test_derivatives3D(fetype, order)
     println("EG = Tetrahedron3D | $fetype | operator = SymmetricHessian{1} | error = $error_symH")
     println("EG = Tetrahedron3D | $fetype | operator = SymmetricHessian{√2} | error = $error_symH2")
     return maximum([error_curl3, error_L, error_H, error_symH, error_symH2, error_grad, error_div])
+end
+
+## Checks the derivative operators on the bubble dofs of H1BR, where the basis functions are
+## the face bubbles weighted by cell-dependent coefficients (the face normals), which must be
+## accounted for by all derivative operators. The analytic values are evaluated at the midpoint
+## of a single non-reference triangle/tetrahedron.
+function test_bubble_operators2D()
+    ## define grid = a single non-reference triangle
+    xgrid = grid_triangle([-1.0 0.0; 1.0 0.0; 0.0 1.0]') # midpoint = [0.0, 1 / 3]
+    FES = FESpace{H1BR{2}}(xgrid)
+    qf = QuadratureRule{Float64, Triangle2D}(0)
+
+    ## analytic barycentric coordinates and their gradients at the midpoint of the only cell
+    cellnodes = xgrid[CellNodes][:, 1]
+    nnodes = length(cellnodes)
+    xcoords = xgrid[Coordinates][:, cellnodes]
+    x0 = vec(sum(xcoords, dims = 2) / nnodes)
+    coef = [xcoords' ones(nnodes)] \ Matrix(I, nnodes, nnodes)
+    glab = coef[1:2, :]'
+    lam = coef[1, :] * x0[1] + coef[2, :] * x0[2] + coef[3, :]
+
+    ## operator evaluations on cell 1
+    optypes = [Gradient, Curl2D, Laplacian, Hessian, SymmetricHessian{1}, SymmetricHessian{sqrt(2)}]
+    opnames = ["Gradient", "Curl2", "Laplacian", "Hessian", "SymmetricHessian{1}", "SymmetricHessian{sqrt(2)}"]
+    FEBEs = [FEEvaluator(FES, optype, qf) for optype in optypes]
+    for FEBE in FEBEs
+        update_basis!(FEBE, 1)
+    end
+
+    errors = Float64[]
+    for j in 1:num_faces(Triangle2D)
+        ## scalar face bubble b = 6 * lam_a * lam_b with face nodes a, b and its derivatives
+        face = xgrid[CellFaces][j, 1]
+        a, b = xgrid[FaceNodes][:, face]
+        n = xgrid[FaceNormals][:, face]
+        gb = 6.0 * (lam[b] * glab[a, :] + lam[a] * glab[b, :])
+        hb = 6.0 * (glab[a, :] * glab[b, :]' + glab[b, :] * glab[a, :]')
+        Δb = hb[1, 1] + hb[2, 2]
+
+        ## expected operator values of the basis function b * n at the cell midpoint
+        ## note: SymmetricHessian stores [d11, d22, offdiagval * d12] per component
+        expected = Vector{Float64}[[n[1] * gb[1], n[1] * gb[2], n[2] * gb[1], n[2] * gb[2]], [n[2] * gb[1] - n[1] * gb[2]], [n[1] * Δb, n[2] * Δb], [n[1] * hb[1, 1], n[1] * hb[1, 2], n[1] * hb[2, 1], n[1] * hb[2, 2], n[2] * hb[1, 1], n[2] * hb[1, 2], n[2] * hb[2, 1], n[2] * hb[2, 2]], [n[1] * hb[1, 1], n[1] * hb[2, 2], n[1] * hb[1, 2], n[2] * hb[1, 1], n[2] * hb[2, 2], n[2] * hb[1, 2]], [n[1] * hb[1, 1], n[1] * hb[2, 2], n[1] * sqrt(2) * hb[1, 2], n[2] * hb[1, 1], n[2] * hb[2, 2], n[2] * sqrt(2) * hb[1, 2]]]
+
+        ## local dof index of the j-th face bubble
+        dof = nnodes * 2 + j
+        for (k, FEBE) in enumerate(FEBEs)
+            error = sqrt(sum((FEBE.cvals[:, dof, 1] - expected[k]) .^ 2))
+            println("EG = Triangle2D | H1BR{2} | bubble dof $dof | operator = $(opnames[k]) | error = $error")
+            push!(errors, error)
+        end
+    end
+    return maximum(errors)
+end
+
+function test_bubble_operators3D()
+    ## define grid = a single non-reference tetrahedron
+    xgrid = reference_domain(Tetrahedron3D)
+    xgrid[Coordinates][:, 2] = [2, 0, 0] # midpoint = [0.5, 0.25, 0.25]
+    FES = FESpace{H1BR{3}}(xgrid)
+    qf = QuadratureRule{Float64, Tetrahedron3D}(0)
+
+    ## analytic barycentric coordinates and their gradients at the midpoint of the only cell
+    cellnodes = xgrid[CellNodes][:, 1]
+    nnodes = length(cellnodes)
+    xcoords = xgrid[Coordinates][:, cellnodes]
+    x0 = vec(sum(xcoords, dims = 2) / nnodes)
+    coef = [xcoords' ones(nnodes)] \ Matrix(I, nnodes, nnodes)
+    glab = coef[1:3, :]'
+    lam = coef[1, :] * x0[1] + coef[2, :] * x0[2] + coef[3, :] * x0[3] + coef[4, :]
+
+    optypes = [Gradient, Curl3D]
+    opnames = ["Gradient", "Curl3"]
+    FEBEs = [FEEvaluator(FES, optype, qf) for optype in optypes]
+    for FEBE in FEBEs
+        update_basis!(FEBE, 1)
+    end
+
+    errors = Float64[]
+    for j in 1:num_faces(Tetrahedron3D)
+        ## scalar face bubble b = 60 * lam_a * lam_b * lam_c with face nodes a, b, c
+        face = xgrid[CellFaces][j, 1]
+        fnodes = xgrid[FaceNodes][:, face]
+        n = xgrid[FaceNormals][:, face]
+        gb = zeros(3)
+        for a in fnodes
+            gb += 60.0 * prod([lam[c] for c in fnodes if c != a]) * glab[a, :]
+        end
+
+        ## expected operator values of the basis function b * n at the cell midpoint
+        expected = Vector{Float64}[[n[1] * gb[1], n[1] * gb[2], n[1] * gb[3], n[2] * gb[1], n[2] * gb[2], n[2] * gb[3], n[3] * gb[1], n[3] * gb[2], n[3] * gb[3]], [n[3] * gb[2] - n[2] * gb[3], n[1] * gb[3] - n[3] * gb[1], n[2] * gb[1] - n[1] * gb[2]]]
+
+        ## local dof index of the j-th face bubble
+        dof = nnodes * 3 + j
+        for (k, FEBE) in enumerate(FEBEs)
+            error = sqrt(sum((FEBE.cvals[:, dof, 1] - expected[k]) .^ 2))
+            println("EG = Tetrahedron3D | H1BR{3} | bubble dof $dof | operator = $(opnames[k]) | error = $error")
+            push!(errors, error)
+        end
+    end
+    return maximum(errors)
 end
