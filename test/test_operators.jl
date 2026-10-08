@@ -6,6 +6,12 @@ function run_operator_tests()
         println("============================")
         error = test_derivatives2D(H1P2{2, 2}, 2)
         @test error < 1.0e-14
+        error = test_derivatives2D(H1P1{2}, 1)
+        @test error < 1.0e-14
+        error = test_derivatives2D(H1BR{2}, 2)
+        @test error < 1.0e-14
+        error = test_derivatives2D(H1BR{2}, 1)
+        @test error < 1.0e-14
         error = test_derivatives2D(HDIVBDM2{2}, 2)
         @test error < 1.0e-14
         error = test_derivatives2D(HCURLN1{2}, 1)
@@ -98,6 +104,12 @@ function test_derivatives2D(fetype, order)
     elseif order == 1
         expected_id = [4 / 3, 1]
         expected_curl2 = [-2]
+        expected_grad = [1, 1, -1, 3]
+        expected_div = [4]
+        expected_L = [0, 0]
+        expected_H = zeros(8)
+        expected_symH = zeros(6)
+        expected_symH2 = zeros(6)
     end
 
     ## define P2-Courant finite element space
@@ -151,6 +163,24 @@ function test_derivatives2D(fetype, order)
         return maximum([error_id, error_curl2, error_grad])
     end
 
+    ## for H1 elements Curl2(u) must be consistent with the corresponding entries of Grad(u)
+    ## = [du1/dx1, du1/dx2, du2/dx1, du2/dx2], i.e. Curl2(u) = du2/dx1 - du1/dx2
+    error_curl2_grad = abs(curl2[1] - (grad[3] - grad[2]))
+    println("EG = Triangle2D | $fetype | operator = Curl2 vs. Gradient | error = $error_curl2_grad")
+
+    if fetype <: AbstractH1FiniteElementWithCoefficients
+        if order == 1
+            ## linear functions are exactly representable in H1BR (bubble dofs vanish here)
+            return maximum([error_id, error_curl2, error_grad, error_div, error_curl2_grad])
+        else
+            ## the BR space is a proper subspace of P2, so a quadratic test function is not
+            ## reproduced exactly by interpolation and only the consistency between Curl2 and
+            ## Gradient can be checked exactly (this also tests the coefficient handling of the
+            ## normal-weighted bubble dofs, which are non-zero for quadratic functions)
+            return error_curl2_grad
+        end
+    end
+
     # do the same for second order derivatives
     FEBE_L = FEEvaluator(FES, Laplacian, qf)
     FEBE_H = FEEvaluator(FES, Hessian, qf)
@@ -180,7 +210,7 @@ function test_derivatives2D(fetype, order)
     println("EG = Triangle2D | $fetype | operator = Hessian | error = $error_H")
     println("EG = Triangle2D | $fetype | operator = SymmetricHessian{1} | error = $error_symH")
     println("EG = Triangle2D | $fetype | operator = SymmetricHessian{√2} | error = $error_symH2")
-    return maximum([error_id, error_curl2, error_L, error_H, error_symH, error_symH2, error_grad, error_div])
+    return maximum([error_id, error_curl2, error_L, error_H, error_symH, error_symH2, error_grad, error_div, error_curl2_grad])
 end
 
 function test_derivatives3D(fetype, order)
