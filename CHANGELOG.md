@@ -1,5 +1,10 @@
 # CHANGES
 
+## v1.7.2 Oct 08, 2026
+- fixed wrong sign in `Curl2D` evaluation for H1 elements (`-du1/dx2` was added instead of subtracted), which was introduced by the operator evaluation restructuring in v1.7.0
+- added evaluations of `Curl2D`, `Curl3D`, `CurlScalar`, `Laplacian`, `Hessian`, `SymmetricHessian` and `TangentialGradient` for `AbstractH1FiniteElementWithCoefficients` elements (e.g. `H1BR`, `H1P1TEB`), so far the coefficients of the normal-weighted bubble dofs were ignored by these operators
+- added tests for `Curl2D` on `H1P1` and `H1BR`, a consistency check between `Curl2D` and `Gradient` on H1 elements and analytic checks of the derivative operators on the bubble dofs of `H1BR`
+
 ## v1.7.1 Sep 30, 2026
 - restructured test suite, added tests for Example210 and Example290
 - added new Example220 for the heat equation, Example210 now uses DifferentiationInterface
